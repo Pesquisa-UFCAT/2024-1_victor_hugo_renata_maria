@@ -1,0 +1,4 @@
+parepy-toolbox
+numpy
+pandas
+openpyxl
