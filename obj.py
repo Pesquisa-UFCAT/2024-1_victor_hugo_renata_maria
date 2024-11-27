@@ -87,11 +87,12 @@ def momento_resistente_secao_sem_cor(a_s: float, b_w: float, h: float, f_ck: flo
 
     f_ck *= 1E3
     f_cd = f_ck / gamma_c
-    f_y = 500000
     d = h * 0.9
-    x = ((a_s * f_y) / (f_cd * b_w * alpha_c * lambdaa))
-    m_rd = a_s * f_y * (d - x * 0.5 * lambdaa)
+    x = ((a_s * f_yk) / (f_cd * b_w * alpha_c * lambdaa))
+    m_rd = a_s * f_yk * (d - x * 0.5 * lambdaa)
+    print(x)
     return m_rd
+
 
 
 def obj_mestrado_victor(x, none_variable):
@@ -103,7 +104,6 @@ def obj_mestrado_victor(x, none_variable):
     time_step = none_variable['time analysis']
     t_i = time_step[id_analysis] 
     # t_i is a time value from your list of times entered in the 'none variable' key.
-    
 
     # Random variables
     m_g = x[0]
@@ -120,7 +120,6 @@ def obj_mestrado_victor(x, none_variable):
     b_w = none_variable['dados_viga']['b_w (m)']
     h = none_variable['dados_viga']['h (m)']
     a_s = none_variable['dados_viga']['a_s (m2)']
-
     
     # Degradation criteria
     if t_i == 0:
@@ -137,3 +136,12 @@ def obj_mestrado_victor(x, none_variable):
     constraint = e_r * m_r - e_s * m_s
 
     return [m_r * e_r], [m_s * e_s], [constraint]
+
+
+if __name__ == "__main__":
+    x = [17,2.87,25000,500000,1,1,10]
+    dados_viga = {'h (m)': 0.4, 'b_w (m)': 0.14, 'm_rd (kN.m)': 0, 'a_s (m2)': 0.15/100*0.14*0.40, 'gamma_c': 1.00, 'gamma_s': 1.00, 'gamma_f': 1.00}
+    # dados_viga = {'d_b (m)': 8/1000, 'd_linha (m)': 3.9/100,'n_b': 3, 'gamma_c': 1.00, 'gamma_s': 1.00, 'b_w (m)': 0.2, 'h (m)': 0.50, 'cob (m)': 0.025, 'ano_construcao': 2000}
+    # dados_corrosao = {'k_c': 30.5, 'k_fc': 1.7, 'a_d': 0, 'k_ad': 0.32, 'k_co2': 15.5, 'k_rh': 1300, 'k_ce': 1.3}
+    none_variable = {'dados_viga': dados_viga, 'time analysis': list(range(0, 101, 10))}
+    print(obj_mestrado_victor(x, none_variable))

@@ -1,3 +1,5 @@
 env_victor/
 __pycache__/
 *.pyc
+*.txt
+!requirements.txt

@@ -2,3 +2,4 @@ parepy-toolbox
 numpy
 pandas
 openpyxl
+ipykernel
