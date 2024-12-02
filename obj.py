@@ -1,5 +1,4 @@
 import numpy as np
-import math as mt
 
 """Arquivo com funções de momento resistente da viga de seção retangular"""
 
@@ -95,7 +94,6 @@ def momento_resistente_secao_sem_cor(a_s: float, b_w: float, h: float, f_ck: flo
     return m_rd
 
 
-
 def obj_mestrado_victor(x, none_variable):
     """Função objetivo que determina o momento resistente em vigas de concreto armado sujeitas a uma função de decaimento de resistência ao longo do tempo.
     """
@@ -126,8 +124,7 @@ def obj_mestrado_victor(x, none_variable):
     if t_i == 0:
         degrad = 1
     else:
-        degrad = mt.exp(-0.00223 * t_i)
-        print(degrad)
+        degrad = np.exp(-0.00223 * t_i)
 
     # Capacity and demand
     m_r = momento_resistente_secao_sem_cor(a_s, b_w, h, f_ck, f_yk, gamma_s, gamma_c)
