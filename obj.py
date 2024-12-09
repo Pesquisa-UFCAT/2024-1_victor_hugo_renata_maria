@@ -90,7 +90,6 @@ def momento_resistente_secao_sem_cor(a_s: float, b_w: float, h: float, f_ck: flo
     d = h * 0.9
     x = ((a_s * f_yk) / (f_cd * b_w * alpha_c * lambdaa))
     m_rd = a_s * f_yk * (d - x * 0.5 * lambdaa)
-    print(x)
     return m_rd
 
 
