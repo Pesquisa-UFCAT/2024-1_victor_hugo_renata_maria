@@ -1,0 +1,28 @@
+name: build-paper
+on:
+  push:
+    branches:
+      - paper
+  workflow_dispatch:
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    name: Paper Draft
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: paper  # 🔹 Garante que pega a branch correta
+
+      - name: Build draft PDF
+        uses: openjournals/openjournals-draft-action@master
+        with:
+          journal: joss
+          paper-path: paper.md  # 🔹 Certifique-se de que `paper.md` está na raiz
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper
+          path: paper.pdf  # 🔹 Caminho onde o PDF será salvo
