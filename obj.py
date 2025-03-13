@@ -123,7 +123,9 @@ def obj_mestrado_victor(x, none_variable):
     if t_i == 0:
         degrad = 1
     else:
-        degrad = np.exp(-0.00223 * t_i)
+        a_d = 1
+        b_d = 0.000055
+        degrad = a_d * (1 - b_d * t_i ** 2)
 
     # Capacity and demand
     m_r = momento_resistente_secao_sem_cor(a_s, b_w, h, f_ck, f_yk, gamma_s, gamma_c)
