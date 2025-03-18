@@ -101,6 +101,7 @@ def obj_mestrado_victor(x, none_variable):
     id_analysis = int(x[-1])
     time_step = none_variable['time analysis']
     t_i = time_step[id_analysis] 
+    print(t_i)
     # t_i is a time value from your list of times entered in the 'none variable' key.
 
     # Random variables
@@ -136,6 +137,38 @@ def obj_mestrado_victor(x, none_variable):
     constraint = e_r * m_r - e_s * m_s
 
     return [m_r * e_r], [m_s * e_s], [constraint]
+
+def nowak_collins_time_example(x, none_variable):
+    """Objective function for the Nowak example (tutorial).
+    """
+    
+    # User must copy and paste this code in time reliability objective function
+    ###########################################
+    id_analysis = int(x[-1])
+    time_step = none_variable['time analysis']
+    t_i = time_step[id_analysis] 
+    # t_i is a time value from your list of times entered in the 'none variable' key.
+    ###########################################
+
+    # Random variables
+    f_y = x[0]
+    p_load = x[1]
+    w_load = x[2]
+    
+    # Degradation criteria
+    if t_i == 0:
+        degrad = 1
+    else:
+        degrad = 1 - (0.2 / t_i) * 1E-2
+
+    # Capacity and demand
+    capacity = 80 * f_y * degrad
+    demand = 54 * p_load + 5832 * w_load
+
+    # State limit function
+    constraint = capacity - demand
+
+    return [capacity], [demand], [constraint]
 
 
 if __name__ == "__main__":

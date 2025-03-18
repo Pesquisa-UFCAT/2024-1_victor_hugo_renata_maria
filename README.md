@@ -1,13 +1,13 @@
 # ic_victor
 
-python -m venv env_victor
+python -m venv env
 
-env_victor\Scripts\activate
+env\Scripts\activate
 
 pip install -r requirements.txt
 
 git pull (atualiza o repositório)
 
-env_victor\Scripts\activate
+env\Scripts\activate
 
 deactivate
