@@ -139,6 +139,13 @@ def obj_mestrado_victor(x, none_variable):
     return [m_r * e_r], [m_s * e_s], [constraint]
 
 
+def verfica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float) -> float
+    """
+    """
+    
+    return temp_limit
+
+
 if __name__ == "__main__":
     x = [5000,5000,5000,5000,2,10,10]
     dados_viga = {'h (m)': 0.50, 'b_w (m)': 0.30, 'm_rd (kN.m)': 0, 'a_s (m2)': 0.15/100*0.30*0.50, 'gamma_c': 1.00, 'gamma_s': 1.00, 'gamma_f': 1.00}
