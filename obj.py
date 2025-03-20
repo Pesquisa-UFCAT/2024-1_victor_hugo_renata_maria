@@ -139,11 +139,76 @@ def obj_mestrado_victor(x, none_variable):
     return [m_r * e_r], [m_s * e_s], [constraint]
 
 
-def verfica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float) -> float
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import CubicSpline
+from scipy.optimize import bisect
+
+def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plotar: bool = True) -> float:
     """
+    Função que verifica e determina o tempo em que a estrutura alcança o valor de pf limite.
+
+    Parâmetros:
+    - pf_list: Lista com valores de pf ao longo do tempo.
+    - temp_list: Lista com os valores de tempo correspondentes.
+    - pf_limit: Valor limite de pf que define a reta horizontal.
+    - plotar: Se True, exibe o gráfico das curvas e do ponto de interseção.
+
+    Retorna:
+    - x_cross: Valor de tempo onde as curvas se cruzam (None se não houver interseção).
     """
-    
-    return temp_limit
+    # Verificando se os dados estão ordenados por tempo
+    sorted_indices = np.argsort(temp_list)
+    X1 = np.array(temp_list)[sorted_indices]
+    Y1 = np.array(pf_list)[sorted_indices]
+
+    # Criando a curva da reta horizontal
+    X2 = X1  # Mantemos os mesmos tempos
+    Y2 = np.full_like(X1, pf_limit)  # Criamos um array constante com o valor de pf_limit
+
+    # Criando interpolação apenas para pf_list
+    f1 = CubicSpline(X1, Y1)
+
+    # Função para encontrar interseção
+    def diff(x):
+        return f1(x) - pf_limit
+
+    # Definição do intervalo de busca
+    x_min, x_max = X1[0], X1[-1]
+    x_values = np.linspace(x_min, x_max, 1000)
+
+    x_cross, y_cross = None, None
+    for i in range(len(x_values) - 1):
+        if diff(x_values[i]) * diff(x_values[i+1]) < 0:
+            x_cross = bisect(diff, x_values[i], x_values[i+1])
+            y_cross = f1(x_cross)
+            print(f"As curvas se cruzam em X = {x_cross:.2f}, Y = {y_cross:.2f}")
+            break
+
+    # Plotando o gráfico
+    if plotar:
+        plt.figure(figsize=(8, 6))
+        plt.plot(X1, Y1, label="Curva pf", color='blue')
+        plt.axhline(y=pf_limit, color='red', linestyle="--", label="pf Limite")  # Linha reta horizontal
+
+        plt.scatter(X1, Y1, color='blue', marker='o', label="Pontos Curva pf")
+
+        if x_cross is not None and y_cross is not None:
+            plt.scatter(x_cross, y_cross, color='black', marker='x', s=100, label="Interseção")
+            plt.text(x_cross, y_cross, f"({x_cross:.2f}, {y_cross:.2f})", fontsize=12, verticalalignment='bottom')
+
+        plt.xlabel("Ano")
+        plt.ylabel("pf")
+        plt.title("Interseção das Curvas")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    return x_cross
+
+temp_limit = verifica_tempo_limite(pf_list, temp_list, pf_limit)
+print("Ponto de interseção:", temp_limit)
+
 
 
 if __name__ == "__main__":
