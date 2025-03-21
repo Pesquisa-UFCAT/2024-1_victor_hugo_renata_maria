@@ -139,11 +139,6 @@ def obj_mestrado_victor(x, none_variable):
     return [m_r * e_r], [m_s * e_s], [constraint]
 
 
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import CubicSpline
-from scipy.optimize import bisect
-
 def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plotar: bool = True) -> float:
     """
     Função que verifica e determina o tempo em que a estrutura alcança o valor de pf limite.
@@ -182,7 +177,8 @@ def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plota
         if diff(x_values[i]) * diff(x_values[i+1]) < 0:
             x_cross = bisect(diff, x_values[i], x_values[i+1])
             y_cross = f1(x_cross)
-            print(f"As curvas se cruzam em X = {x_cross:.2f}, Y = {y_cross:.2f}")
+            #print(f"As curvas se cruzam em X = {x_cross:.2f}, Y = {y_cross:.2f}")
+            print(f"Tempo limite = {x_cross:.2f}")
             break
 
     # Plotando o gráfico
@@ -205,10 +201,6 @@ def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plota
         plt.show()
 
     return x_cross
-
-temp_limit = verifica_tempo_limite(pf_list, temp_list, pf_limit)
-print("Ponto de interseção:", temp_limit)
-
 
 
 if __name__ == "__main__":
