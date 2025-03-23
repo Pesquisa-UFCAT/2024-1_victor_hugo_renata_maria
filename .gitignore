@@ -1,4 +1,4 @@
-env_victor/
+env/
 __pycache__/
 *.pyc
 *.txt

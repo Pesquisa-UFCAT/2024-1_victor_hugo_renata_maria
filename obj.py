@@ -1,6 +1,8 @@
+"""Objective function"""
 import numpy as np
-
-"""Arquivo com funções de momento resistente da viga de seção retangular"""
+import matplotlib.pyplot as plt
+from scipy.interpolate import CubicSpline
+from scipy.optimize import bisect
 
 
 def momento_limite_armadura_simples(b_w: float, h: float, f_ck: float, gamma_c: float = 1.4) -> float:
@@ -101,7 +103,7 @@ def obj_mestrado_victor(x, none_variable):
     id_analysis = int(x[-1])
     time_step = none_variable['time analysis']
     t_i = time_step[id_analysis] 
-    print(t_i)
+    # print(t_i)
     # t_i is a time value from your list of times entered in the 'none variable' key.
 
     # Random variables
@@ -139,7 +141,7 @@ def obj_mestrado_victor(x, none_variable):
     return [m_r * e_r], [m_s * e_s], [constraint]
 
 
-def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plotar: bool = True) -> float:
+def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plotar: bool=False) -> float:
     """
     Função que verifica e determina o tempo em que a estrutura alcança o valor de pf limite.
 
@@ -177,8 +179,8 @@ def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plota
         if diff(x_values[i]) * diff(x_values[i+1]) < 0:
             x_cross = bisect(diff, x_values[i], x_values[i+1])
             y_cross = f1(x_cross)
-            #print(f"As curvas se cruzam em X = {x_cross:.2f}, Y = {y_cross:.2f}")
-            print(f"Tempo limite = {x_cross:.2f}")
+            # print(f"As curvas se cruzam em X = {x_cross:.2f}, Y = {y_cross:.2f}")
+            # print(f"Tempo limite = {x_cross:.2f}")
             break
 
     # Plotando o gráfico
