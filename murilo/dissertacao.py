@@ -297,7 +297,7 @@ if __name__ == "__main__":
 
     # Tempo de iniciação da corrosão
     cob = 2.5/100
-    t_cor_0 = tempo_iniciacao_corrosao(k_c, k_fc, f_ck,
+    t_cor_0, _, _= tempo_iniciacao_corrosao(k_c, k_fc, f_ck,
                                        ad, k_ad, k_co2,
                                        ur,k_rh, k_ce, cob, 2023)
     print('tempo de inicio de corrosao (anos): ', t_cor_0)
@@ -361,7 +361,7 @@ if __name__ == "__main__":
     # Momento resistente com corrosão
     t = 50
     t_i_cor = 32
-    m_rd, c_f, d_novo = momento_resistente_com_corrosao_azad_algohi(d_barras, n_barras, f_ck, f_yk,
+    m_rd, c_f, d_novo, d = momento_resistente_com_corrosao_azad_algohi(d_barras, n_barras, f_ck, f_yk,
                                                                     b_w, d, gamma_c, gamma_s,
                                                                     i_cor20, temp, t, t_i_cor)
     print('diametro d novo: ', d_novo, 'c_f: ', c_f, 'momento resistente com corrosao (kN.m): ', m_rd)
