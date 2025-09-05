@@ -5,34 +5,42 @@ from scipy.interpolate import CubicSpline
 from scipy.optimize import bisect
 
 
-def momento_limite_armadura_simples(b_w: float, h: float, f_ck: float, gamma_c: float = 1.4) -> float:
+def momento_limite_armadura_simples(a_s: float, b_w: float, h: float, f_ck: float, f_yk: float, gamma_c: float = 1.4, gamma_s: float = 1.15) -> float:
     """
     Calcula o momento resistente limite m_rdlim para vigas de concreto armado.
 
-    Args:
-        b_w: largura da seção transversal
-        d: altura útil da seção transversal
-        f_ck: resistência de característica à compressão do concreto
-        gamma_c: coeficiente parcial de segurança para o concreto
+    :param a_s: área de aço longitudinal (m2)
+    :param b_w: largura da seção transversal (m)
+    :param h: altura total da seção transversal (m)
+    :param f_ck: resistência característica à compressão do concreto (kPa)
+    :param f_yk: resistência característica à tração do aço (kPa)
+    :param gamma_c: coeficiente parcial de segurança para o concreto (padrão 1.4)
+    :param gamma_s: coeficiente parcial de segurança para o aço (padrão 1.15)
 
-    Returns:
-        mrdlim: valor do momento resistente limite utilizando armadura simples
+    :return: momento resistente para seções de armadura simples (kN.m)
     """
+
+    # Propriedades dos materiais e da geometria
     f_ck /= 1E3
-    if f_ck >  50:
+    if f_ck > 50:
         lambdaa = 0.80 - ((f_ck - 50) / 400)
         alpha_c = (1.00 - ((f_ck - 50) / 200)) * 0.85
-        beta = 0.35
     else:
         lambdaa = 0.80
         alpha_c = 0.85
-        beta = 0.45
     f_ck *= 1E3
     f_cd = f_ck / gamma_c
+    f_yd = f_yk / gamma_s
+    d = h * 0.90
 
-    d = h * 0.9
 
-    return b_w * d**2 * lambdaa * beta * alpha_c * f_cd * (1 - 0.5 * lambdaa * beta)
+    # Profundidade da linha neutra
+    x = (a_s * f_yd) / (f_cd * b_w * alpha_c * lambdaa)
+
+    # Calculation of the ultimate resisting moment
+    m_rd = a_s * f_yd * (d - 0.5 * lambdaa * x)
+
+    return m_rd
 
 
 def area_aco_flexao_simples( m_sd: float, b_w: float, h: float, f_ck: float, f_ywk: float = 500000, gamma_c: float = 1.4, gamma_s: float = 1.15, impressao: bool = False) -> float:
