@@ -6,37 +6,12 @@ from scipy.interpolate import CubicSpline
 from scipy.optimize import bisect
 
 
-def forca_rcc():
-    """
-    """
-
-    # Propriedades dos materiais e da geometria
-    f_ck /= 1E3
-    if f_ck > 50:
-        aux1 = (f_ck - 50) / 400
-        lambda_c = 0.80 - aux1
-        aux2 = (f_ck - 50) / 200
-        alpha_c = (1.00 - aux2) * 0.85
-        eta_c = (40 / f_ck) ** (1/3)
-    else:
-        lambda_c = 0.80
-        alpha_c = 0.85
-        eta_c = 1.00
-    f_ck *= 1E3
-
-    # Tensão no concreto
-    f_cd = f_ck / gamma_c
-    sigma_cd = alpha_c * eta_c * f_cd
-
-    return sigma_cd * (lambda_c * x * b_w)
-
-
 def f_alpha(beta, args):
     """
     Função que calcula o resíduo da equação de equilíbrio de forças normais em uma seção retangular de concreto armado, dado um valor de beta (x/d).
 
     :param beta: relação x/d da seção
-    :param args: contém os parâmetros de simulação. [0] = f_ck - resistência característica à compressão do concreto (kPa), [1] = f_yk - resistência característica à tração do aço (kPa), [2] = b_w - largura da seção (m), [3] = d - altura útil (m), [4] = a_st - área de aço (m2), [5] = e_s - módulo de elasticidade do aço (kPa), [6] = gamma_c - coeficiente parcial de segurança do concreto, [7] = gamma_s - coeficiente parcial de segurança do aço
+    :param args: contém os parâmetros de simulação. [0] = f_ck - resistência característica à compressão do concreto (kPa), [1] = f_yk - resistência característica à tração do aço (kPa), [2] = b_w - largura da seção (m), [3] = d - altura útil (m), [4] = a_st - área de aço tracionado (m2), [5] = e_s - módulo de elasticidade do aço (kPa), [6] = gamma_c - coeficiente parcial de segurança do concreto, [7] = gamma_s - coeficiente parcial de segurança do aço
 
     :return: resíduo da equação de equilíbrio de forças normais
     """
@@ -94,13 +69,14 @@ def f_alpha(beta, args):
     return r_cc - r_st
 
 
-def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, f_ck: float, f_yk: float, e_s: float, gamma_c: float = 1.4, gamma_s: float = 1.15) -> float:
+def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, relacao_h_d: float, f_ck: float, f_yk: float, e_s: float, gamma_c: float = 1.4, gamma_s: float = 1.15) -> float:
     """
     Calcula o momento resistente limite m_rdlim para vigas de concreto armado de seção retangular com armadura simples.
 
-    :param a_st: área de aço (m2)
+    :param a_st: área de aço tracionado (m2)
     :param b_w: largura da seção (m)
     :param h: altura total da seção (m)
+    :param relacao_h_d: relação d/h da seção
     :param f_ck: resistência característica à compressão do concreto (kPa)
     :param f_yk: resistência característica à tração do aço (kPa)
     :param e_s: módulo de elasticidade do aço (kPa)
@@ -113,14 +89,17 @@ def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, f_ck: flo
     # Propriedades dos materiais e da geometria
     f_ck /= 1E3
     if f_ck > 50:
-        lambdaa = 0.80 - ((f_ck - 50) / 400)
-        alpha_c = (1.00 - ((f_ck - 50) / 200)) * 0.85
+        aux1 = (f_ck - 50) / 400
+        lambda_c = 0.80 - aux1
+        aux2 = (f_ck - 50) / 200
+        alpha_c = (1.00 - aux2) * 0.85
+        eta_c = (40 / f_ck) ** (1/3)
     else:
-        lambdaa = 0.80
+        lambda_c = 0.80
         alpha_c = 0.85
+        eta_c = 1.00
     f_ck *= 1E3
-    f_yd = f_yk / gamma_s
-    d = h * 0.90
+    d = h * relacao_h_d
 
     # Encontrar equilíbrio de forças normais
     args = (f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s)
@@ -130,8 +109,12 @@ def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, f_ck: flo
     x = resultado.root * d
 
     # Momento resistente
-    r_cc = forca_rcc()
-    m_rd = r_cc * (d - 0.5 * lambdaa * x)
+    f_cd = f_ck / gamma_c
+    sigma_cd = alpha_c * eta_c * f_cd
+
+    # Força no concreto
+    r_cc = sigma_cd * (lambda_c * x * b_w)
+    m_rd = r_cc * (d - 0.5 * lambda_c * x)
 
     return m_rd
 
