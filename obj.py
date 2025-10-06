@@ -6,14 +6,14 @@ from scipy.interpolate import CubicSpline
 from scipy.optimize import bisect
 
 
-def f_alpha(beta, args):
+def f_alpha(beta: float, args: tuple) -> float:
     """
     Função que calcula o resíduo da equação de equilíbrio de forças normais em uma seção retangular de concreto armado, dado um valor de beta (x/d).
 
-    :param beta: relação x/d da seção
-    :param args: contém os parâmetros de simulação. [0] = f_ck - resistência característica à compressão do concreto (kPa), [1] = f_yk - resistência característica à tração do aço (kPa), [2] = b_w - largura da seção (m), [3] = d - altura útil (m), [4] = a_st - área de aço tracionado (m2), [5] = e_s - módulo de elasticidade do aço (kPa), [6] = gamma_c - coeficiente parcial de segurança do concreto, [7] = gamma_s - coeficiente parcial de segurança do aço
+    :param beta: Relação x/d da seção
+    :param args: Contém os parâmetros de simulação. [0] = f_ck - resistência característica à compressão do concreto (kPa), [1] = f_yk - resistência característica à tração do aço (kPa), [2] = b_w - largura da seção (m), [3] = d - altura útil (m), [4] = a_st - área de aço tracionado (m2), [5] = e_s - módulo de elasticidade do aço (kPa), [6] = gamma_c - coeficiente parcial de segurança do concreto, [7] = gamma_s - coeficiente parcial de segurança do aço
 
-    :return: resíduo da equação de equilíbrio de forças normais
+    :return: Resíduo da equação de equilíbrio de forças normais
     """
     
     f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s = args
@@ -375,9 +375,9 @@ def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, relacao_h
 
 def indice_corrosao_(i_corr_20, temperatura):
     """
-    Determina o índice de corrosão para processos de corrosão em armaduras de aço considerando a carbonatação do concreto.
+    Determina o índice de corrosão para processos de corrosão em armaduras de aço considerando a carbonatação do concreto. Título e DOI
 
-    Args:
+    :param 
         i_corr_20 (Float): Índice de corrosão a 20°C μA/cm²
         temperatura (Float): Temperatura do ambiente (°C)
     
@@ -399,7 +399,7 @@ def indice_corrosao_(i_corr_20, temperatura):
 
 def momento_resistente_com_corrosao_azad_algohi(d_0, n_barras, f_ck, f_yk, e_s, b_w, h, relacao_d_h, i_corr_20, temperatura, tempo_decorrido, tempo_iniciacao, gamma_c=1.4, gamma_s=1.15):
     """
-    Determina o momento resistente de uma viga de concreto armado sem corrosão.
+    Determina o momento resistente de uma viga de concreto armado sem corrosão. ######
 
     Args:
         d_0 (Float): Diâmetro original da barra de aço (m)
@@ -413,7 +413,7 @@ def momento_resistente_com_corrosao_azad_algohi(d_0, n_barras, f_ck, f_yk, e_s, 
         tempo_decorrido (Float): Tempo decorrido (anos)
         tempo_iniciacao (Float): Tempo de iniciação da corrosão (anos)
     
-    Returns:
+    return 
         m_rd (Float): Momento resistente da viga (kN.m)
         c_f (Float): Coeficiente de redução da aderência
         d_corroido (Float): Diâmetro corroido da barra de aço (m)
@@ -455,3 +455,7 @@ def momento_resistente_com_corrosao_azad_algohi(d_0, n_barras, f_ck, f_yk, e_s, 
 
 if __name__ == "__main__":
     pass
+    # i_corr_20 = 0.5
+    # temperatura = 20
+    # icor = indice_corrosao_(i_corr_20, temperatura)
+    # print(icor)
