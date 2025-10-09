@@ -8,26 +8,25 @@ from typing import Any, Dict, List, Tuple, Optional
 
 
 
-def f_alpha(beta: float, args: tuple[float, float, float, float, float, float, float, float]) -> float:
+def f_alpha(beta: float, args: list) -> float:
     """
-    Calcula o resíduo da equação de equilíbrio de forças normais em uma seção retangular de concreto armado,
-    dado um valor de beta (x/d).
+    Calcula o resíduo da equação de equilíbrio de forças normais em uma seção retangular
+    de concreto armado, dado um valor de beta (x/d).
 
-    :param beta: Relação x/d da seção (adimensional)
-    :param args: Tupla contendo os parâmetros da simulação:
-        [0] f_ck - resistência característica à compressão do concreto (kPa)
-        [1] f_yk - resistência característica à tração do aço (kPa)
-        [2] b_w - largura da seção (m)
-        [3] d - altura útil (m)
-        [4] a_st - área de aço tracionado (m²)
-        [5] e_s - módulo de elasticidade do aço (kPa)
-        [6] gamma_c - coeficiente parcial de segurança do concreto
-        [7] gamma_s - coeficiente parcial de segurança do aço
+    Referência: [fonte a ser inserida]
 
-    :return: Resíduo da equação de equilíbrio de forças normais (kN)
+    :param beta: relação x/d da seção
+    :param args: lista de parâmetros [f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s]
+                 f_ck: resistência característica à compressão do concreto (kPa)
+                 f_yk: resistência característica à tração do aço (kPa)
+                 b_w: largura da seção (m)
+                 d: altura útil da seção (m)
+                 a_st: área de aço tracionado (m²)
+                 e_s: módulo de elasticidade do aço (kPa)
+                 gamma_c: coeficiente parcial de segurança do concreto
+                 gamma_s: coeficiente parcial de segurança do aço
 
-    :reference: Modelo genérico de equilíbrio de seções retangulares de concreto armado.
-                (Referência a ser definida conforme fonte bibliográfica utilizada no trabalho.)
+    :return: resíduo da equação de equilíbrio de forças normais
     """
     f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s = args
 
@@ -95,22 +94,22 @@ def momento_limite_armadura_simples(
     gamma_s: float = 1.15
 ) -> float:
     """
-    Calcula o momento resistente limite (m_rdlim) para vigas de concreto armado de seção retangular com armadura simples.
+    Calcula o momento resistente limite (m_rdlim) para vigas de concreto armado de
+    seção retangular com armadura simples.
 
-    :param a_st: Área de aço tracionado (m²)
-    :param b_w: Largura da seção transversal (m)
-    :param h: Altura total da seção (m)
-    :param relacao_h_d: Relação d/h da seção (adimensional)
-    :param f_ck: Resistência característica à compressão do concreto (kPa)
-    :param f_yk: Resistência característica à tração do aço (kPa)
-    :param e_s: Módulo de elasticidade do aço (kPa)
-    :param gamma_c: Coeficiente parcial de segurança do concreto (valor padrão = 1.4)
-    :param gamma_s: Coeficiente parcial de segurança do aço (valor padrão = 1.15)
+    Referência: NBR 6118 (2014)
 
-    :return: Momento resistente limite da seção (kN·m)
+    :param a_st: área de aço tracionado (m²)
+    :param b_w: largura da seção (m)
+    :param h: altura total da seção (m)
+    :param relacao_h_d: relação d/h da seção
+    :param f_ck: resistência característica à compressão do concreto (kPa)
+    :param f_yk: resistência característica à tração do aço (kPa)
+    :param e_s: módulo de elasticidade do aço (kPa)
+    :param gamma_c: coeficiente parcial de segurança do concreto
+    :param gamma_s: coeficiente parcial de segurança do aço
 
-    :reference: Associação Brasileira de Normas Técnicas (ABNT). NBR 6118: Projeto de Estruturas de Concreto — Procedimento.
-                Rio de Janeiro, 2014.
+    :return: momento resistente limite (kN·m)
     """
 
     # Propriedades dos materiais e da geometria
@@ -148,35 +147,26 @@ def momento_limite_armadura_simples(
 
 
 def profundidade_carbonatacao_possan(
-    k_c: float,
-    k_fc: float,
-    f_ck: float,
-    t: float,
-    ad: float,
-    k_ad: float,
-    co_2: float,
-    k_co_2: float,
-    ur: float,
-    k_rh: float,
-    k_ce: float
+    k_c: float, k_fc: float, f_ck: float, t: float, ad: float, k_ad: float,
+    co_2: float, k_co_2: float, ur: float, k_rh: float, k_ce: float
 ) -> float:
     """
-    Determina a profundidade de carbonatação do concreto de acordo com o modelo de Possan et al. (2016).
-    DOI: 10.1007/s41024-016-0010-9
+    Determina a profundidade de carbonatação do concreto de acordo com o modelo
+    de Possan et al. (2016).
 
     :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
     :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
-    :param f_ck: Resistência característica à compressão do concreto (MPa)
-    :param t: Idade da estrutura (anos)
-    :param ad: Teor de material pozolânico no concreto (fração da massa de cimento, em %)
-    :param k_ad: Fator relacionado às adições pozolânicas do concreto (Tabela 3a)
-    :param co_2: Concentração de dióxido de carbono no ambiente (%)
-    :param k_co_2: Fator relacionado à concentração de CO₂ do ambiente (Tabela 3a)
-    :param ur: Umidade relativa média (adimensional, em fração de 0 a 1)
-    :param k_rh: Fator relacionado à umidade relativa (Tabela 3a)
-    :param k_ce: Fator relacionado à exposição da estrutura (Tabela 3b)
+    :param f_ck: resistência característica do concreto (MPa)
+    :param t: idade da estrutura (anos)
+    :param ad: material pozolânico no concreto (% relativo à massa de cimento)
+    :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
+    :param co_2: concentração de CO2 atmosférico (%)
+    :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
+    :param ur: umidade relativa média (% * 0.01)
+    :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
+    :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
 
-    :return: Profundidade de carbonatação do concreto (m)
+    :return: profundidade de carbonatação do concreto (m)
     """
 
     # Fator relacionado ao tipo de cimento e à resistência do concreto
@@ -223,40 +213,29 @@ def rcp_co2(ano: int) -> float:
 
 
 def tempo_iniciacao_corrosao(
-    k_c: float,
-    k_fc: float,
-    f_ck: float,
-    ad: float,
-    k_ad: float,
-    k_co_2: float,
-    ur: float,
-    k_rh: float,
-    k_ce: float,
-    cob: float,
-    ano_instalacao_estrutura: int = 2000
+    k_c: float, k_fc: float, f_ck: float, ad: float, k_ad: float, k_co_2: float,
+    ur: float, k_rh: float, k_ce: float, cob: float, ano_instalacao_estrutura: int = 2000
 ) -> tuple[float, float, float]:
     """
-    Determina o tempo de iniciação da corrosão das armaduras em função do modelo de Possan et al. (2016).
+    Determina o tempo de iniciação da corrosão das armaduras em função do modelo
+    de Possan et al. (2016).
 
     :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
     :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
-    :param f_ck: Resistência característica à compressão do concreto (kPa)
-    :param ad: Teor de material pozolânico no concreto (fração da massa de cimento, em %)
-    :param k_ad: Fator relacionado às adições pozolânicas do concreto (Tabela 3a)
-    :param k_co_2: Fator relacionado à concentração de CO₂ do ambiente (Tabela 3a)
-    :param ur: Umidade relativa média (fração de 0 a 1)
-    :param k_rh: Fator relacionado à umidade relativa (Tabela 3a)
-    :param k_ce: Fator relacionado à exposição da estrutura (Tabela 3b)
-    :param cob: Cobrimento da armadura (m)
-    :param ano_instalacao_estrutura: Ano de instalação da estrutura (anos), padrão = 2000
+    :param f_ck: resistência característica do concreto (kPa)
+    :param ad: material pozolânico no concreto (%)
+    :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
+    :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
+    :param ur: umidade relativa média (%)
+    :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
+    :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
+    :param cob: cobrimento da armadura (m)
+    :param ano_instalacao_estrutura: ano de instalação da estrutura
 
-    :return: Tupla contendo:
-        inicio_corrosao: Tempo de iniciação da corrosão das armaduras (anos)
-        y_carb: Profundidade de carbonatação do concreto (m)
-        co_2: Concentração de CO₂ atmosférico (%)
-
-    :reference: Possan, R. et al. (2016). “Carbonatation-induced corrosion in reinforced concrete structures.” 
-                DOI: 10.1007/s41024-016-0010-9
+    :return:
+        inicio_corrosao: tempo de iniciação da corrosão (anos)
+        y_carb: profundidade de carbonatação (m)
+        co_2: concentração de CO2 (%)
     """
 
     # Inicializando o ano da estrutura
@@ -282,32 +261,23 @@ def tempo_iniciacao_corrosao(
 
 
 def area_aco_flexao_simples(
-    m_sd: float,
-    b_w: float,
-    h: float,
-    f_ck: float,
-    f_ywk: float = 500000,
-    gamma_c: float = 1.4,
-    gamma_s: float = 1.15,
-    impressao: bool = False
+    m_sd: float, b_w: float, h: float, f_ck: float, f_ywk: float = 500000,
+    gamma_c: float = 1.4, gamma_s: float = 1.15, impressao: bool = False
 ) -> float:
     """
-    Calcula a área de aço necessária para resistir aos esforços de flexão em vigas de concreto armado
-    com armadura simples, conforme a NBR 6118 (2014).
+    Calcula a área de aço necessária para resistir aos esforços de flexão em
+    uma viga de concreto armado de acordo com a NBR 6118 (2014).
 
-    :param m_sd: Momento de cálculo da seção (kN·m)
-    :param b_w: Largura da seção transversal (m)
-    :param h: Altura total da seção (m)
-    :param f_ck: Resistência característica à compressão do concreto (kPa)
-    :param f_ywk: Resistência característica à tração do aço (kPa), padrão = 500000 kPa
-    :param gamma_c: Coeficiente parcial de segurança do concreto, padrão = 1.4
-    :param gamma_s: Coeficiente parcial de segurança do aço, padrão = 1.15
-    :param impressao: Se True, exibe os resultados intermediários no console (bool)
+    :param m_sd: momento solicitante (kN·m)
+    :param b_w: largura da seção (m)
+    :param h: altura da seção (m)
+    :param f_ck: resistência característica à compressão do concreto (kPa)
+    :param f_ywk: resistência característica à tração do aço (kPa)
+    :param gamma_c: coeficiente parcial de segurança do concreto
+    :param gamma_s: coeficiente parcial de segurança do aço
+    :param impressao: se True, imprime informações intermediárias
 
-    :return: Área de aço necessária para flexão (m²)
-
-    :reference: Associação Brasileira de Normas Técnicas (ABNT). NBR 6118: Projeto de Estruturas de Concreto — Procedimento.
-                Rio de Janeiro, 2023.
+    :return: área de aço necessária (m²)
     """
 
     # Converte f_ck de kPa para MPa para o cálculo intermediário
