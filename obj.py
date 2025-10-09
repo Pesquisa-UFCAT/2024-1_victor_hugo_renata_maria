@@ -13,7 +13,7 @@ def f_alpha(beta: float, args: list) -> float:
     Calcula o resíduo da equação de equilíbrio de forças normais em uma seção retangular
     de concreto armado, dado um valor de beta (x/d).
 
-    Referência: [fonte a ser inserida]
+    Referência: NBR 6118 (2023)
 
     :param beta: relação x/d da seção
     :param args: lista de parâmetros [f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s]
@@ -97,7 +97,7 @@ def momento_limite_armadura_simples(
     Calcula o momento resistente limite (m_rdlim) para vigas de concreto armado de
     seção retangular com armadura simples.
 
-    Referência: NBR 6118 (2014)
+    Referência: NBR 6118 (2023)
 
     :param a_st: área de aço tracionado (m²)
     :param b_w: largura da seção (m)
@@ -197,12 +197,13 @@ def rcp_co2(ano: int) -> float:
     Determina a concentração de dióxido de carbono (CO₂) atmosférico em função do ano, 
     conforme o modelo de cenário representativo de concentração (RCP).
 
-    :param ano: Ano de referência (adimensional)
-    :return: Concentração de CO₂ atmosférico correspondente ao ano indicado (%)
-
     :reference: Intergovernmental Panel on Climate Change (IPCC). 
                 Climate Change 2013: The Physical Science Basis. 
                 Cambridge University Press, 2013. (Modelos RCP)
+    
+    :param ano: Ano de referência (adimensional)
+
+    :return: Concentração de CO₂ atmosférico correspondente ao ano indicado (%)
     """
 
     i_aux = ano - 2000
@@ -266,7 +267,7 @@ def area_aco_flexao_simples(
 ) -> float:
     """
     Calcula a área de aço necessária para resistir aos esforços de flexão em
-    uma viga de concreto armado de acordo com a NBR 6118 (2014).
+    uma viga de concreto armado de acordo com a NBR 6118 (2023).
 
     :param m_sd: momento solicitante (kN·m)
     :param b_w: largura da seção (m)
@@ -416,14 +417,14 @@ def verifica_tempo_limite(
     """
     Verifica e determina o tempo em que a estrutura atinge o valor limite de probabilidade de falha (pf).
 
+    :reference: Adaptado para análise de confiabilidade de estruturas, baseado em metodologia de confiabilidade estrutural.
+
     :param pf_list: Lista de valores de probabilidade de falha ao longo do tempo (adimensional)
     :param temp_list: Lista de tempos correspondentes (anos)
     :param pf_limit: Valor limite de pf que define a reta horizontal para comparação
     :param plotar: Se True, exibe o gráfico das curvas de pf ao longo do tempo e a interseção com pf_limit
 
     :return: Tempo (anos) em que pf atinge o valor limite. Retorna None se não houver interseção.
-
-    :reference: Adaptado para análise de confiabilidade de estruturas, baseado em metodologia de confiabilidade estrutural.
     """
 
     # Verificando se os dados estão ordenados por tempo
@@ -481,14 +482,12 @@ def verifica_tempo_limite(
 def indice_corrosao_(i_corr_20: float, temperatura: float) -> float:
     """
     Determina o índice de corrosão das armaduras de aço em concreto armado
-    considerando a influência da temperatura ambiente sobre a taxa de corrosão.
+    considerando a influência da temperatura ambiente sobre a taxa de corrosão, de acordo com Peng and Stewart (2016).
 
     :param i_corr_20: Índice de corrosão a 20°C (μA/cm²)
     :param temperatura: Temperatura do ambiente (°C)
 
     :return: Índice de corrosão ajustado para a temperatura T (μA/cm²)
-
-    :reference: Adaptado de modelos de corrosão de armaduras em concreto carbonatado.
     """
 
     # Correção para temperaturas diferentes de 20°C
@@ -524,6 +523,8 @@ def momento_resistente_com_corrosao_azad_algohi(
     Determina o momento resistente de uma viga de concreto armado considerando
     os efeitos da corrosão nas armaduras de aço.
 
+    :reference: Al-Gohi, B. H. A. (2008), “Time-dependent modeling of loss of flexural strength of corroding RC beams”.
+
     :param d_0: Diâmetro original da barra de aço (m)
     :param n_barras: Número de barras de aço na seção
     :param f_ck: Resistência característica do concreto (kPa)
@@ -544,8 +545,6 @@ def momento_resistente_com_corrosao_azad_algohi(
         c_f: Coeficiente de redução da aderência devido à corrosão (adimensional)
         d_corroido: Diâmetro corroido da barra de aço (m)
         i_corr: Índice de corrosão ajustado para a temperatura T (μA/cm²)
-
-    :reference: Adaptado de Azad & Algohi (ano), estudo sobre efeitos da corrosão em vigas de concreto armado.
     """
 
     # Índice de corrosão
