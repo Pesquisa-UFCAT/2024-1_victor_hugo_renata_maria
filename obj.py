@@ -376,7 +376,7 @@ def obj_mestrado_victor(x: List[float], none_variable: Dict[str, Any]) -> Tuple[
     e_s = x[5]  # Fator de amplificação do momento solicitante (adimensional)
 
     # Variáveis fixas da viga
-    dados_viga = none_variable['dados_viga']
+    # dados_viga = none_variable['dados_viga']
     gamma_c = dados_viga['gamma_c']
     gamma_s = dados_viga['gamma_s']
     gamma_f = dados_viga['gamma_f']
