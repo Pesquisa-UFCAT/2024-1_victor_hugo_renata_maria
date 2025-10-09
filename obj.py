@@ -479,6 +479,7 @@ def verifica_tempo_limite(
 
 
 
+
 def indice_corrosao_(i_corr_20: float, temperatura: float) -> float:
     """
     Determina o índice de corrosão das armaduras de aço em concreto armado
