@@ -81,18 +81,17 @@ def f_alpha(beta: float, args: list) -> float:
     return r_cc - r_st
 
 
-
 def momento_limite_armadura_simples(
-    a_st: float,
-    b_w: float,
-    h: float,
-    relacao_h_d: float,
-    f_ck: float,
-    f_yk: float,
-    e_s: float,
-    gamma_c: float = 1.4,
-    gamma_s: float = 1.15
-) -> float:
+                                    a_st: float,
+                                    b_w: float,
+                                    h: float,
+                                    relacao_h_d: float,
+                                    f_ck: float,
+                                    f_yk: float,
+                                    e_s: float,
+                                    gamma_c: float = 1.4,
+                                    gamma_s: float = 1.15
+                                ) -> float:
     """
     Calcula o momento resistente limite (m_rdlim) para vigas de concreto armado de
     seção retangular com armadura simples.
@@ -145,119 +144,118 @@ def momento_limite_armadura_simples(
     return m_rd
 
 
+# def profundidade_carbonatacao_possan(
+#     k_c: float, k_fc: float, f_ck: float, t: float, ad: float, k_ad: float,
+#     co_2: float, k_co_2: float, ur: float, k_rh: float, k_ce: float
+# ) -> float:
+#     """
+#     Determina a profundidade de carbonatação do concreto de acordo com o modelo
+#     de Possan et al. (2016).
 
-def profundidade_carbonatacao_possan(
-    k_c: float, k_fc: float, f_ck: float, t: float, ad: float, k_ad: float,
-    co_2: float, k_co_2: float, ur: float, k_rh: float, k_ce: float
-) -> float:
-    """
-    Determina a profundidade de carbonatação do concreto de acordo com o modelo
-    de Possan et al. (2016).
+#     :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
+#     :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
+#     :param f_ck: resistência característica do concreto (kPa)
+#     :param t: idade da estrutura (anos)
+#     :param ad: material pozolânico no concreto (% relativo à massa de cimento)
+#     :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
+#     :param co_2: concentração de CO2 atmosférico (%)
+#     :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
+#     :param ur: umidade relativa média (% * 0.01)
+#     :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
+#     :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
 
-    :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
-    :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
-    :param f_ck: resistência característica do concreto (kPa)
-    :param t: idade da estrutura (anos)
-    :param ad: material pozolânico no concreto (% relativo à massa de cimento)
-    :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
-    :param co_2: concentração de CO2 atmosférico (%)
-    :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
-    :param ur: umidade relativa média (% * 0.01)
-    :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
-    :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
+#     :return: profundidade de carbonatação do concreto (m)
+#     """
 
-    :return: profundidade de carbonatação do concreto (m)
-    """
+#     # Fator relacionado ao tipo de cimento e à resistência do concreto
+#     aux_1 = k_c * (20 / f_ck) ** k_fc  
 
-    # Fator relacionado ao tipo de cimento e à resistência do concreto
-    aux_1 = k_c * (20 / f_ck) ** k_fc  
+#     # Fator relacionado à idade da estrutura (considerando t em anos)
+#     aux_2 = (t / 20) ** (1 / 2)  
 
-    # Fator relacionado à idade da estrutura (considerando t em anos)
-    aux_2 = (t / 20) ** (1 / 2)  
+#     # Fatores relacionados às adições pozolânicas (ad) e resistência do concreto
+#     aux_31 = (k_ad * ad ** (3 / 2)) / (40 + f_ck)  
 
-    # Fatores relacionados às adições pozolânicas (ad) e resistência do concreto
-    aux_31 = (k_ad * ad ** (3 / 2)) / (40 + f_ck)  
+#     # Fator relacionado à concentração de CO₂ no ambiente e resistência do concreto
+#     aux_32 = (k_co_2 * co_2 ** (1 / 2)) / (60 + f_ck)  
 
-    # Fator relacionado à concentração de CO₂ no ambiente e resistência do concreto
-    aux_32 = (k_co_2 * co_2 ** (1 / 2)) / (60 + f_ck)  
+#     # Fator relacionado à umidade relativa e resistência do concreto
+#     aux_33 = (k_rh * (ur - 0.58) ** 2) / (100 + f_ck)  
 
-    # Fator relacionado à umidade relativa e resistência do concreto
-    aux_33 = (k_rh * (ur - 0.58) ** 2) / (100 + f_ck)  
+#     # Profundidade de carbonatação do concreto (em mm), ajustando pelos fatores de exposição
+#     y_carb = aux_1 * aux_2 * np.exp(aux_31 + aux_32 - aux_33) * k_ce  
 
-    # Profundidade de carbonatação do concreto (em mm), ajustando pelos fatores de exposição
-    y_carb = aux_1 * aux_2 * np.exp(aux_31 + aux_32 - aux_33) * k_ce  
-
-    # Converte profundidade de mm para metros e retorna
-    return y_carb / 1000
-
+#     # Converte profundidade de mm para metros e retorna
+#     return y_carb / 1000
 
 
-def rcp_co2(ano: int) -> float:
-    """
-    Determina a concentração de dióxido de carbono (CO₂) atmosférico em função do ano, 
-    conforme o modelo de cenário representativo de concentração (RCP).
 
-    :reference: Intergovernmental Panel on Climate Change (IPCC). 
-                Climate Change 2013: The Physical Science Basis. 
-                Cambridge University Press, 2013. (Modelos RCP)
+# def rcp_co2(ano: int) -> float:
+#     """
+#     Determina a concentração de dióxido de carbono (CO₂) atmosférico em função do ano, 
+#     conforme o modelo de cenário representativo de concentração (RCP).
+
+#     :reference: Intergovernmental Panel on Climate Change (IPCC). 
+#                 Climate Change 2013: The Physical Science Basis. 
+#                 Cambridge University Press, 2013. (Modelos RCP)
     
-    :param ano: Ano de referência (adimensional)
+#     :param ano: Ano de referência (adimensional)
 
-    :return: Concentração de CO₂ atmosférico correspondente ao ano indicado (%)
-    """
+#     :return: Concentração de CO₂ atmosférico correspondente ao ano indicado (%)
+#     """
 
-    i_aux = ano - 2000
-    co_2_percentual = (0.07278*i_aux**2 + 1.86395*i_aux + 340.93383) / (1E6/1E2)
+#     i_aux = ano - 2000
+#     co_2_percentual = (0.07278*i_aux**2 + 1.86395*i_aux + 340.93383) / (1E6/1E2)
 
-    return co_2_percentual
+#     return co_2_percentual
 
 
 
-def tempo_iniciacao_corrosao(
-    k_c: float, k_fc: float, f_ck: float, ad: float, k_ad: float, k_co_2: float,
-    ur: float, k_rh: float, k_ce: float, cob: float, ano_instalacao_estrutura: int = 2000
-) -> tuple[float, float, float]:
-    """
-    Determina o tempo de iniciação da corrosão das armaduras em função do modelo
-    de Possan et al. (2016).
+# def tempo_iniciacao_corrosao(
+#     k_c: float, k_fc: float, f_ck: float, ad: float, k_ad: float, k_co_2: float,
+#     ur: float, k_rh: float, k_ce: float, cob: float, ano_instalacao_estrutura: int = 2000
+# ) -> tuple[float, float, float]:
+#     """
+#     Determina o tempo de iniciação da corrosão das armaduras em função do modelo
+#     de Possan et al. (2016).
 
-    :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
-    :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
-    :param f_ck: resistência característica do concreto (kPa)
-    :param ad: material pozolânico no concreto (%)
-    :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
-    :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
-    :param ur: umidade relativa média (%)
-    :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
-    :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
-    :param cob: cobrimento da armadura (m)
-    :param ano_instalacao_estrutura: ano de instalação da estrutura
+#     :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
+#     :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
+#     :param f_ck: resistência característica do concreto (kPa)
+#     :param ad: material pozolânico no concreto (%)
+#     :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
+#     :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
+#     :param ur: umidade relativa média (%)
+#     :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
+#     :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
+#     :param cob: cobrimento da armadura (m)
+#     :param ano_instalacao_estrutura: ano de instalação da estrutura
 
-    :return:
-        inicio_corrosao: tempo de iniciação da corrosão (anos)
-        y_carb: profundidade de carbonatação (m)
-        co_2: concentração de CO2 (%)
-    """
+#     :return:
+#         inicio_corrosao: tempo de iniciação da corrosão (anos)
+#         y_carb: profundidade de carbonatação (m)
+#         co_2: concentração de CO2 (%)
+#     """
 
-    # Inicializando o ano da estrutura
-    ano = ano_instalacao_estrutura
+#     # Inicializando o ano da estrutura
+#     ano = ano_instalacao_estrutura
 
-    # Procurando o tempo de iniciação para a amostra em questão (máximo da busca = 150 anos)
-    t_max = 150
-    for i in range(0, t_max):
-        # Equação interpoladora RCP 8.5
-        co_2 = rcp_co2(ano)
-        y_carb = profundidade_carbonatacao_possan(k_c, k_fc,  f_ck/1000, i,
-                                                    ad, k_ad, co_2, k_co_2,
-                                                    ur*0.01, k_rh, k_ce)
-        if y_carb >= cob:
-            ti = i
-            break
-        else:
-            ti = t_max
-        ano += 1
+#     # Procurando o tempo de iniciação para a amostra em questão (máximo da busca = 150 anos)
+#     t_max = 150
+#     for i in range(0, t_max):
+#         # Equação interpoladora RCP 8.5
+#         co_2 = rcp_co2(ano)
+#         y_carb = profundidade_carbonatacao_possan(k_c, k_fc,  f_ck/1000, i,
+#                                                     ad, k_ad, co_2, k_co_2,
+#                                                     ur*0.01, k_rh, k_ce)
+#         if y_carb >= cob:
+#             ti = i
+#             break
+#         else:
+#             ti = t_max
+#         ano += 1
         
-    return ti, y_carb, co_2
+#     return ti, y_carb, co_2
 
 
 
@@ -332,78 +330,78 @@ def area_aco_flexao_simples(
 
 
 
-def obj_mestrado_victor(x: List[float], none_variable: Dict[str, Any]) -> Tuple[List[float], List[float], List[float]]:
-    """
-    Função objetivo que determina o momento resistente de vigas de concreto armado sujeitas
-    a uma função de decaimento de resistência ao longo do tempo.
+# def obj_mestrado_victor(x: List[float], none_variable: Dict[str, Any]) -> Tuple[List[float], List[float], List[float]]:
+#     """
+#     Função objetivo que determina o momento resistente de vigas de concreto armado sujeitas
+#     a uma função de decaimento de resistência ao longo do tempo.
 
-    :param x: Lista de variáveis aleatórias e de controle, contendo:
-        x[0] = M_g: Momento devido ao carregamento permanente (kN·m)
-        x[1] = M_q: Momento devido ao carregamento acidental (kN·m)
-        x[2] = f_ck: Resistência característica do concreto (kPa)
-        x[3] = f_yk: Resistência característica do aço (kPa)
-        x[4] = e_r: Fator de amplificação do momento resistente (adimensional)
-        x[5] = e_s: Fator de amplificação da demanda (adimensional)
-        x[-1] = id_analysis: Índice de passo de tempo para análise de confiabilidade
+#     :param x: Lista de variáveis aleatórias e de controle, contendo:
+#         x[0] = M_g: Momento devido ao carregamento permanente (kN·m)
+#         x[1] = M_q: Momento devido ao carregamento acidental (kN·m)
+#         x[2] = f_ck: Resistência característica do concreto (kPa)
+#         x[3] = f_yk: Resistência característica do aço (kPa)
+#         x[4] = e_r: Fator de amplificação do momento resistente (adimensional)
+#         x[5] = e_s: Fator de amplificação da demanda (adimensional)
+#         x[-1] = id_analysis: Índice de passo de tempo para análise de confiabilidade
 
-    :param none_variable: Dicionário contendo parâmetros fixos e listas de tempo, com chaves:
-        'time analysis': lista de tempos (anos)
-        'dados_viga': dicionário com dados da viga:
-            - gamma_c: coeficiente parcial de segurança do concreto
-            - gamma_s: coeficiente parcial de segurança do aço
-            - gamma_f: coeficiente de combinação de ações
-            - b_w (m): largura da seção transversal
-            - h (m): altura da seção
-            - a_s (m²): área de aço da seção
+#     :param none_variable: Dicionário contendo parâmetros fixos e listas de tempo, com chaves:
+#         'time analysis': lista de tempos (anos)
+#         'dados_viga': dicionário com dados da viga:
+#             - gamma_c: coeficiente parcial de segurança do concreto
+#             - gamma_s: coeficiente parcial de segurança do aço
+#             - gamma_f: coeficiente de combinação de ações
+#             - b_w (m): largura da seção transversal
+#             - h (m): altura da seção
+#             - a_s (m²): área de aço da seção
 
-    :return: Tupla de listas:
-        [m_r * e_r]: Momento resistente amplificado (kN·m)
-        [m_s * e_s]: Momento solicitante amplificado (kN·m)
-        [constraint]: Função de estado limite (kN·m)
-    """
+#     :return: Tupla de listas:
+#         [m_r * e_r]: Momento resistente amplificado (kN·m)
+#         [m_s * e_s]: Momento solicitante amplificado (kN·m)
+#         [constraint]: Função de estado limite (kN·m)
+#     """
     
-    # Seleciona o índice do passo de tempo e o valor correspondente
-    id_analysis = int(x[-1])
-    time_step = none_variable['time analysis']
-    t_i = time_step[id_analysis]  # Tempo de análise atual (anos)
+#     # Seleciona o índice do passo de tempo e o valor correspondente
+#     id_analysis = int(x[-1])
+#     time_step = none_variable['time analysis']
+#     t_i = time_step[id_analysis]  # Tempo de análise atual (anos)
 
-    # Variáveis aleatórias (momento e propriedades do material)
-    m_g = x[0]  # Momento devido ao peso permanente (kN·m)
-    m_q = x[1]  # Momento devido ao carregamento variável (kN·m)
-    f_ck = x[2]  # Resistência característica do concreto (kPa)
-    f_yk = x[3]  # Resistência característica do aço (kPa)
-    e_r = x[4]  # Fator de amplificação do momento resistente (adimensional)
-    e_s = x[5]  # Fator de amplificação do momento solicitante (adimensional)
+#     # Variáveis aleatórias (momento e propriedades do material)
+#     m_g = x[0]  # Momento devido ao peso permanente (kN·m)
+#     m_q = x[1]  # Momento devido ao carregamento variável (kN·m)
+#     f_ck = x[2]  # Resistência característica do concreto (kPa)
+#     f_yk = x[3]  # Resistência característica do aço (kPa)
+#     e_r = x[4]  # Fator de amplificação do momento resistente (adimensional)
+#     e_s = x[5]  # Fator de amplificação do momento solicitante (adimensional)
 
-    # Variáveis fixas da viga
-    # dados_viga = none_variable['dados_viga']
-    gamma_c = dados_viga['gamma_c']
-    gamma_s = dados_viga['gamma_s']
-    gamma_f = dados_viga['gamma_f']
-    b_w = dados_viga['b_w (m)']
-    h = dados_viga['h (m)']
-    a_s = dados_viga['a_s (m2)']
+#     # Variáveis fixas da viga
+#     # dados_viga = none_variable['dados_viga']
+#     gamma_c = dados_viga['gamma_c']
+#     gamma_s = dados_viga['gamma_s']
+#     gamma_f = dados_viga['gamma_f']
+#     b_w = dados_viga['b_w (m)']
+#     h = dados_viga['h (m)']
+#     a_s = dados_viga['a_s (m2)']
 
-    # Critério de degradação da resistência ao longo do tempo
-    if t_i == 0:
-        degrad = 1.0  # Sem degradação no instante inicial
-    else:
-        a_d = 1.0
-        b_d = 0.000055  # Coeficiente de degradação
-        degrad = a_d * (1 - b_d * t_i ** 2)  # Redução quadrática ao longo do tempo
+#     # Critério de degradação da resistência ao longo do tempo
+#     if t_i == 0:
+#         degrad = 1.0  # Sem degradação no instante inicial
+#     else:
+#         a_d = 1.0
+#         b_d = 0.000055  # Coeficiente de degradação
+#         degrad = a_d * (1 - b_d * t_i ** 2)  # Redução quadrática ao longo do tempo
 
-    # Cálculo da capacidade resistente da seção
-    m_r = momento_resistente_secao_sem_cor(a_s, b_w, h, f_ck, f_yk, gamma_s, gamma_c)
-    m_r *= degrad  # Aplica degradação temporal
+#     # Cálculo da capacidade resistente da seção
+#     m_r = momento_resistente_secao_sem_cor(a_s, b_w, h, f_ck, f_yk, gamma_s, gamma_c)
+#     m_r *= degrad  # Aplica degradação temporal
 
-    # Cálculo do momento solicitante
-    m_s = gamma_f * (m_g + m_q)
+#     # Cálculo do momento solicitante
+#     m_s = gamma_f * (m_g + m_q)
 
-    # Função de estado limite (restrição de segurança)
-    constraint = e_r * m_r - e_s * m_s
+#     # Função de estado limite (restrição de segurança)
+#     constraint = e_r * m_r - e_s * m_s
 
-    # Retorna momento resistente, momento solicitante e função de estado limite
-    return [m_r * e_r], [m_s * e_s], [constraint]
+#     # Retorna momento resistente, momento solicitante e função de estado limite
+#     return [m_r * e_r], [m_s * e_s], [constraint]
 
 
 
@@ -476,8 +474,6 @@ def verifica_tempo_limite(
         plt.show()
 
     return x_cross
-
-
 
 
 def indice_corrosao_(i_corr_20: float, temperatura: float) -> float:
@@ -580,11 +576,3 @@ def momento_resistente_com_corrosao_azad_algohi(
 
     return m_rd, c_f, d_corroido, i_corr
 
-
-
-if __name__ == "__main__":
-    pass
-    # i_corr_20 = 0.5
-    # temperatura = 20
-    # icor = indice_corrosao_(i_corr_20, temperatura)
-    # print(icor)
