@@ -156,7 +156,7 @@ def profundidade_carbonatacao_possan(
 
     :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
     :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
-    :param f_ck: resistência característica do concreto (MPa)
+    :param f_ck: resistência característica do concreto (kPa)
     :param t: idade da estrutura (anos)
     :param ad: material pozolânico no concreto (% relativo à massa de cimento)
     :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
@@ -354,7 +354,7 @@ def obj_mestrado_victor(x: List[float], none_variable: Dict[str, Any]) -> Tuple[
             - gamma_f: coeficiente de combinação de ações
             - b_w (m): largura da seção transversal
             - h (m): altura da seção
-            - a_s (m2): área de aço da seção
+            - a_s (m²): área de aço da seção
 
     :return: Tupla de listas:
         [m_r * e_r]: Momento resistente amplificado (kN·m)
