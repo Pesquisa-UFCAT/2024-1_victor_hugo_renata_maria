@@ -1,3 +1,9 @@
+import numpy as np
+import pandas as pd
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
+import scipy.stats as stats
+
 # ================= FKML: núcleo matemático =================
 def _phi(u, lam):
     # Trata lam -> 0 por continuidade: (u^lam - 1)/lam -> ln(u)
@@ -97,3 +103,54 @@ def plot_gld_only(lambdas, n_points=2000, quantile_trim=1e-3, qp_min=1e-8, ylim=
         plt.ylim(*ylim)
     plt.tight_layout()
     plt.show()
+
+
+def plot_gld_vs_data(lambdas, n_points=2000, quantile_trim=1e-3, qp_min=1e-8, ylim=None):
+    data = np.asarray(data, dtype=float)
+    l1, l2, l3, l4 = lambdas
+
+    # Curva da PDF GLD (robusta para evitar explosões numéricas)
+    a = float(quantile_trim)
+    u = np.linspace(a, 1.0 - a, n_points)
+    x = gld_fkml_quantile(u, l1, l2, l3, l4)
+    qp = gld_fkml_qprime(u, l2, l3, l4)
+
+    mask = np.isfinite(x) & np.isfinite(qp) & (qp > qp_min)
+    x, f = x[mask], (1.0 / qp[mask])
+
+    order = np.argsort(x)
+    x, f = x[order], f[order]
+
+    return x, f
+
+
+def state_limit_function(x: np.ndarray, n_latent_samples: int) -> tuple[np.ndarray, pd.DataFrame]:
+    """
+    B. Sudret paper state limit function approximation.
+    """
+    y_aux = []
+    dfs = []
+    for i in range(x.shape[0]):
+        df = {'r': [x[i, 0]] * n_latent_samples, 's': [x[i, 1]] * n_latent_samples}
+        df = pd.DataFrame(df)
+        z1aux = []
+        z2aux = []
+        for i in df.iterrows():
+            z1_mu = 1.
+            z1_sc = 0.028
+            s = np.sqrt(np.log(1 + (z1_sc/z1_mu)**2))
+            scale = z1_mu / np.sqrt(1 + (z1_sc/z1_mu)**2)
+            z1aux.append(stats.lognorm.rvs(s=s, scale=scale, size=1)[0])
+            z2_mu = 1.
+            z2_sc = 0.096
+            s = np.sqrt(np.log(1 + (z2_sc/z2_mu)**2))
+            scale = z2_mu / np.sqrt(1 + (z2_sc/z2_mu)**2)
+            z2aux.append(stats.lognorm.rvs(s=s, scale=scale, size=1)[0])
+        df['z1'] = z1aux
+        df['z2'] = z2aux
+        df['g'] = df['r'] / df['z1'] - df['s'] * df['z2']
+        dfs.append(df)
+        lambdas, _ = fit_gld_fkml_mle(df['g'].values)
+        y_aux.append(lambdas)
+        y = np.array(y_aux)
+    return y, dfs
