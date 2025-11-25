@@ -1,167 +1,430 @@
 """Objective function"""
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy as sc
 from scipy.interpolate import CubicSpline
 from scipy.optimize import bisect
+from typing import Any, Dict, List, Tuple, Optional
 
 
-def momento_limite_armadura_simples(a_s: float, b_w: float, h: float, f_ck: float, f_yk: float, gamma_c: float = 1.4, gamma_s: float = 1.15) -> float:
+
+def f_alpha(beta: float, args: list) -> float:
     """
-    Calcula o momento resistente limite m_rdlim para vigas de concreto armado.
+    Calcula o resíduo da equação de equilíbrio de forças normais em uma seção retangular
+    de concreto armado, dado um valor de beta (x/d).
 
-    :param a_s: área de aço longitudinal (m2)
-    :param b_w: largura da seção transversal (m)
-    :param h: altura total da seção transversal (m)
+    Referência: NBR 6118 (2023)
+
+    :param beta: relação x/d da seção
+    :param args: lista de parâmetros [f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s]
+                 f_ck: resistência característica à compressão do concreto (kPa)
+                 f_yk: resistência característica à tração do aço (kPa)
+                 b_w: largura da seção (m)
+                 d: altura útil da seção (m)
+                 a_st: área de aço tracionado (m²)
+                 e_s: módulo de elasticidade do aço (kPa)
+                 gamma_c: coeficiente parcial de segurança do concreto
+                 gamma_s: coeficiente parcial de segurança do aço
+
+    :return: resíduo da equação de equilíbrio de forças normais
+    """
+    f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s = args
+
+    # Propriedades dos materiais e da geometria
+    f_ck /= 1E3
+    if f_ck > 50:
+        aux1 = (f_ck - 50) / 400
+        lambda_c = 0.80 - aux1
+        aux2 = (f_ck - 50) / 200
+        alpha_c = (1.00 - aux2) * 0.85
+        eta_c = (40 / f_ck) ** (1/3)
+        epsilon_cu = 2.6 / 1000 + 35 / 1000 * ((90 - f_ck) / 100) ** 4
+    else:
+        lambda_c = 0.80
+        alpha_c = 0.85
+        eta_c = 1.00
+        epsilon_cu = 3.5 / 1000
+    f_ck *= 1E3
+
+    # Tensão no concreto
+    f_cd = f_ck / gamma_c
+    sigma_cd = alpha_c * eta_c * f_cd
+    x = beta * d
+
+    # Força no concreto
+    r_cc = sigma_cd * (lambda_c * x * b_w)
+
+    # Limite domínio 2 com o 3 e deformações
+    beta_x_limit = epsilon_cu / (epsilon_cu + 10/1000)
+
+    # Deformações
+    if beta <= beta_x_limit: 
+        # Domínio 2
+        epsilon_st = 10 / 1000
+        epsilon_cc = epsilon_st * beta / (1 - beta)
+    else:
+        # Domínio 3
+        epsilon_cc = epsilon_cu
+        epsilon_st = epsilon_cc * (1 - beta) / x
+
+    # Tensão no aço
+    f_yd = f_yk / gamma_s
+    epsilon_yd = f_yd / e_s
+    if np.abs(epsilon_st) <= epsilon_yd:
+        sigma_st = e_s * epsilon_st
+    else:
+        sigma_st = np.sign(epsilon_st) * f_yd
+
+    # Força no aço
+    r_st = sigma_st * a_st
+
+    return r_cc - r_st
+
+
+def momento_limite_armadura_simples(
+                                    a_st: float,
+                                    b_w: float,
+                                    h: float,
+                                    relacao_h_d: float,
+                                    f_ck: float,
+                                    f_yk: float,
+                                    e_s: float,
+                                    gamma_c: float = 1.4,
+                                    gamma_s: float = 1.15
+                                ) -> float:
+    """
+    Calcula o momento resistente limite (m_rdlim) para vigas de concreto armado de
+    seção retangular com armadura simples.
+
+    Referência: NBR 6118 (2023)
+
+    :param a_st: área de aço tracionado (m²)
+    :param b_w: largura da seção (m)
+    :param h: altura total da seção (m)
+    :param relacao_h_d: relação d/h da seção
     :param f_ck: resistência característica à compressão do concreto (kPa)
     :param f_yk: resistência característica à tração do aço (kPa)
-    :param gamma_c: coeficiente parcial de segurança para o concreto (padrão 1.4)
-    :param gamma_s: coeficiente parcial de segurança para o aço (padrão 1.15)
+    :param e_s: módulo de elasticidade do aço (kPa)
+    :param gamma_c: coeficiente parcial de segurança do concreto
+    :param gamma_s: coeficiente parcial de segurança do aço
 
-    :return: momento resistente para seções de armadura simples (kN.m)
+    :return: momento resistente limite (kN·m)
     """
 
     # Propriedades dos materiais e da geometria
     f_ck /= 1E3
     if f_ck > 50:
-        lambdaa = 0.80 - ((f_ck - 50) / 400)
-        alpha_c = (1.00 - ((f_ck - 50) / 200)) * 0.85
+        aux1 = (f_ck - 50) / 400
+        lambda_c = 0.80 - aux1
+        aux2 = (f_ck - 50) / 200
+        alpha_c = (1.00 - aux2) * 0.85
+        eta_c = (40 / f_ck) ** (1/3)
     else:
-        lambdaa = 0.80
+        lambda_c = 0.80
         alpha_c = 0.85
+        eta_c = 1.00
     f_ck *= 1E3
-    f_cd = f_ck / gamma_c
-    f_yd = f_yk / gamma_s
-    d = h * 0.90
+    d = h * relacao_h_d
 
+    # Encontrar equilíbrio de forças normais
+    args = (f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s)
+    resultado = sc.optimize.root_scalar(lambda beta: f_alpha(beta, args), bracket=(0.00001, d/h), method='bisect')
 
     # Profundidade da linha neutra
-    x = (a_s * f_yd) / (f_cd * b_w * alpha_c * lambdaa)
+    x = resultado.root * d
 
-    # Calculation of the ultimate resisting moment
-    m_rd = a_s * f_yd * (d - 0.5 * lambdaa * x)
+    # Momento resistente
+    f_cd = f_ck / gamma_c
+    sigma_cd = alpha_c * eta_c * f_cd
+
+    # Força no concreto
+    r_cc = sigma_cd * (lambda_c * x * b_w)
+    m_rd = r_cc * (d - 0.5 * lambda_c * x)
 
     return m_rd
 
 
-def area_aco_flexao_simples( m_sd: float, b_w: float, h: float, f_ck: float, f_ywk: float = 500000, gamma_c: float = 1.4, gamma_s: float = 1.15, impressao: bool = False) -> float:
-    """
-    Esta função verifica a área de aço necessária para combater os esforços de flexão na peça de concreto armado de acordo com a NBR 6118 (2014).
+# def profundidade_carbonatacao_possan(
+#     k_c: float, k_fc: float, f_ck: float, t: float, ad: float, k_ad: float,
+#     co_2: float, k_co_2: float, ur: float, k_rh: float, k_ce: float
+# ) -> float:
+#     """
+#     Determina a profundidade de carbonatação do concreto de acordo com o modelo
+#     de Possan et al. (2016).
 
-    Entrada:
+#     :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
+#     :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
+#     :param f_ck: resistência característica do concreto (kPa)
+#     :param t: idade da estrutura (anos)
+#     :param ad: material pozolânico no concreto (% relativo à massa de cimento)
+#     :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
+#     :param co_2: concentração de CO2 atmosférico (%)
+#     :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
+#     :param ur: umidade relativa média (% * 0.01)
+#     :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
+#     :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
 
+#     :return: profundidade de carbonatação do concreto (m)
+#     """
+
+#     # Fator relacionado ao tipo de cimento e à resistência do concreto
+#     aux_1 = k_c * (20 / f_ck) ** k_fc  
+
+#     # Fator relacionado à idade da estrutura (considerando t em anos)
+#     aux_2 = (t / 20) ** (1 / 2)  
+
+#     # Fatores relacionados às adições pozolânicas (ad) e resistência do concreto
+#     aux_31 = (k_ad * ad ** (3 / 2)) / (40 + f_ck)  
+
+#     # Fator relacionado à concentração de CO₂ no ambiente e resistência do concreto
+#     aux_32 = (k_co_2 * co_2 ** (1 / 2)) / (60 + f_ck)  
+
+#     # Fator relacionado à umidade relativa e resistência do concreto
+#     aux_33 = (k_rh * (ur - 0.58) ** 2) / (100 + f_ck)  
+
+#     # Profundidade de carbonatação do concreto (em mm), ajustando pelos fatores de exposição
+#     y_carb = aux_1 * aux_2 * np.exp(aux_31 + aux_32 - aux_33) * k_ce  
+
+#     # Converte profundidade de mm para metros e retorna
+#     return y_carb / 1000
+
+
+
+# def rcp_co2(ano: int) -> float:
+#     """
+#     Determina a concentração de dióxido de carbono (CO₂) atmosférico em função do ano, 
+#     conforme o modelo de cenário representativo de concentração (RCP).
+
+#     :reference: Intergovernmental Panel on Climate Change (IPCC). 
+#                 Climate Change 2013: The Physical Science Basis. 
+#                 Cambridge University Press, 2013. (Modelos RCP)
+    
+#     :param ano: Ano de referência (adimensional)
+
+#     :return: Concentração de CO₂ atmosférico correspondente ao ano indicado (%)
+#     """
+
+#     i_aux = ano - 2000
+#     co_2_percentual = (0.07278*i_aux**2 + 1.86395*i_aux + 340.93383) / (1E6/1E2)
+
+#     return co_2_percentual
+
+
+
+# def tempo_iniciacao_corrosao(
+#     k_c: float, k_fc: float, f_ck: float, ad: float, k_ad: float, k_co_2: float,
+#     ur: float, k_rh: float, k_ce: float, cob: float, ano_instalacao_estrutura: int = 2000
+# ) -> tuple[float, float, float]:
+#     """
+#     Determina o tempo de iniciação da corrosão das armaduras em função do modelo
+#     de Possan et al. (2016).
+
+#     :param k_c: Fator relacionado ao tipo de cimento (Tabela 3a)
+#     :param k_fc: Fator relacionado à resistência à compressão do concreto (Tabela 3a)
+#     :param f_ck: resistência característica do concreto (kPa)
+#     :param ad: material pozolânico no concreto (%)
+#     :param k_ad: fator relacionado a adições pozolânicas (Tabela 3a)
+#     :param k_co_2: fator relacionado à concentração de CO2 (Tabela 3a)
+#     :param ur: umidade relativa média (%)
+#     :param k_rh: fator relacionado à umidade relativa (Tabela 3a)
+#     :param k_ce: fator relacionado à exposição da estrutura (Tabela 3b)
+#     :param cob: cobrimento da armadura (m)
+#     :param ano_instalacao_estrutura: ano de instalação da estrutura
+
+#     :return:
+#         inicio_corrosao: tempo de iniciação da corrosão (anos)
+#         y_carb: profundidade de carbonatação (m)
+#         co_2: concentração de CO2 (%)
+#     """
+
+#     # Inicializando o ano da estrutura
+#     ano = ano_instalacao_estrutura
+
+#     # Procurando o tempo de iniciação para a amostra em questão (máximo da busca = 150 anos)
+#     t_max = 150
+#     for i in range(0, t_max):
+#         # Equação interpoladora RCP 8.5
+#         co_2 = rcp_co2(ano)
+#         y_carb = profundidade_carbonatacao_possan(k_c, k_fc,  f_ck/1000, i,
+#                                                     ad, k_ad, co_2, k_co_2,
+#                                                     ur*0.01, k_rh, k_ce)
+#         if y_carb >= cob:
+#             ti = i
+#             break
+#         else:
+#             ti = t_max
+#         ano += 1
+        
+#     return ti, y_carb, co_2
+
+
+
+def area_aco_flexao_simples(
+    m_sd: float, b_w: float, h: float, f_ck: float, f_ywk: float = 500000,
+    gamma_c: float = 1.4, gamma_s: float = 1.15, impressao: bool = False
+) -> float:
     """
-    f_ck /= 1E3
-    if f_ck >  50:
-        lambdaa = 0.80 - ((f_ck - 50) / 400)
-        alpha_c = (1.00 - ((f_ck - 50) / 200)) * 0.85
+    Calcula a área de aço necessária para resistir aos esforços de flexão em
+    uma viga de concreto armado de acordo com a NBR 6118 (2023).
+
+    :param m_sd: momento solicitante (kN·m)
+    :param b_w: largura da seção (m)
+    :param h: altura da seção (m)
+    :param f_ck: resistência característica à compressão do concreto (kPa)
+    :param f_ywk: resistência característica à tração do aço (kPa)
+    :param gamma_c: coeficiente parcial de segurança do concreto
+    :param gamma_s: coeficiente parcial de segurança do aço
+    :param impressao: se True, imprime informações intermediárias
+
+    :return: área de aço necessária (m²)
+    """
+
+    # Converte f_ck de kPa para MPa para o cálculo intermediário
+    f_ck /= 1E3  
+
+    # Ajusta os coeficientes lambda e alpha_c de acordo com f_ck
+    if f_ck > 50:
+        # Para concretos de alta resistência, aplica redução nos coeficientes
+        lambdaa = 0.80 - ((f_ck - 50) / 400)  
+        alpha_c = (1.00 - ((f_ck - 50) / 200)) * 0.85  
     else:
+        # Para f_ck ≤ 50 MPa, coeficientes padrão
         lambdaa = 0.80
         alpha_c = 0.85
 
-    d = h * 0.9
-    f_ck *= 1E3
-    f_cd = f_ck / gamma_c
-    zeta = m_sd / (b_w * alpha_c * f_cd)
-    aux = d ** 2 - 2 * zeta
-    x = (d - np.sqrt(aux)) / lambdaa
-    z = d - 0.50 * lambdaa * x
-    f_yd = f_ywk / gamma_s
-    a_s = m_sd / (z * f_yd)
-    a_c = b_w * h
-    pho_s = a_s / a_c * 100
+    # Altura útil da seção (considerando cobrimento e diâmetro da armadura)
+    d = h * 0.9  
 
+    # Converte f_ck de volta para kPa para cálculo de tensão de projeto
+    f_ck *= 1E3  
+
+    # Tensão de cálculo do concreto (considerando coeficiente parcial de segurança)
+    f_cd = f_ck / gamma_c  
+
+    # Calcula zeta = M_sd / (b * alpha_c * f_cd), usado para determinação da profundidade do eixo neutro
+    zeta = m_sd / (b_w * alpha_c * f_cd)  
+
+    # Calcula o valor auxiliar para a equação quadrática do eixo neutro
+    aux = d ** 2 - 2 * zeta  
+
+    # Profundidade do eixo neutro da seção (x)
+    x = (d - np.sqrt(aux)) / lambdaa  
+
+    # Braço de alavanca efetivo da seção (z)
+    z = d - 0.50 * lambdaa * x  
+
+    # Tensão de cálculo do aço (considerando coeficiente parcial de segurança)
+    f_yd = f_ywk / gamma_s  
+
+    # Área de aço necessária para resistir ao momento fletor (m²)
+    a_s = m_sd / (z * f_yd)  
+
+    # Área total da seção de concreto (m²)
+    a_c = b_w * h  
+
+    # Taxa de armadura (%) em relação à área da seção de concreto
+    pho_s = a_s / a_c * 100  
+
+    # Retorna área de aço e taxa de armadura
     return a_s, pho_s
 
 
-def momento_resistente_secao_sem_cor(a_s: float, b_w: float, h: float, f_ck: float, f_yk: float = 500000, gamma_s: float = 1.15, gamma_c: float = 1.40) -> float:
-    """
-    Calcula o momento resistente para vigas de concreto armado.
 
-    Args:
-        f_ck: resistência característica à compressão do concreto (em kPa)
-        a_s: área da armadura longitudinal (em mm²)
-        b_w: largura da seção transversal (em mm)
-        h: altura total da seção transversal (em mm)
+# def obj_mestrado_victor(x: List[float], none_variable: Dict[str, Any]) -> Tuple[List[float], List[float], List[float]]:
+#     """
+#     Função objetivo que determina o momento resistente de vigas de concreto armado sujeitas
+#     a uma função de decaimento de resistência ao longo do tempo.
 
-    Returns:
-        m_rd: valor do momento resistente limite utilizando armadura simples (em N.mm)
-    """
+#     :param x: Lista de variáveis aleatórias e de controle, contendo:
+#         x[0] = M_g: Momento devido ao carregamento permanente (kN·m)
+#         x[1] = M_q: Momento devido ao carregamento acidental (kN·m)
+#         x[2] = f_ck: Resistência característica do concreto (kPa)
+#         x[3] = f_yk: Resistência característica do aço (kPa)
+#         x[4] = e_r: Fator de amplificação do momento resistente (adimensional)
+#         x[5] = e_s: Fator de amplificação da demanda (adimensional)
+#         x[-1] = id_analysis: Índice de passo de tempo para análise de confiabilidade
 
-    f_ck /= 1E3
-    if f_ck > 50:
-        lambdaa = 0.80 - ((f_ck - 50) / 400)
-        alpha_c = (1.00 - ((f_ck - 50) / 200)) * 0.85
-    else:
-        lambdaa = 0.80
-        alpha_c = 0.85
+#     :param none_variable: Dicionário contendo parâmetros fixos e listas de tempo, com chaves:
+#         'time analysis': lista de tempos (anos)
+#         'dados_viga': dicionário com dados da viga:
+#             - gamma_c: coeficiente parcial de segurança do concreto
+#             - gamma_s: coeficiente parcial de segurança do aço
+#             - gamma_f: coeficiente de combinação de ações
+#             - b_w (m): largura da seção transversal
+#             - h (m): altura da seção
+#             - a_s (m²): área de aço da seção
 
-    f_ck *= 1E3
-    f_cd = f_ck / gamma_c
-    d = h * 0.9
-    x = ((a_s * f_yk) / (f_cd * b_w * alpha_c * lambdaa))
-    m_rd = a_s * f_yk * (d - x * 0.5 * lambdaa)
-    return m_rd
-
-
-def obj_mestrado_victor(x, none_variable):
-    """Função objetivo que determina o momento resistente em vigas de concreto armado sujeitas a uma função de decaimento de resistência ao longo do tempo.
-    """
+#     :return: Tupla de listas:
+#         [m_r * e_r]: Momento resistente amplificado (kN·m)
+#         [m_s * e_s]: Momento solicitante amplificado (kN·m)
+#         [constraint]: Função de estado limite (kN·m)
+#     """
     
-    # User must copy and paste this code in time reliability objective function-
-    id_analysis = int(x[-1])
-    time_step = none_variable['time analysis']
-    t_i = time_step[id_analysis] 
-    # print(t_i)
-    # t_i is a time value from your list of times entered in the 'none variable' key.
+#     # Seleciona o índice do passo de tempo e o valor correspondente
+#     id_analysis = int(x[-1])
+#     time_step = none_variable['time analysis']
+#     t_i = time_step[id_analysis]  # Tempo de análise atual (anos)
 
-    # Random variables
-    m_g = x[0]
-    m_q = x[1]
-    f_ck = x[2]
-    f_yk = x[3]
-    e_r = x[4]
-    e_s = x[5]
+#     # Variáveis aleatórias (momento e propriedades do material)
+#     m_g = x[0]  # Momento devido ao peso permanente (kN·m)
+#     m_q = x[1]  # Momento devido ao carregamento variável (kN·m)
+#     f_ck = x[2]  # Resistência característica do concreto (kPa)
+#     f_yk = x[3]  # Resistência característica do aço (kPa)
+#     e_r = x[4]  # Fator de amplificação do momento resistente (adimensional)
+#     e_s = x[5]  # Fator de amplificação do momento solicitante (adimensional)
 
-    # Fixed variables
-    gamma_c = none_variable['dados_viga']['gamma_c']
-    gamma_s = none_variable['dados_viga']['gamma_s']
-    gamma_f = none_variable['dados_viga']['gamma_f']
-    b_w = none_variable['dados_viga']['b_w (m)']
-    h = none_variable['dados_viga']['h (m)']
-    a_s = none_variable['dados_viga']['a_s (m2)']
-    
-    # Degradation criteria
-    if t_i == 0:
-        degrad = 1
-    else:
-        a_d = 1
-        b_d = 0.000055
-        degrad = a_d * (1 - b_d * t_i ** 2)
+#     # Variáveis fixas da viga
+#     # dados_viga = none_variable['dados_viga']
+#     gamma_c = dados_viga['gamma_c']
+#     gamma_s = dados_viga['gamma_s']
+#     gamma_f = dados_viga['gamma_f']
+#     b_w = dados_viga['b_w (m)']
+#     h = dados_viga['h (m)']
+#     a_s = dados_viga['a_s (m2)']
 
-    # Capacity and demand
-    m_r = momento_resistente_secao_sem_cor(a_s, b_w, h, f_ck, f_yk, gamma_s, gamma_c)
-    m_r *= degrad
-    m_s = gamma_f * (m_g + m_q)
+#     # Critério de degradação da resistência ao longo do tempo
+#     if t_i == 0:
+#         degrad = 1.0  # Sem degradação no instante inicial
+#     else:
+#         a_d = 1.0
+#         b_d = 0.000055  # Coeficiente de degradação
+#         degrad = a_d * (1 - b_d * t_i ** 2)  # Redução quadrática ao longo do tempo
 
-    # State limit function
-    constraint = e_r * m_r - e_s * m_s
+#     # Cálculo da capacidade resistente da seção
+#     m_r = momento_resistente_secao_sem_cor(a_s, b_w, h, f_ck, f_yk, gamma_s, gamma_c)
+#     m_r *= degrad  # Aplica degradação temporal
 
-    return [m_r * e_r], [m_s * e_s], [constraint]
+#     # Cálculo do momento solicitante
+#     m_s = gamma_f * (m_g + m_q)
+
+#     # Função de estado limite (restrição de segurança)
+#     constraint = e_r * m_r - e_s * m_s
+
+#     # Retorna momento resistente, momento solicitante e função de estado limite
+#     return [m_r * e_r], [m_s * e_s], [constraint]
 
 
-def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plotar: bool=False) -> float:
+
+
+def verifica_tempo_limite(
+    pf_list: List[float],
+    temp_list: List[float],
+    pf_limit: float,
+    plotar: bool = False
+) -> Optional[float]:
     """
-    Função que verifica e determina o tempo em que a estrutura alcança o valor de pf limite.
+    Verifica e determina o tempo em que a estrutura atinge o valor limite de probabilidade de falha (pf).
 
-    Parâmetros:
-    - pf_list: Lista com valores de pf ao longo do tempo.
-    - temp_list: Lista com os valores de tempo correspondentes.
-    - pf_limit: Valor limite de pf que define a reta horizontal.
-    - plotar: Se True, exibe o gráfico das curvas e do ponto de interseção.
+    :reference: Adaptado para análise de confiabilidade de estruturas, baseado em metodologia de confiabilidade estrutural.
 
-    Retorna:
-    - x_cross: Valor de tempo onde as curvas se cruzam (None se não houver interseção).
+    :param pf_list: Lista de valores de probabilidade de falha ao longo do tempo (adimensional)
+    :param temp_list: Lista de tempos correspondentes (anos)
+    :param pf_limit: Valor limite de pf que define a reta horizontal para comparação
+    :param plotar: Se True, exibe o gráfico das curvas de pf ao longo do tempo e a interseção com pf_limit
+
+    :return: Tempo (anos) em que pf atinge o valor limite. Retorna None se não houver interseção.
     """
+
     # Verificando se os dados estão ordenados por tempo
     sorted_indices = np.argsort(temp_list)
     X1 = np.array(temp_list)[sorted_indices]
@@ -213,10 +476,103 @@ def verifica_tempo_limite(pf_list: list, temp_list: list, pf_limit: float, plota
     return x_cross
 
 
-if __name__ == "__main__":
-    x = [5000,5000,5000,5000,2,10,10]
-    dados_viga = {'h (m)': 0.50, 'b_w (m)': 0.30, 'm_rd (kN.m)': 0, 'a_s (m2)': 0.15/100*0.30*0.50, 'gamma_c': 1.00, 'gamma_s': 1.00, 'gamma_f': 1.00}
-    # dados_viga = {'d_b (m)': 8/1000, 'd_linha (m)': 3.9/100,'n_b': 3, 'gamma_c': 1.00, 'gamma_s': 1.00, 'b_w (m)': 0.2, 'h (m)': 0.50, 'cob (m)': 0.025, 'ano_construcao': 2000}
-    # dados_corrosao = {'k_c': 30.5, 'k_fc': 1.7, 'a_d': 0, 'k_ad': 0.32, 'k_co2': 15.5, 'k_rh': 1300, 'k_ce': 1.3}
-    none_variable = {'dados_viga': dados_viga, 'time analysis': list(range(0, 101))}
-    print(obj_mestrado_victor(x, none_variable))
+def indice_corrosao_(i_corr_20: float, temperatura: float) -> float:
+    """
+    Determina o índice de corrosão das armaduras de aço em concreto armado
+    considerando a influência da temperatura ambiente sobre a taxa de corrosão, de acordo com Peng and Stewart (2016).
+
+    :param i_corr_20: Índice de corrosão a 20°C (μA/cm²)
+    :param temperatura: Temperatura do ambiente (°C)
+
+    :return: Índice de corrosão ajustado para a temperatura T (μA/cm²)
+    """
+
+    # Correção para temperaturas diferentes de 20°C
+    if temperatura > 20:
+        k = 0.073
+    elif temperatura < 20:
+        k = 0.025
+    elif temperatura == 20:
+        k = 0
+    i_corr = i_corr_20 * (1 + k * (temperatura - 20))
+
+    return i_corr
+
+
+
+def momento_resistente_com_corrosao_azad_algohi(
+    d_0: float,
+    n_barras: int,
+    f_ck: float,
+    f_yk: float,
+    e_s: float,
+    b_w: float,
+    h: float,
+    relacao_d_h: float,
+    i_corr_20: float,
+    temperatura: float,
+    tempo_decorrido: float,
+    tempo_iniciacao: float,
+    gamma_c: float = 1.4,
+    gamma_s: float = 1.15
+) -> tuple[float, float, float, float]:
+    """
+    Determina o momento resistente de uma viga de concreto armado considerando
+    os efeitos da corrosão nas armaduras de aço.
+
+    :reference: Al-Gohi, B. H. A. (2008), “Time-dependent modeling of loss of flexural strength of corroding RC beams”.
+
+    :param d_0: Diâmetro original da barra de aço (m)
+    :param n_barras: Número de barras de aço na seção
+    :param f_ck: Resistência característica do concreto (kPa)
+    :param f_yk: Resistência característica do aço (kPa)
+    :param e_s: Módulo de elasticidade do aço (kPa)
+    :param b_w: Largura da seção transversal da viga (m)
+    :param h: Altura total da seção da viga (m)
+    :param relacao_d_h: Relação altura útil / altura total da seção (adimensional)
+    :param i_corr_20: Índice de corrosão a 20°C (μA/cm²)
+    :param temperatura: Temperatura do ambiente (°C)
+    :param tempo_decorrido: Tempo decorrido desde a instalação da estrutura (anos)
+    :param tempo_iniciacao: Tempo estimado de início da corrosão (anos)
+    :param gamma_c: Coeficiente parcial de segurança do concreto (padrão = 1.4)
+    :param gamma_s: Coeficiente parcial de segurança do aço (padrão = 1.15)
+
+    :return: Tupla contendo:
+        m_rd: Momento resistente da viga (kN·m)
+        c_f: Coeficiente de redução da aderência devido à corrosão (adimensional)
+        d_corroido: Diâmetro corroido da barra de aço (m)
+        i_corr: Índice de corrosão ajustado para a temperatura T (μA/cm²)
+    """
+
+    # Índice de corrosão
+    tempo_corrosao = tempo_decorrido - tempo_iniciacao
+    i_corr = indice_corrosao_(i_corr_20, temperatura)
+
+    # Perda de seção devido à corrosão
+    d_0 *= 1000
+    delta_dim = 0.0232 * i_corr * tempo_corrosao
+    d_corroido = d_0 - delta_dim
+    d_corroido /= 1000
+
+    # Momento resistente com corrosão considerando apenas perda de seção
+    a_s_initial = n_barras * (np.pi * (d_corroido ** 2) / 4)
+    # print("nbar", n_barras)
+    # print("d_0", d_0)
+    # print("d_corroido", d_corroido)
+    # print("a_s_initial", a_s_initial)
+    # print("f_ck", f_ck)
+    # print("f_yk", f_yk)
+    # print("e_s", e_s)
+    m_rd = momento_limite_armadura_simples(a_s_initial, b_w, h, relacao_d_h, f_ck, f_yk, e_s)
+
+    # Momento resistente com corrosão considerando perda de seção e redução da aderência
+    i_corr /= 1000
+    cf_aux = 5 / (d_0 ** 0.54 * (i_corr * tempo_corrosao * 365) ** 0.19)
+    if cf_aux > 1.00:
+        c_f = 1.00
+    else:
+        c_f = cf_aux
+    m_rd *= c_f
+
+    return m_rd, c_f, d_corroido, i_corr
+
