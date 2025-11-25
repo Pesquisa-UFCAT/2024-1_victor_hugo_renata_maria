@@ -148,7 +148,7 @@ def state_limit_function(x: np.ndarray, n_latent_samples: int) -> tuple[np.ndarr
             z2aux.append(stats.lognorm.rvs(s=s, scale=scale, size=1)[0])
         df['z1'] = z1aux
         df['z2'] = z2aux
-        df['g'] = df['r'] - np.log(df['z1']) - (df['s'] + np.log(df['z2']))
+        df['g'] = df['r']/df['z1'] - df['s'] * df['z2']
         dfs.append(df)
         lambdas, _ = fit_gld_fkml_mle(df['g'].values)
         y_aux.append(lambdas)
