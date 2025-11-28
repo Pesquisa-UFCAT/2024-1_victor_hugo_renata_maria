@@ -560,4 +560,21 @@ def momento_resistente_com_corrosao_azad_algohi(
 #     return x_cross
 
 
-
+if __name__ == "__main__":
+    f_ck = 20E3
+    f_yk = 500E3
+    b_w = 0.20
+    h = 0.50
+    d = 0.47
+    a_st = 8.10E-4
+    e_s = 200E6
+    gamma_c = 1.4
+    gamma_s = 1.15
+    args = (f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s)
+    resultado = sc.optimize.root_scalar(lambda beta: f_alpha(beta, args), bracket=(0.00001, d/h), method='bisect')
+    beta = resultado.root
+    print(f'Beta: {beta:.4f}')
+    x = beta * d
+    print(f'x: {x:.4f} m')
+    residuo = f_alpha(beta, args)
+    print(f'Residuo: {residuo:.4f}')
