@@ -8,25 +8,24 @@ from typing import Any, Dict, List, Tuple, Optional
 
 
 def f_alpha(beta: float, args: list) -> float:
-    """
-    Calcula o resíduo da equação de equilíbrio de forças normais em uma seção retangular de concreto armado, dado um valor de beta (x/d). Referência: NBR 6118 (2023)
+    """Computes the residual of the normal force equilibrium equation in a rectangular reinforced concrete section, given a value of beta (x/d). Reference: NBR 6118 (2023)
 
-    :param beta: relação x/d da seção
-    :param args: lista de parâmetros [f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s]
-                 f_ck: resistência característica à compressão do concreto (kPa)
-                 f_yk: resistência característica à tração do aço (kPa)
-                 b_w: largura da seção (m)
-                 d: altura útil da seção (m)
-                 a_st: área de aço tracionado (m²)
-                 e_s: módulo de elasticidade do aço (kPa)
-                 gamma_c: coeficiente parcial de segurança do concreto
-                 gamma_s: coeficiente parcial de segurança do aço
+    :param beta: x/d ratio of the section
+    :param args: list of parameters [f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s]
+                 f_ck: characteristic compressive strength of concrete (kPa)
+                 f_yk: characteristic tensile strength of steel (kPa)
+                 b_w: section width (m)
+                 d: effective depth of the section (m)
+                 a_st: tensile reinforcement area (m²)
+                 e_s: modulus of elasticity of steel (kPa)
+                 gamma_c: partial safety factor for concrete
+                 gamma_s: partial safety factor for steel
 
-    :return: resíduo da equação de equilíbrio de forças normais
+    :return: residual of the normal force equilibrium equation
     """
     f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s = args
 
-    # Propriedades dos materiais e da geometria
+    # Material and geometric properties
     f_ck /= 1E3
     if f_ck > 50:
         aux1 = (f_ck - 50) / 400
@@ -42,28 +41,28 @@ def f_alpha(beta: float, args: list) -> float:
         epsilon_cu = 3.5 / 1000
     f_ck *= 1E3
 
-    # Tensão no concreto
+    # Concrete stress
     f_cd = f_ck / gamma_c
     sigma_cd = alpha_c * eta_c * f_cd
     x = beta * d
 
-    # Força no concreto
+    # Concrete force
     r_cc = sigma_cd * (lambda_c * x * b_w)
 
-    # Limite domínio 2 com o 3 e deformações
+    # Limit between domain 2 and 3 and strains
     beta_x_limit = epsilon_cu / (epsilon_cu + 10/1000)
 
-    # Deformações
+    # Strains
     if beta <= beta_x_limit: 
-        # Domínio 2
+        # Domain 2
         epsilon_st = 10 / 1000
         epsilon_cc = epsilon_st * beta / (1 - beta)
     else:
-        # Domínio 3
+        # Domain 3
         epsilon_cc = epsilon_cu
         epsilon_st = epsilon_cc * (1 - beta) / x
 
-    # Tensão no aço
+    # Steel stress
     f_yd = f_yk / gamma_s
     epsilon_yd = f_yd / e_s
     if np.abs(epsilon_st) <= epsilon_yd:
@@ -71,30 +70,29 @@ def f_alpha(beta: float, args: list) -> float:
     else:
         sigma_st = np.sign(epsilon_st) * f_yd
 
-    # Força no aço
+    # Steel force
     r_st = sigma_st * a_st
 
     return r_cc - r_st
 
 
-def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, relacao_h_d: float, f_ck: float, f_yk: float, e_s: float, gamma_c: float = 1.4, gamma_s: float = 1.15) -> float:
+def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, relacao_h_d: float, f_ck: float, f_yk: float, e_s: float, gamma_c: float = 1.00, gamma_s: float = 1.00) -> float:
+    """Computing the flexural capacity of a reinforced concrete beam with a rectangular section and simple reinforcement according to NBR 6118 (2023).
+
+    :param a_st: tensile reinforcement area (m²)
+    :param b_w: section width (m)
+    :param h: total section height (m)
+    :param relacao_h_d: d/h ratio of the section
+    :param f_ck: characteristic compressive strength of concrete (kPa)
+    :param f_yk: characteristic tensile strength of steel (kPa)
+    :param e_s: modulus of elasticity of steel (kPa)
+    :param gamma_c: partial safety factor for concrete
+    :param gamma_s: partial safety factor for steel
+
+    :return: flexural capacity (kN·m)
     """
-    Calcula o momento resistente limite (m_rdlim) para vigas de concreto armado de uma seção retangular com armadura simples.
 
-    :param a_st: área de aço tracionado (m²)
-    :param b_w: largura da seção (m)
-    :param h: altura total da seção (m)
-    :param relacao_h_d: relação d/h da seção
-    :param f_ck: resistência característica à compressão do concreto (kPa)
-    :param f_yk: resistência característica à tração do aço (kPa)
-    :param e_s: módulo de elasticidade do aço (kPa)
-    :param gamma_c: coeficiente parcial de segurança do concreto
-    :param gamma_s: coeficiente parcial de segurança do aço
-
-    :return: momento resistente limite (kN·m)
-    """
-
-    # Propriedades dos materiais e da geometria
+    # Material and geometric properties
     f_ck /= 1E3
     if f_ck > 50:
         aux1 = (f_ck - 50) / 400
@@ -127,12 +125,8 @@ def momento_limite_armadura_simples(a_st: float, b_w: float, h: float, relacao_h
     return m_rd
 
 
-
-
-def indice_corrosao_(i_corr_20: float, temperatura: float) -> float:
-    """
-    Determina o índice de corrosão das armaduras de aço em concreto armado
-    considerando a influência da temperatura ambiente sobre a taxa de corrosão, de acordo com Peng and Stewart (2016).
+def corrosion_index(i_corr_20: float, temperature: float) -> float:
+    """Determines the corrosion index of steel reinforcements in reinforced concrete considering the influence of ambient temperature on the corrosion rate, according to Peng and Stewart (2016).
 
     :param i_corr_20: Índice de corrosão a 20°C (μA/cm²)
     :param temperatura: Temperatura do ambiente (°C)
@@ -209,13 +203,6 @@ def momento_resistente_com_corrosao_azad_algohi(
 
     # Momento resistente com corrosão considerando apenas perda de seção
     a_s_initial = n_barras * (np.pi * (d_corroido ** 2) / 4)
-    # print("nbar", n_barras)
-    # print("d_0", d_0)
-    # print("d_corroido", d_corroido)
-    # print("a_s_initial", a_s_initial)
-    # print("f_ck", f_ck)
-    # print("f_yk", f_yk)
-    # print("e_s", e_s)
     m_rd = momento_limite_armadura_simples(a_s_initial, b_w, h, relacao_d_h, f_ck, f_yk, e_s)
 
     # Momento resistente com corrosão considerando perda de seção e redução da aderência
