@@ -135,13 +135,13 @@ def corrosion_index(i_corr_20: float, temperature: float) -> float:
     """
 
     # Correção para temperaturas diferentes de 20°C
-    if temperatura > 20:
+    if temperature > 20:
         k = 0.073
-    elif temperatura < 20:
+    elif temperature < 20:
         k = 0.025
-    elif temperatura == 20:
+    elif temperature == 20:
         k = 0
-    i_corr = i_corr_20 * (1 + k * (temperatura - 20))
+    i_corr = i_corr_20 * (1 + k * (temperature - 20))
 
     return i_corr
 
@@ -160,8 +160,8 @@ def momento_resistente_com_corrosao_azad_algohi(
     temperatura: float,
     tempo_decorrido: float,
     tempo_iniciacao: float,
-    gamma_c: float = 1.4,
-    gamma_s: float = 1.15
+    gamma_c: float,
+    gamma_s: float
 ) -> tuple[float, float, float, float]:
     """
     Determina o momento resistente de uma viga de concreto armado considerando
@@ -193,7 +193,7 @@ def momento_resistente_com_corrosao_azad_algohi(
 
     # Índice de corrosão
     tempo_corrosao = tempo_decorrido - tempo_iniciacao
-    i_corr = indice_corrosao_(i_corr_20, temperatura)
+    i_corr = corrosion_index(i_corr_20, temperatura)
 
     # Perda de seção devido à corrosão
     d_0 *= 1000
@@ -547,21 +547,36 @@ def momento_resistente_com_corrosao_azad_algohi(
 #     return x_cross
 
 
-if __name__ == "__main__":
-    f_ck = 20E3
-    f_yk = 500E3
-    b_w = 0.20
-    h = 0.50
-    d = 0.47
-    a_st = 8.10E-4
-    e_s = 200E6
-    gamma_c = 1.4
-    gamma_s = 1.15
-    args = (f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s)
-    resultado = sc.optimize.root_scalar(lambda beta: f_alpha(beta, args), bracket=(0.00001, d/h), method='bisect')
-    beta = resultado.root
-    print(f'Beta: {beta:.4f}')
-    x = beta * d
-    print(f'x: {x:.4f} m')
-    residuo = f_alpha(beta, args)
-    print(f'Residuo: {residuo:.4f}')
+
+# if __name__ == "__main__":
+#     resultado = momento_limite_armadura_simples(
+#         a_st=0.00016,
+#         b_w=0.14,
+#         h=0.30,
+#         relacao_h_d=0.9,
+#         f_ck=20000,
+#         f_yk=500000,
+#         e_s=200000000,
+#         gamma_c=1.00,
+#         gamma_s=1.00
+#     )
+#     print(f"Momento resistente: {resultado:.2f} kN·m")
+
+# if __name__ == "__main__":
+#     resultado =  momento_resistente_com_corrosao_azad_algohi(
+#         d_0 = 0.0125,
+#         n_barras = 1.3038,
+#         f_ck = 20000,
+#         f_yk = 500000,
+#         e_s = 200000000,
+#         b_w = 0.14,
+#         h = 0.30,
+#         relacao_d_h = 0.9,
+#         i_corr_20 = 0.431,
+#         temperatura = 29.29,
+#         tempo_decorrido = 40,
+#         tempo_iniciacao = 20,
+#         gamma_c = 1.0,
+#         gamma_s = 1.0
+#     )
+    
