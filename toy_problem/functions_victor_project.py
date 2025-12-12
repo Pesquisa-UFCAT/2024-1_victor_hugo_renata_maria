@@ -181,11 +181,8 @@ def state_limit_function_time(x: np.ndarray, n_latent_samples: int, t: float = 0
             z2aux.append(stats.lognorm.rvs(s=s, scale=scale, size=1)[0])
         df['z1'] = z1aux
         df['z2'] = z2aux
-        if t == 0:
-            aux = 1
-        else:
-            aux = 0.2 * np.sqrt(t)
-        df['g'] = (df['r']/df['z1']) / aux - df['s'] * df['z2']
+        k_factor = 1 + (0.3 - 1) * t / 100
+        df['g'] = k_factor * df['r']/df['z1'] - df['s'] * df['z2']
         dfs.append(df)
         lambdas, _ = fit_gld_fkml_mle(df['g'].values)
         y_aux.append(lambdas)

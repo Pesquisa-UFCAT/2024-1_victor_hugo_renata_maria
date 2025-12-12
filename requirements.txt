@@ -2,9 +2,7 @@ backports.tarfile==1.2.0
 dill==0.4.0
 fqdn==1.5.1
 importlib-metadata==8.0.0
-inflect==7.3.1
 isoduration==20.11.0
-jaraco-functools==4.3.0
 jaraco.collections==5.1.0
 jsonpointer==3.0.0
 jupyter==1.1.1
