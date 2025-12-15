@@ -99,20 +99,7 @@ for i, row in df.iterrows():
             if y_carb > cob:
                t_dur = k - t_without_cor[-1]
                m_rd, c_f, d_novo, d = momento_resistente_com_corrosao_azad_algohi(d_barras, n_barras, f_ck_sample, f_yk_sample, e_s, b_w, h, relacao_d_h, i_corr_20, temp, k, t_without_cor[-1])
-                   d_0: float,
-                                                                                    n_barras: int,
-                                                                                    f_ck: float,
-                                                                                    f_yk: float,
-                                                                                    e_s: float,
-                                                                                    b_w: float,
-                                                                                    h: float,
-                                                                                    relacao_d_h: float,
-                                                                                    i_corr_20: float,
-                                                                                    temperatura: float,
-                                                                                    tempo_decorrido: float,
-                                                                                    tempo_iniciacao: float,
-                                                                                    gamma_c: float,
-                                                                                    gamma_s: float
+    
             else: 
                 t_without_cor.append(k)
                 m_rd = momento_limite_armadura_simples(a_s_initial, b_w, h, relacao_d_h, f_ck_sample, f_yk_sample, e_s)
