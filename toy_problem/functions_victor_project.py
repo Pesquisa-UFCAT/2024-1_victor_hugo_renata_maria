@@ -1,5 +1,13 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
+import pickle
+import dill
+from scipy.integrate import odeint
+from UQpy.distributions import Uniform, Normal, JointIndependent #, Lognormal
+from UQpy.distributions.collection.Lognormal import Lognormal
+from UQpy.surrogates import *
+from sklearn.metrics import mean_squared_error, r2_score
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import scipy.stats as stats
@@ -125,9 +133,14 @@ def plot_gld_vs_data(lambdas, n_points=2000, quantile_trim=1e-3, qp_min=1e-8, yl
 
 
 def state_limit_function(x: np.ndarray, n_latent_samples: int) -> tuple[np.ndarray, pd.DataFrame]:
+    """State limit function with time effect. Considering Z_1 and Z_2 are the latent variables.
+    
+    :param x: Input variables [0] = Resistance R ; [1] = Load S
+    :param n_latent_samples: Number of latent samples to be generated for each input sample
+    
+    :return: [0] = GLAM parameters ; [1] = Dataset with Resitance 'r', Load 's', latent variables 'z1' and 'z2', and state limit function 'g'
     """
-    B. Sudret paper state limit function approximation.
-    """
+    
     y_aux = []
     dfs = []
     for i in range(x.shape[0]):
@@ -156,11 +169,16 @@ def state_limit_function(x: np.ndarray, n_latent_samples: int) -> tuple[np.ndarr
     return y, dfs
 
 
-
 def state_limit_function_time(x: np.ndarray, n_latent_samples: int, t: float = 0) -> tuple[np.ndarray, pd.DataFrame]:
+    """State limit function with time effect. Considering Z_1 and Z_2 are the latent variables.
+    
+    :param x: Input variables [0] = Resistance R ; [1] = Load S
+    :param n_latent_samples: Number of latent samples to be generated for each input sample
+    :param t: Time parameter affecting the state limit function
+    
+    :return: [0] = GLAM parameters ; [1] = Dataset with Resitance 'r', Load 's', latent variables 'z1' and 'z2', and state limit function 'g'
     """
-    B. Sudret paper state limit function approximation.
-    """
+    
     y_aux = []
     dfs = []
     for i in range(x.shape[0]):
@@ -187,4 +205,65 @@ def state_limit_function_time(x: np.ndarray, n_latent_samples: int, t: float = 0
         lambdas, _ = fit_gld_fkml_mle(df['g'].values)
         y_aux.append(lambdas)
         y = np.array(y_aux)
+    
     return y, dfs
+
+
+def execute_parallel_process(k: float | int, n_samples: int, n_latent_samples: int) -> dict:
+    """Execute parallel process for training, saving, and validating the PCE metamodel at time k.
+    
+    :param k: Time parameter affecting the state limit function
+    :param n_samples: Number of samples for training and validation
+    :param n_latent_samples: Number of latent samples to be generated for each input sample
+    
+    :return: Formatted string with R2 score for time k
+    """
+    
+    # 1. Training
+    r = Normal(loc=5., scale=0.8)
+    s = Normal(loc=2., scale=0.6)
+    joint = JointIndependent(marginals=[r, s])
+    x = joint.rvs(n_samples)
+    y, _ = state_limit_function_time(x, n_latent_samples, t=k)
+    max_degree = 3
+    polynomial_basis = TotalDegreeBasis(joint, max_degree)
+    least_squares = LeastSquareRegression()
+    pce_metamodel = PolynomialChaosExpansion(polynomial_basis=polynomial_basis, regression_method=least_squares)
+    pce_metamodel.fit(x, y)
+    
+    # 2. Save metamodel
+    filename = f'pce_metamodel_{k}.pkl'
+    with open(filename, 'wb') as f:
+        dill.dump(pce_metamodel, f)
+    
+    # 3. Validation
+    r_val = Normal(loc=5., scale=0.8)
+    s_val = Normal(loc=2., scale=0.6)
+    joint_val = JointIndependent(marginals=[r_val, s_val])
+    x_val = joint_val.rvs(n_samples)
+    y_val_obs, _ = state_limit_function_time(x_val, n_latent_samples, t=k)
+    with open(filename, 'rb') as f:
+        pce_metamodel_up = pickle.load(f)
+    y_val_pre = pce_metamodel_up.predict(x_val)
+    y_val_obs_aux_lambda_1 = list(y_val_obs[:, 0])
+    y_val_pre_aux_lambda_1 = list(y_val_pre[:, 0])
+    y_val_obs_aux_lambda_2 = list(y_val_obs[:, 1])
+    y_val_pre_aux_lambda_2 = list(y_val_pre[:, 1])
+    y_val_obs_aux_lambda_3 = list(y_val_obs[:, 2])
+    y_val_pre_aux_lambda_3 = list(y_val_pre[:, 2])
+    y_val_obs_aux_lambda_4 = list(y_val_obs[:, 3])
+    y_val_pre_aux_lambda_4 = list(y_val_pre[:, 3])
+           
+    # R2 scores
+    score_lambda_1 = r2_score(y_val_obs_aux_lambda_1, y_val_pre_aux_lambda_1)
+    score_lambda_2 = r2_score(y_val_obs_aux_lambda_2, y_val_pre_aux_lambda_2)
+    score_lambda_3 = r2_score(y_val_obs_aux_lambda_3, y_val_pre_aux_lambda_3)
+    score_lambda_4 = r2_score(y_val_obs_aux_lambda_4, y_val_pre_aux_lambda_4) 
+    
+    return {
+            'Time': k,
+            'R2 (Lambda 1)': score_lambda_1,
+            'R2 (Lambda 2)': score_lambda_2,
+            'R2 (Lambda 3)': score_lambda_3,
+            'R2 (Lambda 4)': score_lambda_4
+           }
