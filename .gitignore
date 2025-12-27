@@ -1,5 +1,6 @@
 env/
 myenv/
+models/
 *.pyc
 *.txt
 !requirements.txt
