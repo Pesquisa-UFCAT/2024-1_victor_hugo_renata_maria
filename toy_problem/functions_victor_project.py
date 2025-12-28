@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from typing import Optional
 import seaborn as sns
 import pickle
 import dill
@@ -11,6 +12,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+from multiprocessing import Pool, cpu_count
 
 # ================= FKML: núcleo matemático =================
 def _phi(u, lam):
@@ -267,3 +269,17 @@ def execute_parallel_process(k: float | int, n_samples: int, n_latent_samples: i
             'R2 (Lambda 3)': score_lambda_3,
             'R2 (Lambda 4)': score_lambda_4
            }
+
+
+def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n_latent_samples: int, t: int = 0, n_processes: Optional[int] = None):
+    if n_processes is None:
+        n_processes = cpu_count()
+    args_list = [(x_val_list[i], n_latent_samples, t) for i in range(len(x_val_list))]
+    with Pool(processes=n_processes) as pool:
+        results = pool.starmap(state_limit_function_time, args_list)
+    y_list = [r[0] for r in results]
+    df_list = [r[1] for r in results]
+    # df = []
+    # for sublist in y:
+
+    return y_list, df_list
