@@ -271,6 +271,25 @@ def execute_parallel_process(k: float | int, n_samples: int, n_latent_samples: i
            }
 
 
+def pce_toy_problem_parallel_with_multiprocessing():
+    """Execute PCE training process and validate.
+    
+    :return: r2 score about PCE training
+    """
+
+    n_samples = 1000
+    n_latent_samples = 5000
+    time = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    inputs = [(k, n_samples, n_latent_samples) for k in time]
+
+    # Execution
+    n_processes = cpu_count()
+    with Pool(processes=n_processes) as pool:
+        results = pool.starmap(execute_parallel_process, inputs)
+
+    return results
+
+
 def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n_latent_samples: int, t: float = 0.0, n_processes: Optional[int] = None):
     """Execute the state limit function in parallel using multiprocessing.
 

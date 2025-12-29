@@ -19,6 +19,7 @@ myenv\Scripts\activate    # On Windows
 
 #### 1.3 Install required packages
 ```bash
+python.exe -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
