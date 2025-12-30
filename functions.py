@@ -211,6 +211,55 @@ def state_limit_function_time(x: np.ndarray, n_latent_samples: int, t: float = 0
     return y, dfs
 
 
+def state_limit_function_time_gumbel(x: np.ndarray, n_latent_samples: int, t: float = 0.0) -> tuple[np.ndarray, pd.DataFrame]:
+    """State limit function with time effect. Considering Z_1 and Z_2 are the latent variables.
+    
+    :param x: Input variables [0] = Resistance R ; [1] = Load S
+    :param n_latent_samples: Number of latent samples to be generated for each input sample
+    :param t: Time parameter affecting the state limit function
+    
+    :return: [0] = GLAM parameters ; [1] = Dataset with Resitance 'r', Load 's', latent variables 'z1' and 'z2', and state limit function 'g'
+    """
+    
+    y_aux = []
+    dfs = []
+    for i in range(x.shape[0]):
+        df = {'r': [x[i, 0]] * n_latent_samples, 's': [x[i, 1]] * n_latent_samples}
+        df = pd.DataFrame(df)
+        z1aux = []
+        z2aux = []
+        for i in df.iterrows():
+            z1_mu = 1.
+            z1_sc = 0.028
+            s = np.sqrt(np.log(1 + (z1_sc/z1_mu)**2))
+            scale = z1_mu / np.sqrt(1 + (z1_sc/z1_mu)**2)
+            z1aux.append(stats.lognorm.rvs(s=s, scale=scale, size=1)[0])
+            z2_mu = 1.
+            z2_sc = 0.096
+
+            # 1. Cálculo do parâmetro de escala (beta)
+            # beta = (Desvio Padrão * raiz(6)) / pi
+            beta = (z2_sc * np.sqrt(6)) / np.pi
+
+            # 2. Cálculo do parâmetro de localização (mu ou loc)
+            # loc = Média - (beta * Constante de Euler)
+            loc = z2_mu - (beta * np.euler_gamma)
+
+            # 3. Geração da variável aleatória (usando gumbel_r para máximos)
+            # Se fosse para mínimos, usaria gumbel_l
+            z2aux.append(stats.gumbel_l.rvs(loc=loc, scale=beta, size=1)[0])
+        df['z1'] = z1aux
+        df['z2'] = z2aux
+        k_factor = 1 + (0.3 - 1) * t / 100
+        df['g'] = k_factor * df['r']/df['z1'] - df['s'] * df['z2']
+        dfs.append(df)
+        lambdas, _ = fit_gld_fkml_mle(df['g'].values)
+        y_aux.append(lambdas)
+        y = np.array(y_aux)
+    
+    return y, dfs
+
+
 def execute_parallel_process(k: float | int, n_samples: int, n_latent_samples: int) -> dict:
     """Execute parallel process for training, saving, and validating the PCE metamodel at time k.
     
@@ -288,6 +337,54 @@ def pce_toy_problem_parallel_with_multiprocessing():
         results = pool.starmap(execute_parallel_process, inputs)
 
     return results
+
+
+def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n_latent_samples: int, t: float = 0.0, n_processes: Optional[int] = None):
+    """Execute the state limit function in parallel using multiprocessing.
+
+    :param x_val_list: R and S realization dividided in batches for parallel processing
+    :param n_latent_samples: Number of latent samples to be generated for each input sample
+    :param t: Time step. Default is 0
+    :param n_processes: Number of processes to use. If None, use the number of CPU cores
+
+    :return: [0] All datat and [1] Dataset with GLAM parameters and state limit function results for each batch
+    """
+
+    if n_processes is None:
+        n_processes = cpu_count()
+    args_list = [(x_val_list[i], n_latent_samples, t) for i in range(len(x_val_list))]
+    with Pool(processes=n_processes) as pool:
+        results = pool.starmap(state_limit_function_time, args_list)
+    y_list = [r[0] for r in results]
+    df_list = [r[1] for r in results]
+    df = []
+    i = 0
+    for j, sublist in enumerate(df_list):
+        for k, item in enumerate(sublist):
+            item['realization'] = i
+            item["lambda 1"] = y_list[j][k][0]
+            item["lambda 2"] = y_list[j][k][1]
+            item["lambda 3"] = y_list[j][k][2]
+            item["lambda 4"] = y_list[j][k][3]
+            i += 1
+            df.append(item)
+    df = pd.concat(df).reset_index(drop=True)
+    df['time'] = t
+    df = df[['realization', 'time', 'r', 's', 'z1', 'z2', 'g', 'lambda 1', 'lambda 2', 'lambda 3', 'lambda 4']]
+    glam_data = {'r': [], 's': [], 'lambda 1': [], 'lambda 2': [], 'lambda 3': [], 'lambda 4': []}
+    n_samples = df['realization'].nunique()
+    for i in range(n_samples):
+        x = df[df['realization'] == i]
+        r, s, lambda_1, lambda_2, lambda_3, lambda_4 = x['r'].values[0], x['s'].values[0], x['lambda 1'].values[0], x['lambda 2'].values[0], x['lambda 3'].values[0], x['lambda 4'].values[0]
+        glam_data['r'].append(r)
+        glam_data['s'].append(s)
+        glam_data['lambda 1'].append(lambda_1)
+        glam_data['lambda 2'].append(lambda_2)
+        glam_data['lambda 3'].append(lambda_3)
+        glam_data['lambda 4'].append(lambda_4)
+    glam_data = pd.DataFrame(glam_data)
+
+    return df, glam_data
 
 
 def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n_latent_samples: int, t: float = 0.0, n_processes: Optional[int] = None):
