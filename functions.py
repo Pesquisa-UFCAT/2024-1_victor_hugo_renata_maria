@@ -134,6 +134,24 @@ def plot_gld_vs_data(lambdas, n_points=2000, quantile_trim=1e-3, qp_min=1e-8, yl
     return x, f
 
 
+def glam_data_generator(lambdas, n_points=5000, quantile_trim=1e-3, qp_min=1e-8, ylim=None) -> list:
+    l1, l2, l3, l4 = lambdas
+
+    # Curva da PDF GLD (robusta para evitar explosões numéricas)
+    a = float(quantile_trim)
+    u = np.linspace(a, 1.0 - a, n_points)
+    x = gld_fkml_quantile(u, l1, l2, l3, l4)
+    qp = gld_fkml_qprime(u, l2, l3, l4)
+
+    mask = np.isfinite(x) & np.isfinite(qp) & (qp > qp_min)
+    x, f = x[mask], (1.0 / qp[mask])
+
+    order = np.argsort(x)
+    x, f = x[order], f[order]
+
+    return list(x)
+
+
 def state_limit_function(x: np.ndarray, n_latent_samples: int) -> tuple[np.ndarray, pd.DataFrame]:
     """State limit function with time effect. Considering Z_1 and Z_2 are the latent variables.
     
