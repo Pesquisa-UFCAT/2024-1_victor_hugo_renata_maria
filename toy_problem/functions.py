@@ -13,6 +13,8 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 from multiprocessing import Pool, cpu_count
+from scipy.interpolate import interp1d
+
 
 # ================= FKML: núcleo matemático =================
 def _phi(u, lam):
@@ -451,3 +453,143 @@ def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n
     glam_data = pd.DataFrame(glam_data)
 
     return df, glam_data
+
+
+def g_interpolated_at_t(bds, t_query, column='g_emulator_mean'):
+    """
+    Retorna g(t_query) por interpolação linear.
+    """
+    t = bds['time'].values
+    g = bds[column].values
+
+    f = interp1d(
+        t, g,
+        kind='linear',
+        fill_value='extrapolate',
+        bounds_error=False
+    )
+
+    return float(f(t_query))
+
+
+def failure_time_interpolated(bds, g_threshold=0.0, column='g_emulator_mean'):
+    """
+    Retorna o tempo exato de falha por interpolação (g = g_threshold).
+    """
+    t = bds['time'].values
+    g = bds[column].values
+
+    # Detecta cruzamento
+    sign_change = np.where(np.diff(np.sign(g - g_threshold)) != 0)[0]
+
+    if len(sign_change) == 0:
+        return None  # nunca falha no horizonte analisado
+
+    i = sign_change[0]
+
+    # Interpolação linear entre os dois pontos
+    t1, t2 = t[i], t[i + 1]
+    g1, g2 = g[i], g[i + 1]
+
+    t_failure = t1 + (g_threshold - g1) * (t2 - t1) / (g2 - g1)
+
+    return float(t_failure)
+
+
+def rul(df, t_i, g_threshold, g_column='g_emulator_mean'):
+    """
+    Compute Remaining Useful Life (RUL) based on g(t)
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Must contain columns ['time', g_column]
+    t_i : float
+        Inspection time
+    g_threshold : float
+        Failure threshold (usually 0)
+    g_column : str
+        Column name of g(t)
+
+    Returns
+    -------
+    dict
+    """
+
+    # Ordenar por tempo
+    df = df.sort_values('time')
+
+    time = df['time'].values
+    g = df[g_column].values
+
+    # -------------------------
+    # Interpolação em t_i
+    # -------------------------
+    g_ti = np.interp(t_i, time, g)
+
+    # Já falhou?
+    if g_ti <= g_threshold:
+        return {
+            't_inspection': t_i,
+            't_failure': t_i,
+            'RUL': 0.0,
+            'g_at_inspection': g_ti
+        }
+
+    # -------------------------
+    # Tempo de falha (g = threshold)
+    # -------------------------
+    idx = np.where(g <= g_threshold)[0]
+
+    if len(idx) == 0:
+        t_failure = np.nan
+        rul_value = np.nan
+    else:
+        i = idx[0]
+        t_failure = np.interp(
+            g_threshold,
+            [g[i-1], g[i]],
+            [time[i-1], time[i]]
+        )
+        rul_value = t_failure - t_i
+
+    return {
+        't_inspection': t_i,
+        't_failure': t_failure,
+        'RUL': rul_value,
+        'g_at_inspection': g_ti
+    }
+
+def g_emulator_at_inspect_time(bds, t_i, g_col="g_emulator"):
+    """
+    Retorna os valores de g_emulator exatamente no tempo t_i.
+    Assume que t_i existe no dataset.
+    """
+    g_vals_ins = bds.loc[bds["time"] == t_i, g_col].values
+
+    if len(g_vals_ins) == 0:
+        raise ValueError(f"Time t_i = {t_i} not found in dataset.")
+
+    return g_vals_ins
+
+
+def g_emulator_at_limit_time(bds, t_limit, g_col="g_emulator"):
+    """
+    Retorna os valores de g_emulator exatamente no tempo limite t_limit.
+    Assume que t_limit existe no dataset.
+    """
+    g_vals_lim = bds.loc[bds["time"] == t_limit, g_col].values
+
+    if len(g_vals_lim) == 0:
+        raise ValueError(f"Limit time t_limit = {t_limit} not found in dataset.")
+
+    return g_vals_lim
+
+
+def nearest_time_in_dataset(bds, t_query):
+    """
+    Retorna o tempo disponível no dataset mais próximo de t_query.
+    """
+    time_available = np.sort(bds["time"].unique())
+    idx = np.argmin(np.abs(time_available - t_query))
+    return float(time_available[idx])
