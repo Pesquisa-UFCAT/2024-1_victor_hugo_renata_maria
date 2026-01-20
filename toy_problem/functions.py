@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from typing import Optional
@@ -14,6 +17,31 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 from multiprocessing import Pool, cpu_count
 from scipy.interpolate import interp1d
+
+
+def find_excel_file(filename, max_depth=5):
+    """Busca o arquivo Excel em 5 diretórios acima e 5 diretórios abaixo
+    """
+    
+    # Começa do diretório atual
+    current_dir = Path.cwd()
+    
+    # Procura para cima (diretórios pais)
+    for i in range(max_depth):
+        search_dir = current_dir
+        # Procura em todas as pastas do diretório atual
+        for root, dirs, files in os.walk(search_dir):
+            if filename in files:
+                return os.path.join(root, filename)
+        
+        # Sobe um nível
+        current_dir = current_dir.parent
+        
+        # Se chegou na raiz, para
+        if current_dir == current_dir.parent:
+            break
+    
+    return None
 
 
 # ================= FKML: núcleo matemático =================
@@ -407,54 +435,6 @@ def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n
     return df, glam_data
 
 
-def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n_latent_samples: int, t: float = 0.0, n_processes: Optional[int] = None):
-    """Execute the state limit function in parallel using multiprocessing.
-
-    :param x_val_list: R and S realization dividided in batches for parallel processing
-    :param n_latent_samples: Number of latent samples to be generated for each input sample
-    :param t: Time step. Default is 0
-    :param n_processes: Number of processes to use. If None, use the number of CPU cores
-
-    :return: [0] All datat and [1] Dataset with GLAM parameters and state limit function results for each batch
-    """
-
-    if n_processes is None:
-        n_processes = cpu_count()
-    args_list = [(x_val_list[i], n_latent_samples, t) for i in range(len(x_val_list))]
-    with Pool(processes=n_processes) as pool:
-        results = pool.starmap(state_limit_function_time, args_list)
-    y_list = [r[0] for r in results]
-    df_list = [r[1] for r in results]
-    df = []
-    i = 0
-    for j, sublist in enumerate(df_list):
-        for k, item in enumerate(sublist):
-            item['realization'] = i
-            item["lambda 1"] = y_list[j][k][0]
-            item["lambda 2"] = y_list[j][k][1]
-            item["lambda 3"] = y_list[j][k][2]
-            item["lambda 4"] = y_list[j][k][3]
-            i += 1
-            df.append(item)
-    df = pd.concat(df).reset_index(drop=True)
-    df['time'] = t
-    df = df[['realization', 'time', 'r', 's', 'z1', 'z2', 'g', 'lambda 1', 'lambda 2', 'lambda 3', 'lambda 4']]
-    glam_data = {'r': [], 's': [], 'lambda 1': [], 'lambda 2': [], 'lambda 3': [], 'lambda 4': []}
-    n_samples = df['realization'].nunique()
-    for i in range(n_samples):
-        x = df[df['realization'] == i]
-        r, s, lambda_1, lambda_2, lambda_3, lambda_4 = x['r'].values[0], x['s'].values[0], x['lambda 1'].values[0], x['lambda 2'].values[0], x['lambda 3'].values[0], x['lambda 4'].values[0]
-        glam_data['r'].append(r)
-        glam_data['s'].append(s)
-        glam_data['lambda 1'].append(lambda_1)
-        glam_data['lambda 2'].append(lambda_2)
-        glam_data['lambda 3'].append(lambda_3)
-        glam_data['lambda 4'].append(lambda_4)
-    glam_data = pd.DataFrame(glam_data)
-
-    return df, glam_data
-
-
 def g_interpolated_at_t(bds, t_query, column='g_emulator_mean'):
     """
     Retorna g(t_query) por interpolação linear.
@@ -559,6 +539,7 @@ def rul(df, t_i, g_threshold, g_column='g_emulator_mean'):
         'RUL': rul_value,
         'g_at_inspection': g_ti
     }
+
 
 def g_emulator_at_inspect_time(bds, t_i, g_col="g_emulator"):
     """
