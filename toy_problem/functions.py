@@ -368,14 +368,12 @@ def execute_parallel_process(k: float | int, n_samples: int, n_latent_samples: i
            }
 
 
-def pce_toy_problem_parallel_with_multiprocessing():
+def pce_toy_problem_parallel_with_multiprocessing(n_samples: int = 1000, n_latent_samples: int = 5000) -> list:
     """Execute PCE training process and validate.
     
     :return: r2 score about PCE training
     """
 
-    n_samples = 1000
-    n_latent_samples = 5000
     time = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     inputs = [(k, n_samples, n_latent_samples) for k in time]
 
