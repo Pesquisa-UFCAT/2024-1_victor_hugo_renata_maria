@@ -624,3 +624,255 @@ def nearest_time_in_dataset(bds, t_query):
     time_available = np.sort(bds["time"].unique())
     idx = np.argmin(np.abs(time_available - t_query))
     return float(time_available[idx])
+
+
+def resistant_moment_limit_single_reinforcement(
+    b_w: float,
+    h: float,
+    f_ck: float,
+    gamma_c: float = 1.4
+) -> float:
+    """
+    Computes the resistant bending moment limit for a rectangular reinforced
+    concrete beam section with single reinforcement according to NBR 6118.
+
+    :param b_w: Beam width (m)
+    :param h: Beam total height (m)
+    :param f_ck: Characteristic concrete compressive strength (kPa)
+    :param gamma_c: Partial safety factor for concrete
+
+    :return: Resistant moment limit (N.m)
+    """
+
+    f_ck /= 1e3
+    if f_ck > 50:
+        lambda_c = 0.80 - (f_ck - 50) / 400
+        alpha_c = (1.0 - (f_ck - 50) / 200) * 0.85
+        beta = 0.35
+    else:
+        lambda_c = 0.80
+        alpha_c = 0.85
+        beta = 0.45
+
+    f_ck *= 1e3
+    f_cd = f_ck / gamma_c
+    d = 0.9 * h
+
+    return b_w * d**2 * lambda_c * beta * alpha_c * f_cd * (1 - 0.5 * lambda_c * beta)
+
+
+def steel_area_single_reinforcement(
+    m_sd: float,
+    b_w: float,
+    h: float,
+    f_ck: float,
+    f_ywk: float = 500000,
+    gamma_c: float = 1.4,
+    gamma_s: float = 1.15
+) -> tuple[float, float]:
+    """
+    Computes the required steel reinforcement area for bending according to NBR 6118.
+
+    :param m_sd: Design bending moment (N.m)
+    :param b_w: Beam width (m)
+    :param h: Beam total height (m)
+    :param f_ck: Concrete compressive strength (kPa)
+    :param f_ywk: Characteristic steel yield strength (Pa)
+
+    :return: Steel area a_s (m²), reinforcement ratio rho_s (%)
+    """
+
+    f_ck /= 1e3
+    if f_ck > 50:
+        lambda_c = 0.80 - (f_ck - 50) / 400
+        alpha_c = (1.0 - (f_ck - 50) / 200) * 0.85
+    else:
+        lambda_c = 0.80
+        alpha_c = 0.85
+
+    f_ck *= 1e3
+    f_cd = f_ck / gamma_c
+    d = 0.9 * h
+
+    zeta = m_sd / (b_w * alpha_c * f_cd)
+    x = (d - np.sqrt(d**2 - 2 * zeta)) / lambda_c
+    z = d - 0.5 * lambda_c * x
+
+    f_yd = f_ywk / gamma_s
+    a_s = m_sd / (z * f_yd)
+    rho_s = a_s / (b_w * h) * 100
+
+    return a_s, rho_s
+
+
+def resistant_bending_moment(
+    a_s: float,
+    b_w: float,
+    h: float,
+    f_ck: float,
+    f_yk: float = 500000,
+    gamma_s: float = 1.15,
+    gamma_c: float = 1.40
+) -> float:
+    """
+    Computes the resistant bending moment of a reinforced concrete beam section.
+
+    :param a_s: Steel reinforcement area (m²)
+    :param b_w: Beam width (m)
+    :param h: Beam total height (m)
+    :param f_ck: Concrete compressive strength (kPa)
+
+    :return: Resistant bending moment R (N.m)
+    """
+
+    f_ck /= 1e3
+    if f_ck > 50:
+        lambda_c = 0.80 - (f_ck - 50) / 400
+        alpha_c = (1.0 - (f_ck - 50) / 200) * 0.85
+    else:
+        lambda_c = 0.80
+        alpha_c = 0.85
+
+    f_ck *= 1e3
+    f_cd = f_ck / gamma_c
+    d = 0.9 * h
+
+    x = (a_s * f_yk) / (f_cd * b_w * alpha_c * lambda_c)
+    m_rd = a_s * f_yk * (d - 0.5 * lambda_c * x)
+
+    return m_rd
+
+
+def compute_RS_real_beam(
+    b_w: float,
+    h: float,
+    f_ck: float,
+    a_s: float,
+    chi: float = 0.30,
+    gamma_g: float = 1.40,
+    gamma_q: float = 1.40,
+    gamma_f: float = 1.00
+) -> tuple[float, float]:
+    """
+    Computes deterministic resistance (R) and solicitation (S)
+    for a real reinforced concrete beam based on mechanical models.
+
+    :param b_w: Beam width (m)
+    :param h: Beam total height (m)
+    :param f_ck: Concrete compressive strength (kPa)
+    :param a_s: Steel reinforcement area (m²)
+    :param chi: Load combination factor
+    :param gamma_g: Permanent load factor
+    :param gamma_q: Variable load factor
+    :param gamma_f: Global safety factor
+
+    :return:
+        R: Resistant bending moment
+        S: Design solicitation bending moment
+    """
+
+    # --- Resistant bending moment ---
+    R = resistant_bending_moment(
+        a_s=a_s,
+        b_w=b_w,
+        h=h,
+        f_ck=f_ck
+    )
+
+    # --- Load decomposition ---
+    den_g = gamma_g + gamma_q * chi / (1.0 - chi)
+    den_q = gamma_g * (1.0 - chi) / chi + gamma_q
+
+    m_gk = R / den_g
+    m_qk = R / den_q
+
+    # --- Design solicitation ---
+    S = gamma_f * (m_gk + m_qk)
+
+    return R, S
+
+
+def generate_x_from_real_beam(
+    b_w: float,
+    h: float,
+    f_ck: float,
+    a_s: float,
+    chi: float = 0.30
+) -> np.ndarray:
+    """
+    Generates input array x = [[R, S]] for the GLAM pipeline
+    from a real reinforced concrete beam.
+    """
+
+    R, S = compute_RS_real_beam(
+        b_w=b_w,
+        h=h,
+        f_ck=f_ck,
+        a_s=a_s,
+        chi=chi
+    )
+
+    return np.array([[R, S]])
+
+
+
+def state_limit_function_time_real_beam(
+    x: np.ndarray,
+    n_latent_samples: int,
+    t: float = 0.0
+) -> tuple[np.ndarray, list[pd.DataFrame]]:
+    """
+    State limit function with time effect for a real reinforced concrete beam.
+    Considering Z_1 and Z_2 as latent variables.
+
+    :param x: Input variables [0] = Resistance R ; [1] = Load S
+    :param n_latent_samples: Number of latent samples per realization
+    :param t: Time parameter (years)
+
+    :return:
+        [0] GLAM parameters (lambdas)
+        [1] List of DataFrames with r, s, z1, z2 and g
+    """
+
+    y_aux = []
+    dfs = []
+
+    for i in range(x.shape[0]):
+
+        df = pd.DataFrame({
+            'r': [x[i, 0]] * n_latent_samples,
+            's': [x[i, 1]] * n_latent_samples
+        })
+
+        z1, z2 = [], []
+
+        for _ in range(n_latent_samples):
+
+            # --- Latent variable Z1 (resistance uncertainty) ---
+            mu, sc = 1.0, 0.028
+            s_ln = np.sqrt(np.log(1 + (sc / mu) ** 2))
+            scale_ln = mu / np.sqrt(1 + (sc / mu) ** 2)
+            z1.append(stats.lognorm.rvs(s=s_ln, scale=scale_ln))
+
+            # --- Latent variable Z2 (load uncertainty) ---
+            mu, sc = 1.0, 0.096
+            s_ln = np.sqrt(np.log(1 + (sc / mu) ** 2))
+            scale_ln = mu / np.sqrt(1 + (sc / mu) ** 2)
+            z2.append(stats.lognorm.rvs(s=s_ln, scale=scale_ln))
+
+        df['z1'] = z1
+        df['z2'] = z2
+
+        # --- Time degradation factor (generic – can be replaced by carbonation) ---
+        k_t = 1 + (0.3 - 1.0) * t / 100
+
+        df['g'] = k_t * df['r'] / df['z1'] - df['s'] * df['z2']
+
+        lambdas, _ = fit_gld_fkml_mle(df['g'].values)
+
+        y_aux.append(lambdas)
+        dfs.append(df)
+
+    return np.array(y_aux), dfs
+
+
