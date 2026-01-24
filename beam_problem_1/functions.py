@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 from multiprocessing import Pool, cpu_count
 from scipy.interpolate import interp1d
+import scipy as sc
 
 
 def find_excel_file(filename, max_depth=5):
@@ -626,63 +627,33 @@ def nearest_time_in_dataset(bds, t_query):
     return float(time_available[idx])
 
 
-def resistant_moment_limit_single_reinforcement(
-    b_w: float,
-    h: float,
-    f_ck: float,
-    gamma_c: float = 1.4
-) -> float:
-    """
-    Computes the resistant bending moment limit for a rectangular reinforced
-    concrete beam section with single reinforcement according to NBR 6118.
-
-    :param b_w: Beam width (m)
-    :param h: Beam total height (m)
-    :param f_ck: Characteristic concrete compressive strength (kPa)
-    :param gamma_c: Partial safety factor for concrete
-
-    :return: Resistant moment limit (N.m)
-    """
-
-    f_ck /= 1e3
-    if f_ck > 50:
-        lambda_c = 0.80 - (f_ck - 50) / 400
-        alpha_c = (1.0 - (f_ck - 50) / 200) * 0.85
-        beta = 0.35
-    else:
-        lambda_c = 0.80
-        alpha_c = 0.85
-        beta = 0.45
-
-    f_ck *= 1e3
-    f_cd = f_ck / gamma_c
-    d = 0.9 * h
-
-    return b_w * d**2 * lambda_c * beta * alpha_c * f_cd * (1 - 0.5 * lambda_c * beta)
-
-
 def steel_area_single_reinforcement(
     m_sd: float,
     b_w: float,
     h: float,
     f_ck: float,
-    f_ywk: float = 500000,
-    gamma_c: float = 1.4,
-    gamma_s: float = 1.15
+    f_ywk: float = 500_000,
+    gamma_c: float = 1.00,
+    gamma_s: float = 1.00
 ) -> tuple[float, float]:
     """
-    Computes the required steel reinforcement area for bending according to NBR 6118.
+    Computes the required tensile reinforcement area for a singly reinforced
+    rectangular concrete beam under bending, according to NBR 6118.
 
-    :param m_sd: Design bending moment (N.m)
+    :param m_sd: Design bending moment (kN·m)
     :param b_w: Beam width (m)
-    :param h: Beam total height (m)
-    :param f_ck: Concrete compressive strength (kPa)
-    :param f_ywk: Characteristic steel yield strength (Pa)
+    :param h: Total beam height (m)
+    :param f_ck: Characteristic compressive strength of concrete (MPa)
+    :param f_ywk: Characteristic yield strength of steel (MPa)
+    :param gamma_c: Partial safety factor for concrete
+    :param gamma_s: Partial safety factor for steel
 
-    :return: Steel area a_s (m²), reinforcement ratio rho_s (%)
+    :return:
+        a_s: Required steel area (m²)
+        rho_s: Reinforcement ratio (%)
     """
 
-    f_ck /= 1e3
+    # Adjustment of concrete parameters for high-strength concrete
     if f_ck > 50:
         lambda_c = 0.80 - (f_ck - 50) / 400
         alpha_c = (1.0 - (f_ck - 50) / 200) * 0.85
@@ -690,149 +661,378 @@ def steel_area_single_reinforcement(
         lambda_c = 0.80
         alpha_c = 0.85
 
-    f_ck *= 1e3
-    f_cd = f_ck / gamma_c
+    # Design concrete strength
+    f_cd = f_ck * 1e3 / gamma_c   # kN/m²
+
+    # Effective depth
     d = 0.9 * h
 
+    # Neutral axis depth
     zeta = m_sd / (b_w * alpha_c * f_cd)
     x = (d - np.sqrt(d**2 - 2 * zeta)) / lambda_c
+
+    # Lever arm
     z = d - 0.5 * lambda_c * x
 
-    f_yd = f_ywk / gamma_s
+    # Design steel strength
+    f_yd = f_ywk * 1e3 / gamma_s  # kN/m²
+
+    # Required steel area
     a_s = m_sd / (z * f_yd)
+
+    # Reinforcement ratio
     rho_s = a_s / (b_w * h) * 100
 
     return a_s, rho_s
 
 
-def resistant_bending_moment(
-    a_s: float,
-    b_w: float,
-    h: float,
-    f_ck: float,
-    f_yk: float = 500000,
-    gamma_s: float = 1.15,
-    gamma_c: float = 1.40
-) -> float:
+def f_alpha(beta: float, args: list) -> float:
     """
-    Computes the resistant bending moment of a reinforced concrete beam section.
+    Residual of the axial force equilibrium equation for a rectangular
+    reinforced concrete section, using the simplified stress block
+    of NBR 6118 (2023).
 
-    :param a_s: Steel reinforcement area (m²)
-    :param b_w: Beam width (m)
-    :param h: Beam total height (m)
-    :param f_ck: Concrete compressive strength (kPa)
+    :param beta: Neutral axis ratio x/d
+    :param args: List containing:
+        f_ck: characteristic concrete strength (MPa)
+        f_yk: characteristic steel yield strength (MPa)
+        b_w: section width (m)
+        d: effective depth (m)
+        a_st: tensile steel area (m²)
+        e_s: steel modulus of elasticity (MPa)
+        gamma_c: concrete partial safety factor
+        gamma_s: steel partial safety factor
 
-    :return: Resistant bending moment R (N.m)
+    :return:
+        Residual of force equilibrium (concrete – steel)
     """
 
-    f_ck /= 1e3
+    f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s = args
+
+    # Concrete parameters
     if f_ck > 50:
         lambda_c = 0.80 - (f_ck - 50) / 400
-        alpha_c = (1.0 - (f_ck - 50) / 200) * 0.85
+        alpha_c = (1.00 - (f_ck - 50) / 200) * 0.85
+        eta_c = (40 / f_ck) ** (1/3)
+        epsilon_cu = 2.6e-3 + 35e-3 * ((90 - f_ck) / 100) ** 4
     else:
         lambda_c = 0.80
         alpha_c = 0.85
+        eta_c = 1.00
+        epsilon_cu = 3.5e-3
 
-    f_ck *= 1e3
-    f_cd = f_ck / gamma_c
-    d = 0.9 * h
+    # Concrete stress block
+    f_cd = f_ck * 1e3 / gamma_c
+    sigma_cd = alpha_c * eta_c * f_cd
 
-    x = (a_s * f_yk) / (f_cd * b_w * alpha_c * lambda_c)
-    m_rd = a_s * f_yk * (d - 0.5 * lambda_c * x)
+    # Neutral axis depth
+    x = beta * d
+
+    # Resultant concrete force
+    r_cc = sigma_cd * lambda_c * x * b_w
+
+    # Domain limit between 2 and 3
+    beta_lim = epsilon_cu / (epsilon_cu + 10e-3)
+
+    # Steel strain
+    if beta <= beta_lim:
+        epsilon_st = 10e-3
+    else:
+        epsilon_st = epsilon_cu * (1 - beta) / beta
+
+    # Steel stress
+    f_yd = f_yk * 1e3 / gamma_s
+    epsilon_yd = f_yd / (e_s * 1e3)
+
+    if abs(epsilon_st) <= epsilon_yd:
+        sigma_st = e_s * epsilon_st
+    else:
+        sigma_st = np.sign(epsilon_st) * f_yd
+
+    # Resultant steel force
+    r_st = sigma_st * a_st
+
+    return r_cc - r_st
+
+
+def resistant_bending_moment_without_corrosion(
+    a_st: float,
+    b_w: float,
+    h: float,
+    relacao_h_d: float,
+    f_ck: float,
+    f_yk: float,
+    e_s: float,
+    gamma_c: float = 1.00,
+    gamma_s: float = 1.00
+) -> float:
+    """
+    Computes the flexural resistance of a singly reinforced
+    rectangular concrete beam without corrosion effects.
+    
+    :param a_st: tensile reinforcement area (m²)
+    :param b_w: section width (m)
+    :param h: total section height (m)
+    :param relacao_h_d: d/h ratio of the section
+    :param f_ck: characteristic compressive strength of concrete (MPa)
+    :param f_yk: characteristic tensile strength of steel (MPa)
+    :param e_s: modulus of elasticity of steel (MPa)
+    :param gamma_c: partial safety factor for concrete
+    :param gamma_s: partial safety factor for steel
+
+    :return:
+        m_rd: Resistant bending moment (N·m)
+    """
+
+    # Concrete parameters
+    if f_ck > 50:
+        lambda_c = 0.80 - (f_ck - 50) / 400
+        alpha_c = (1.00 - (f_ck - 50) / 200) * 0.85
+        eta_c = (40 / f_ck) ** (1/3)
+    else:
+        lambda_c = 0.80
+        alpha_c = 0.85
+        eta_c = 1.00
+
+    d = h * relacao_h_d
+
+    # Solve force equilibrium
+    args = (f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s)
+    sol = sc.optimize.root_scalar(
+        lambda beta: f_alpha(beta, args),
+        bracket=(1e-5, d / h),
+        method='bisect'
+    )
+
+    x = sol.root * d
+
+    # Resistant moment
+    f_cd = f_ck * 1e3 / gamma_c
+    sigma_cd = alpha_c * eta_c * f_cd
+    r_cc = sigma_cd * lambda_c * x * b_w
+
+    m_rd = r_cc * (d - 0.5 * lambda_c * x)
 
     return m_rd
 
 
-def compute_RS_real_beam(
+
+def corrosion_index(i_corr_20: float, temperature: float) -> float:
+    """Determines the corrosion index of steel reinforcements in reinforced concrete considering the influence of ambient temperature on the corrosion rate, according to Peng and Stewart (2016).
+
+    :param i_corr_20: Índice de corrosão a 20°C (μA/cm²)
+    :param temperatura: Temperatura do ambiente (°C)
+
+    :return: Índice de corrosão ajustado para a temperatura T (μA/cm²)
+    """
+
+    # Correção para temperaturas diferentes de 20°C
+    if temperature > 20:
+        k = 0.073
+    elif temperature < 20:
+        k = 0.025
+    elif temperature == 20:
+        k = 0
+    i_corr = i_corr_20 * (1 + k * (temperature - 20))
+
+    return i_corr
+
+
+def resistant_bending_moment_wit_corrosion(
+    d_0: float,
+    n_barras: int,
+    f_ck: float,
+    f_yk: float,
+    e_s: float,
     b_w: float,
     h: float,
-    f_ck: float,
-    a_s: float,
-    chi: float = 0.30,
-    gamma_g: float = 1.40,
-    gamma_q: float = 1.40,
-    gamma_f: float = 1.00
+    relacao_d_h: float,
+    i_corr_20: float,
+    temperatura: float,
+    tempo_decorrido: float,
+    tempo_iniciacao: float,
+    gamma_c: float = 1.00,
+    gamma_s: float = 1.00
+) -> tuple[float, float, float, float]:
+    """
+    Determina o momento resistente de uma viga de concreto armado considerando
+    os efeitos da corrosão nas armaduras de aço.
+
+    :reference: Al-Gohi, B. H. A. (2008), “Time-dependent modeling of loss of flexural strength of corroding RC beams”.
+
+    :param d_0: Diâmetro original da barra de aço (m)
+    :param n_barras: Número de barras de aço na seção
+    :param f_ck: Resistência característica do concreto (kPa)
+    :param f_yk: Resistência característica do aço (kPa)
+    :param e_s: Módulo de elasticidade do aço (kPa)
+    :param b_w: Largura da seção transversal da viga (m)
+    :param h: Altura total da seção da viga (m)
+    :param relacao_d_h: Relação altura útil / altura total da seção (adimensional)
+    :param i_corr_20: Índice de corrosão a 20°C (μA/cm²)
+    :param temperatura: Temperatura do ambiente (°C)
+    :param tempo_decorrido: Tempo decorrido desde a instalação da estrutura (anos)
+    :param tempo_iniciacao: Tempo estimado de início da corrosão (anos)
+    :param gamma_c: Coeficiente parcial de segurança do concreto (padrão = 1.4)
+    :param gamma_s: Coeficiente parcial de segurança do aço (padrão = 1.15)
+
+    :return: Tupla contendo:
+        m_rd: Momento resistente da viga (N·m)
+        c_f: Coeficiente de redução da aderência devido à corrosão (adimensional)
+        d_corroido: Diâmetro corroido da barra de aço (m)
+        i_corr: Índice de corrosão ajustado para a temperatura T (μA/cm²)
+    """
+
+    # Tempo efetivo de corrosão
+    tempo_corrosao = max(0.0, tempo_decorrido - tempo_iniciacao)
+
+    # Índice de corrosão ajustado à temperatura
+    i_corr_uA = corrosion_index(i_corr_20, temperatura)
+
+    # Perda de diâmetro (modelo de Al-Gohi)
+    d_0_mm = d_0 * 1000
+    delta_dim = 0.0232 * i_corr_uA * tempo_corrosao
+    d_corroido = max(0.0, (d_0_mm - delta_dim) / 1000)
+
+    # Área de aço corroída
+    a_s_corroida = n_barras * (np.pi * d_corroido**2 / 4)
+
+    # Momento resistente mecânico
+    m_rd = resistant_bending_moment_without_corrosion(
+        a_st=a_s_corroida,
+        b_w=b_w,
+        h=h,
+        relacao_h_d=relacao_d_h,
+        f_ck=f_ck,
+        f_yk=f_yk,
+        e_s=e_s,
+        gamma_c=gamma_c,
+        gamma_s=gamma_s
+    )
+
+    # Redução por perda de aderência
+    if tempo_corrosao == 0:
+        c_f = 1.0
+    else:
+        i_corr_mA = i_corr_uA / 1000
+        cf_aux = 5 / (
+            d_0_mm * 0.54 * (i_corr_mA * tempo_corrosao * 365) * 0.19
+        )
+        c_f = min(1.0, cf_aux)
+
+    m_rd *= c_f
+
+    return m_rd, c_f, d_corroido, i_corr_uA
+
+
+def simple_support_beam_bending_moment(
+    q_k: float, 
+    l: float
+) -> float:
+    """
+    Computes the bending moment at mid-span for a simply supported beam
+    under a uniformly distributed load.
+
+    :param q_k: Characteristic distributed load (N/m)
+    :param l: Span length (m)
+
+    :return: Bending moment at mid-span (N·m)
+    """
+    return q_k * l**2 / 8
+
+
+def design_bending_moment(
+    g_k: float,
+    q_k: float,
+    l: float,
+    gamma_g: float = 1.00,
+    gamma_q: float = 1.00
+) -> float:
+    """
+    Computes the design bending moment for a simply supported beam
+    under permanent and variable distributed loads.
+
+    :param g_k: Permanent load (N/m)
+    :param q_k: Variable load (N/m)
+    :param l: Span length (m)
+    :param gamma_g: Safety factor for permanent load
+    :param gamma_q: Safety factor for variable load
+
+    :return: Design bending moment S (N·m)
+    """
+
+    m_gk = simple_support_beam_bending_moment(g_k, l)
+    m_qk = simple_support_beam_bending_moment(q_k, l)
+
+    return gamma_g * m_gk + gamma_q * m_qk
+
+
+def compute_RS_real_beam_time(
+    beam: dict,
+    t: float
 ) -> tuple[float, float]:
     """
-    Computes deterministic resistance (R) and solicitation (S)
-    for a real reinforced concrete beam based on mechanical models.
-
-    :param b_w: Beam width (m)
-    :param h: Beam total height (m)
-    :param f_ck: Concrete compressive strength (kPa)
-    :param a_s: Steel reinforcement area (m²)
-    :param chi: Load combination factor
-    :param gamma_g: Permanent load factor
-    :param gamma_q: Variable load factor
-    :param gamma_f: Global safety factor
-
-    :return:
-        R: Resistant bending moment
-        S: Design solicitation bending moment
+    Computes resistance R(t) and solicitation S for a real reinforced
+    concrete beam considering corrosion effects over time.
     """
 
-    # --- Resistant bending moment ---
-    R = resistant_bending_moment(
-        a_s=a_s,
-        b_w=b_w,
-        h=h,
-        f_ck=f_ck
+    m_rd, _, _, _ = resistant_bending_moment_wit_corrosion(
+        d_0=beam['d_0'],
+        n_barras=beam['n_barras'],
+        f_ck=beam['f_ck'],
+        f_yk=beam['f_yk'],
+        e_s=beam['e_s'],
+        b_w=beam['b_w'],
+        h=beam['h'],
+        relacao_d_h=beam['relacao_d_h'],
+        i_corr_20=beam['i_corr_20'],
+        temperatura=beam['temperatura'],
+        tempo_decorrido=t,                      # ← AQUI
+        tempo_iniciacao=beam['tempo_iniciacao'],
+        gamma_c=beam.get('gamma_c', 1.00),
+        gamma_s=beam.get('gamma_s', 1.00)
     )
 
-    # --- Load decomposition ---
-    den_g = gamma_g + gamma_q * chi / (1.0 - chi)
-    den_q = gamma_g * (1.0 - chi) / chi + gamma_q
+    # Solicitation (permanece determinística)
+    S = design_bending_moment(
+        g_k=beam['g_k'],
+        q_k=beam['q_k'],
+        l=beam['l'],
+        gamma_g=beam.get('gamma_g', 1.00),
+        gamma_q=beam.get('gamma_q', 1.00)
+    )
 
-    m_gk = R / den_g
-    m_qk = R / den_q
-
-    # --- Design solicitation ---
-    S = gamma_f * (m_gk + m_qk)
-
-    return R, S
+    return m_rd, S
 
 
-def generate_x_from_real_beam(
-    b_w: float,
-    h: float,
-    f_ck: float,
-    a_s: float,
-    chi: float = 0.30
+
+def generate_x_from_real_beams_time(
+    beams: list[dict],
+    t: float
 ) -> np.ndarray:
     """
-    Generates input array x = [[R, S]] for the GLAM pipeline
-    from a real reinforced concrete beam.
+    Generates x(t) = [[R(t), S], ...] for multiple real beams.
     """
 
-    R, S = compute_RS_real_beam(
-        b_w=b_w,
-        h=h,
-        f_ck=f_ck,
-        a_s=a_s,
-        chi=chi
-    )
+    x = []
 
-    return np.array([[R, S]])
+    for beam in beams:
+        R, S = compute_RS_real_beam_time(beam, t)
+        x.append([R, S])
+
+    return np.array(x, dtype=float)
 
 
 
 def state_limit_function_time_real_beam(
-    x: np.ndarray,
+    beams: list[dict],
     n_latent_samples: int,
-    t: float = 0.0
+    t: float
 ) -> tuple[np.ndarray, list[pd.DataFrame]]:
     """
-    State limit function with time effect for a real reinforced concrete beam.
-    Considering Z_1 and Z_2 as latent variables.
-
-    :param x: Input variables [0] = Resistance R ; [1] = Load S
-    :param n_latent_samples: Number of latent samples per realization
-    :param t: Time parameter (years)
-
-    :return:
-        [0] GLAM parameters (lambdas)
-        [1] List of DataFrames with r, s, z1, z2 and g
+    State limit function with time effect for real RC beams.
     """
+
+    x = generate_x_from_real_beams_time(beams, t)
 
     y_aux = []
     dfs = []
@@ -848,13 +1048,13 @@ def state_limit_function_time_real_beam(
 
         for _ in range(n_latent_samples):
 
-            # --- Latent variable Z1 (resistance uncertainty) ---
+            # --- Z1: resistance uncertainty ---
             mu, sc = 1.0, 0.028
             s_ln = np.sqrt(np.log(1 + (sc / mu) ** 2))
             scale_ln = mu / np.sqrt(1 + (sc / mu) ** 2)
             z1.append(stats.lognorm.rvs(s=s_ln, scale=scale_ln))
 
-            # --- Latent variable Z2 (load uncertainty) ---
+            # --- Z2: load uncertainty ---
             mu, sc = 1.0, 0.096
             s_ln = np.sqrt(np.log(1 + (sc / mu) ** 2))
             scale_ln = mu / np.sqrt(1 + (sc / mu) ** 2)
@@ -863,10 +1063,8 @@ def state_limit_function_time_real_beam(
         df['z1'] = z1
         df['z2'] = z2
 
-        # --- Time degradation factor (generic – can be replaced by carbonation) ---
-        k_t = 1 + (0.3 - 1.0) * t / 100
-
-        df['g'] = k_t * df['r'] / df['z1'] - df['s'] * df['z2']
+        # --- State limit function ---
+        df['g'] = df['r'] / df['z1'] - df['s'] * df['z2']
 
         lambdas, _ = fit_gld_fkml_mle(df['g'].values)
 
@@ -874,5 +1072,6 @@ def state_limit_function_time_real_beam(
         dfs.append(df)
 
     return np.array(y_aux), dfs
+
 
 
