@@ -632,7 +632,7 @@ def steel_area_single_reinforcement(
     b_w: float,
     h: float,
     f_ck: float,
-    f_ywk: float = 500_000,
+    f_ywk: float,
     gamma_c: float = 1.00,
     gamma_s: float = 1.00
 ) -> tuple[float, float]:
@@ -781,7 +781,7 @@ def resistant_bending_moment_without_corrosion(
     :param gamma_s: partial safety factor for steel
 
     :return:
-        m_rd: Resistant bending moment (N·m)
+        m_rd: Resistant bending moment (kN·m)
     """
 
     # Concrete parameters
@@ -862,9 +862,9 @@ def resistant_bending_moment_wit_corrosion(
 
     :param d_0: Diâmetro original da barra de aço (m)
     :param n_barras: Número de barras de aço na seção
-    :param f_ck: Resistência característica do concreto (kPa)
-    :param f_yk: Resistência característica do aço (kPa)
-    :param e_s: Módulo de elasticidade do aço (kPa)
+    :param f_ck: Resistência característica do concreto (MPa)
+    :param f_yk: Resistência característica do aço (MPa)
+    :param e_s: Módulo de elasticidade do aço (MPa)
     :param b_w: Largura da seção transversal da viga (m)
     :param h: Altura total da seção da viga (m)
     :param relacao_d_h: Relação altura útil / altura total da seção (adimensional)
@@ -876,7 +876,7 @@ def resistant_bending_moment_wit_corrosion(
     :param gamma_s: Coeficiente parcial de segurança do aço (padrão = 1.15)
 
     :return: Tupla contendo:
-        m_rd: Momento resistente da viga (N·m)
+        m_rd: Momento resistente da viga (kN·m)
         c_f: Coeficiente de redução da aderência devido à corrosão (adimensional)
         d_corroido: Diâmetro corroido da barra de aço (m)
         i_corr: Índice de corrosão ajustado para a temperatura T (μA/cm²)
@@ -915,13 +915,14 @@ def resistant_bending_moment_wit_corrosion(
     else:
         i_corr_mA = i_corr_uA / 1000
         cf_aux = 5 / (
-            d_0_mm * 0.54 * (i_corr_mA * tempo_corrosao * 365) * 0.19
+            d_0_mm ** 0.54 * (i_corr_mA * tempo_corrosao * 365) ** 0.19
         )
         c_f = min(1.0, cf_aux)
 
     m_rd *= c_f
 
     return m_rd, c_f, d_corroido, i_corr_uA
+
 
 
 def simple_support_beam_bending_moment(
@@ -932,10 +933,10 @@ def simple_support_beam_bending_moment(
     Computes the bending moment at mid-span for a simply supported beam
     under a uniformly distributed load.
 
-    :param q_k: Characteristic distributed load (N/m)
+    :param q_k: Characteristic distributed load (kN/m)
     :param l: Span length (m)
 
-    :return: Bending moment at mid-span (N·m)
+    :return: Bending moment at mid-span (kN·m)
     """
     return q_k * l**2 / 8
 
@@ -951,13 +952,13 @@ def design_bending_moment(
     Computes the design bending moment for a simply supported beam
     under permanent and variable distributed loads.
 
-    :param g_k: Permanent load (N/m)
-    :param q_k: Variable load (N/m)
+    :param g_k: Permanent load (kN/m)
+    :param q_k: Variable load (kN/m)
     :param l: Span length (m)
     :param gamma_g: Safety factor for permanent load
     :param gamma_q: Safety factor for variable load
 
-    :return: Design bending moment S (N·m)
+    :return: Design bending moment S (kN·m)
     """
 
     m_gk = simple_support_beam_bending_moment(g_k, l)
@@ -967,15 +968,14 @@ def design_bending_moment(
 
 
 def compute_RS_real_beam_time(
-    beam: dict,
-    t: float
+    beam: dict
 ) -> tuple[float, float]:
     """
     Computes resistance R(t) and solicitation S for a real reinforced
     concrete beam considering corrosion effects over time.
     """
 
-    m_rd, _, _, _ = resistant_bending_moment_wit_corrosion(
+    R, _, _, _ = resistant_bending_moment_wit_corrosion(
         d_0=beam['d_0'],
         n_barras=beam['n_barras'],
         f_ck=beam['f_ck'],
@@ -986,7 +986,7 @@ def compute_RS_real_beam_time(
         relacao_d_h=beam['relacao_d_h'],
         i_corr_20=beam['i_corr_20'],
         temperatura=beam['temperatura'],
-        tempo_decorrido=t,                      # ← AQUI
+        tempo_decorrido=beam['tempo_decorrido'],                   
         tempo_iniciacao=beam['tempo_iniciacao'],
         gamma_c=beam.get('gamma_c', 1.00),
         gamma_s=beam.get('gamma_s', 1.00)
@@ -1001,13 +1001,12 @@ def compute_RS_real_beam_time(
         gamma_q=beam.get('gamma_q', 1.00)
     )
 
-    return m_rd, S
+    return R, S
 
 
 
 def generate_x_from_real_beams_time(
-    beams: list[dict],
-    t: float
+    beams: list[dict]
 ) -> np.ndarray:
     """
     Generates x(t) = [[R(t), S], ...] for multiple real beams.
@@ -1016,7 +1015,7 @@ def generate_x_from_real_beams_time(
     x = []
 
     for beam in beams:
-        R, S = compute_RS_real_beam_time(beam, t)
+        R, S = compute_RS_real_beam_time(beam)
         x.append([R, S])
 
     return np.array(x, dtype=float)
@@ -1025,14 +1024,13 @@ def generate_x_from_real_beams_time(
 
 def state_limit_function_time_real_beam(
     beams: list[dict],
-    n_latent_samples: int,
-    t: float
+    n_latent_samples: int
 ) -> tuple[np.ndarray, list[pd.DataFrame]]:
     """
     State limit function with time effect for real RC beams.
     """
 
-    x = generate_x_from_real_beams_time(beams, t)
+    x = generate_x_from_real_beams_time(beams)
 
     y_aux = []
     dfs = []
