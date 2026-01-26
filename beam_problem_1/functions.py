@@ -1072,4 +1072,57 @@ def state_limit_function_time_real_beam(
     return np.array(y_aux), dfs
 
 
+def carbonation_depth_at_time(
+    model,
+    t: float,
+    CO2_ppm: float,
+    fc: float,
+    rh: float,
+    cement_type: int,
+    exposure_conditions: int
+) -> float:
 
+    # Caso venha um bundle antigo por engano
+    if isinstance(model, dict):
+        model = model.get('model', model)
+
+    df = pd.DataFrame({
+        't (years)': [t],
+        'CO2 (%)': [CO2_ppm / 10000],
+        'fc (MPa)': [fc],
+        'RH (%)': [rh],
+        'Type of cement': [cement_type],
+        'Exposure conditions': [exposure_conditions]
+    })
+
+    df = df[model.feature_names_in_]
+
+    return float(model.predict(df)[0])
+
+
+def compute_tempo_iniciacao_from_carb(
+    model,
+    cobrimento_mm: float,
+    t_max: int,
+    CO2_ppm: float,
+    fc: float,
+    rh: float,
+    cement_type: int,
+    exposure_conditions: int
+) -> float:
+
+    for t in range(1, t_max + 1):
+        carb_depth = carbonation_depth_at_time(
+            model=model,
+            t=t,
+            CO2_ppm=CO2_ppm,
+            fc=fc,
+            rh=rh,
+            cement_type=cement_type,
+            exposure_conditions=exposure_conditions
+        )
+
+        if carb_depth >= cobrimento_mm:
+            return float(t)
+
+    return np.inf
