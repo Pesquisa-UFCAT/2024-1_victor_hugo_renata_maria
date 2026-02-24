@@ -566,6 +566,50 @@ def g_emulator_at_limit_time(bds, t_limit, g_col="g_emulator"):
     return g_vals_lim
 
 
+
+def co2_atmosferico_1900_1950(ano):
+    """CO2 atmosférico (%) para os períodos históricos 1900–1950
+    """
+    # crescimento médio ~0.30 ppm/ano
+    co2_ppm = 296.0 + 0.30 * (ano - 1900)
+    return co2_ppm / 1e4
+
+
+def co2_atmosferico_1950_2000(ano):
+    """CO2 atmosférico (%) para os períodos históricos 1950–2000
+    """
+
+    # crescimento médio ~1.16 ppm/ano
+    co2_ppm = 311.0 + 1.16 * (ano - 1950)
+    return co2_ppm / 1e4
+
+
+def co2_atmosferico_pos2000(ano):
+    """CO2 atmosférico (%) para os períodos históricos pós-2000
+    """
+
+    t = ano - 2000
+
+    C0 = 369.0   # ppm em 2000
+    a  = 1.85    # ppm/ano
+    b  = 0.018   # ppm/ano²
+
+    co2_ppm = C0 + a * t + b * t**2
+    return co2_ppm / 1e4
+
+
+def co2_atmosferico_ano(ano):
+    """Concentração média global de CO2 atmosférico (%) válida de 1900 em diante.
+    """
+
+    if ano <= 1950:
+        return co2_atmosferico_1900_1950(ano)
+    elif 1950 < ano <= 2000:
+        return co2_atmosferico_1950_2000(ano)
+    else:
+        return co2_atmosferico_pos2000(ano)
+
+
 # Beam class
 class Beam():
     def __init__(
@@ -848,7 +892,7 @@ def state_limit_function_time(model: Any, geo: list, mat: list, load: list, expo
         
         # Carbonation time
         times = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 125, 150, 180]
-        co2 = 0.05
+        co2 = co2_atmosferico_ano()
         df['time for carbonation to start [year]'] = df.apply(lambda row: beam_instance.carbonation_depth_at_time(model=model, times=times, co2_perc=co2, rh=float(row['z3'])), axis=1)
         
         # Load and resistant moment
