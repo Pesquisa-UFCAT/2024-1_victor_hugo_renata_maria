@@ -566,48 +566,46 @@ def g_emulator_at_limit_time(bds, t_limit, g_col="g_emulator"):
     return g_vals_lim
 
 
-
-def co2_atmosferico_1900_1950(ano):
+def co2_percentage_1900_1950(year):
     """CO2 atmosférico (%) para os períodos históricos 1900–1950
     """
-    # crescimento médio ~0.30 ppm/ano
-    co2_ppm = 296.0 + 0.30 * (ano - 1900)
+    # crescimento médio ~0.30 ppm/year
+    co2_ppm = 296.0 + 0.30 * (year - 1900)
     return co2_ppm / 1e4
 
 
-def co2_atmosferico_1950_2000(ano):
+def co2_percentage_1950_2000(year):
     """CO2 atmosférico (%) para os períodos históricos 1950–2000
     """
-
-    # crescimento médio ~1.16 ppm/ano
-    co2_ppm = 311.0 + 1.16 * (ano - 1950)
+    # crescimento médio ~1.16 ppm/year
+    co2_ppm = 311.0 + 1.16 * (year - 1950)
     return co2_ppm / 1e4
 
 
-def co2_atmosferico_pos2000(ano):
+def co2_percentage_pos2000(year):
     """CO2 atmosférico (%) para os períodos históricos pós-2000
     """
 
-    t = ano - 2000
+    t = year - 2000
 
     C0 = 369.0   # ppm em 2000
-    a  = 1.85    # ppm/ano
-    b  = 0.018   # ppm/ano²
+    a  = 1.85    # ppm/year
+    b  = 0.018   # ppm/year²
 
     co2_ppm = C0 + a * t + b * t**2
     return co2_ppm / 1e4
 
 
-def co2_atmosferico_ano(ano):
+def co2_percentage_year(year):
     """Concentração média global de CO2 atmosférico (%) válida de 1900 em diante.
     """
 
-    if ano <= 1950:
-        return co2_atmosferico_1900_1950(ano)
-    elif 1950 < ano <= 2000:
-        return co2_atmosferico_1950_2000(ano)
+    if year <= 1950:
+        return co2_percentage_1900_1950(year)
+    elif 1950 < year <= 2000:
+        return co2_percentage_1950_2000(year)
     else:
-        return co2_atmosferico_pos2000(ano)
+        return co2_percentage_pos2000(year)
 
 
 # Beam class
@@ -642,7 +640,7 @@ class Beam():
         """Computes the carbonation depth at time t using a trained ML model.
 
         :param model: Trained ML model for carbonation depth prediction
-        :param times: Time points [years] to evaluate
+        :param times: Time points [in years] to evaluate
         :param co2_perc: CO2 concentration [%]
         :param rh: Relative humidity [%]
 
@@ -715,18 +713,14 @@ class Beam():
         :return: Residual of force equilibrium (concrete – steel)
         """
 
-        args = [
-                    self.mat['f_ck [kPa]'],
-                    self.mat['f_yk [kPa'],
-                    self.geo['b_w [m]'],
-                    self.geo['h [m]'] * self.geo['ratio d/h'],
-                    a_st,
-                    self.mat['e_s [kPa]'],
-                    self.mat['gamma_c'],
-                    self.mat['gamma_s']
-               ]
-        
-        f_ck, f_yk, b_w, d, a_st, e_s, gamma_c, gamma_s = args
+       
+        f_ck = self.mat['f_ck [kPa]']
+        f_yk = self.mat['f_yk [kPa]']
+        b_w = self.geo['b_w [m]']
+        d = self.geo['h [m]'] * self.geo['ratio d/h']
+        gamma_c = self.mat['gamma_c']
+        gamma_s = self.mat['gamma_s']
+        e_s = self.mat['e_s [kPa]']
 
         # Concrete parameters
         if f_ck > 50:
@@ -892,7 +886,7 @@ def state_limit_function_time(model: Any, geo: list, mat: list, load: list, expo
         
         # Carbonation time
         times = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 125, 150, 180]
-        co2 = co2_atmosferico_ano()
+        co2 = co2_atmosferico_year()
         df['time for carbonation to start [year]'] = df.apply(lambda row: beam_instance.carbonation_depth_at_time(model=model, times=times, co2_perc=co2, rh=float(row['z3'])), axis=1)
         
         # Load and resistant moment
