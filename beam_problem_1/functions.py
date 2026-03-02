@@ -610,13 +610,7 @@ def co2_percentage_year(year):
 
 # Beam class
 class Beam():
-    def __init__(
-                    self, 
-                    geo: dict, 
-                    mat: dict, 
-                    load: dict, 
-                    expo: dict
-                ):  
+    def __init__(self, geo: dict, mat: dict, load: dict, expo: dict):  
         """Initializes a Beam object with geometric, material, load, and exposure properties.
         
         :param geo: Geometric properties of the beam
@@ -630,13 +624,7 @@ class Beam():
         self.load = load
         self.expo = expo
 
-    def carbonation_depth_at_time(
-                                    self,
-                                    model: Any,
-                                    times: list,
-                                    co2_perc: float,
-                                    rh: float,
-                                ) -> tuple[float, list]:
+    def carbonation_depth_at_time(self, model: Any, times: list, co2_perc: float, rh: float) -> tuple[float, list]:
         """Computes the carbonation depth at time t using a trained ML model.
 
         :param model: Trained ML model for carbonation depth prediction
@@ -644,8 +632,7 @@ class Beam():
         :param co2_perc: CO2 concentration [%]
         :param rh: Relative humidity [%]
 
-        :return: [0] Time to reach the cover depth [year]
-                 [1] Carbonation depths at specified times [mm]
+        :return: [0] Time to reach the cover depth [year], [1] Carbonation depths at specified times [mm]
         """
 
         depths = []
@@ -665,12 +652,8 @@ class Beam():
 
         return float(time_to_cover), depths
 
-    def simple_support_beam_max_bending_moment(
-                                                    self, 
-                                                    p_k: float
-                                               ) -> float:
-        """Computes the bending moment at mid-span for a simply 
-        supported beam under a uniformly distributed load.
+    def simple_support_beam_max_bending_moment(self, p_k: float) -> float:
+        """Computes the bending moment at mid-span for a simply supported beam under a uniformly distributed load.
 
         :param p_k: Characteristic distributed load [kN/m]
 
@@ -679,13 +662,8 @@ class Beam():
 
         return p_k * self.geo['l [m]']**2 / 8
 
-    def design_bending_moment(
-                                self,
-                                g_k: float,
-                                q_k: float
-                            ) -> float:
-        """Computes the design bending moment for a simply supported beam
-            under permanent and variable distributed loads.
+    def design_bending_moment(self, g_k: float, q_k: float) -> float:
+        """Computes the design bending moment for a simply supported beam under permanent and variable distributed loads.
 
         :param g_k: Permanent load [kN/m]
         :param q_k: Variable load [kN/m]
@@ -698,14 +676,8 @@ class Beam():
 
         return self.load['gamma_g'] * m_gk + self.load['gamma_q'] * m_qk
 
-    def f_alpha(
-                    self,
-                    a_st: float, 
-                    beta: float
-                ) -> float:
-        """Residual of the axial force equilibrium equation for a rectangular
-            reinforced concrete section, using the simplified stress block
-            of NBR 6118 (2023).
+    def f_alpha(self, a_st: float, beta: float) -> float:
+        """Residual of the axial force equilibrium equation for a rectangular reinforced concrete section, using the simplified stress block of NBR 6118 (2023).
 
         :param a_st: Tensile steel area [m²]
         :param beta: Neutral axis ratio x/d
@@ -826,8 +798,7 @@ class Beam():
 
         return i_corr
 
-    def design_resistant_bending_moment_with_corrosion(
-                                                            self,
+    def design_resistant_bending_moment_with_corrosion(self,
                                                             t: float,
                                                             t_carb: float,
                                                             temp: float,
@@ -865,14 +836,14 @@ class Beam():
 
 
 # State limit function with time effect
-def state_limit_function_time(carb_model: Any, geo: list, mat: list, load: list, expo: list, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
+def state_limit_function_time(x: np.ndarray, carb_model: Any, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
     z1, z2, z3 = [], [], []
     dfs = []
     lambdas_dfs = []
-    for i in range(len(geo)):
+    for i in range(x.shape[0]):
         # Create Beam instance
         beam_instance = Beam(geo=geo[i], mat=mat[i], load=load[i], expo=expo[i])
-        gk_beam     = load[i]['g_k [kN/m]']                                                                                # Permanent load - deterministic
+        gk_beam       = load[i]['g_k [kN/m]']                                                                                # Permanent load - deterministic
 
         # Latent variables
         qk_beam   = np.random.normal(loc=load[i]['q_k [kN/m]'], scale=load[i]['q_k [kN/m]'] * 0.2, size=n_latent_samples)  # Live load - latent variable
@@ -886,7 +857,7 @@ def state_limit_function_time(carb_model: Any, geo: list, mat: list, load: list,
         
         # Carbonation time
         times = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 125, 150, 180]
-        co2 = co2_atmosferico_year()
+        co2 = co2_percentage_year(2000)
         df['time for carbonation to start [year]'] = df.apply(lambda row: beam_instance.carbonation_depth_at_time(model=carb_model, times=times, co2_perc=co2, rh=float(row['z3'])), axis=1)
         
         # Load and resistant moment
