@@ -865,7 +865,7 @@ class Beam():
 
 
 # State limit function with time effect
-def state_limit_function_time(model: Any, geo: list, mat: list, load: list, expo: list, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
+def state_limit_function_time(carb_model: Any, geo: list, mat: list, load: list, expo: list, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
     z1, z2, z3 = [], [], []
     dfs = []
     lambdas_dfs = []
@@ -887,7 +887,7 @@ def state_limit_function_time(model: Any, geo: list, mat: list, load: list, expo
         # Carbonation time
         times = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 125, 150, 180]
         co2 = co2_atmosferico_year()
-        df['time for carbonation to start [year]'] = df.apply(lambda row: beam_instance.carbonation_depth_at_time(model=model, times=times, co2_perc=co2, rh=float(row['z3'])), axis=1)
+        df['time for carbonation to start [year]'] = df.apply(lambda row: beam_instance.carbonation_depth_at_time(model=carb_model, times=times, co2_perc=co2, rh=float(row['z3'])), axis=1)
         
         # Load and resistant moment
         for _, row in df.iterrows():
