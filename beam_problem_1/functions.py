@@ -624,6 +624,12 @@ class Beam():
         self.load = load
         self.expo = expo
 
+    def latent_variable_generator(self, n_samples: int) -> tuple:
+        
+
+    return (a, b, c, d)
+
+
     def carbonation_depth_at_time(self, model: Any, times: list, co2_perc: float, rh: float) -> tuple[float, list]:
         """Computes the carbonation depth at time t using a trained ML model.
 
@@ -668,7 +674,7 @@ class Beam():
         :param g_k: Permanent load [kN/m]
         :param q_k: Variable load [kN/m]
 
-        :return: Design bending moment Sd [kNm]
+        :return: Design bending moment Sd [kNm] considering load partial safety factors
         """
 
         m_gk = self.simple_support_beam_max_bending_moment(p_k=g_k)
@@ -685,36 +691,27 @@ class Beam():
         :return: Residual of force equilibrium (concrete – steel)
         """
 
-       
-        f_ck = self.mat['f_ck [kPa]']
-        f_yk = self.mat['f_yk [kPa]']
-        b_w = self.geo['b_w [m]']
-        d = self.geo['h [m]'] * self.geo['ratio d/h']
-        gamma_c = self.mat['gamma_c']
-        gamma_s = self.mat['gamma_s']
-        e_s = self.mat['e_s [kPa]']
-
         # Concrete parameters
-        if f_ck > 50:
-            lambda_c = 0.80 - (f_ck - 50) / 400
-            alpha_c = (1.00 - (f_ck - 50) / 200) * 0.85
-            eta_c = (40 / f_ck) ** (1/3)
-            epsilon_cu = 2.6e-3 + 35e-3 * ((90 - f_ck) / 100) ** 4
+        if self.mat['f_ck [kPa]'] > 50000:
+            lambda_c   = 0.80 - ((self.mat['f_ck [kPa]']/1000) - 50) / 400
+            alpha_c    = (1.00 - ((self.mat['f_ck [kPa]']/1000) - 50) / 200) * 0.85
+            eta_c      = (40 / (self.mat['f_ck [kPa]']/1000)) ** (1/3)
+            epsilon_cu = 2.6e-3 + 35e-3 * ((90 - self.mat['f_ck [kPa]']/1000) / 100) ** 4
         else:
-            lambda_c = 0.80
-            alpha_c = 0.85
-            eta_c = 1.00
+            lambda_c   = 0.80
+            alpha_c    = 0.85
+            eta_c      = 1.00
             epsilon_cu = 3.5e-3
 
         # Concrete stress block
-        f_cd = f_ck * 1e3 / gamma_c
+        f_cd     = self.mat['f_ck [kPa]'] / self.mat['gamma_c']
         sigma_cd = alpha_c * eta_c * f_cd
 
         # Neutral axis depth
-        x = beta * d
+        x = beta *  (self.geo['h [m]'] * self.geo['ratio d/h'])
 
         # Resultant concrete force
-        r_cc = sigma_cd * lambda_c * x * b_w
+        r_cc = sigma_cd * lambda_c * x * self.geo['b_w [m]']
 
         # Domain limit between 2 and 3
         beta_lim = epsilon_cu / (epsilon_cu + 10e-3)
@@ -726,11 +723,11 @@ class Beam():
             epsilon_st = epsilon_cu * (1 - beta) / beta
 
         # Steel stress
-        f_yd = f_yk * 1e3 / gamma_s
-        epsilon_yd = f_yd / (e_s * 1e3)
+        f_yd       = self.mat['f_yk [kPa]'] / self.mat['gamma_s']
+        epsilon_yd = f_yd / self.mat['e_s [kPa]']
 
         if abs(epsilon_st) <= epsilon_yd:
-            sigma_st = e_s * epsilon_st
+            sigma_st = self.mat['e_s [kPa]'] * epsilon_st
         else:
             sigma_st = np.sign(epsilon_st) * f_yd
 
@@ -739,51 +736,41 @@ class Beam():
 
         return r_cc - r_st
     
-    def design_resistant_bending_moment_without_corrosion(
-                                                            self,
-                                                            a_st: float,
-                                                        ) -> float:
-        """Computes the design resistant bending moment for a simply supported beam
-            under permanent and variable distributed loads.
+    def design_resistant_bending_moment_without_corrosion(self, a_st: float) -> float:
+        """Computes the design resistant bending moment for a simply supported beam under permanent and variable distributed loads.
 
         :param a_st: Tensile steel area [m²]
+        
         :return: Design resistant bending moment Rd [kNm]
         """
 
         # Concrete parameters
         if self.mat['f_ck [kPa]'] > 50000:
             lambda_c = 0.80 - ((self.mat['f_ck [kPa]']/1000) - 50) / 400
-            alpha_c = (1.00 - ((self.mat['f_ck [kPa]']/1000) - 50) / 200) * 0.85
-            eta_c = (40 / (self.mat['f_ck [kPa]']/1000)) ** (1/3)
+            alpha_c  = (1.00 - ((self.mat['f_ck [kPa]']/1000) - 50) / 200) * 0.85
+            eta_c    = (40 / (self.mat['f_ck [kPa]']/1000)) ** (1/3)
         else:
             lambda_c = 0.80
-            alpha_c = 0.85
-            eta_c = 1.00
+            alpha_c  = 0.85
+            eta_c    = 1.00
 
-        d = self.geo['h [m]'] * self.geo['ratio d/h']
-        sol = sc.optimize.root_scalar(
-                                        lambda beta: self.f_alpha(a_st=a_st, beta=beta),
-                                        bracket=(1e-5, d / self.geo['h [m]']),
-                                        method='bisect'
-                                    )
-        x = sol.root * d
+        # Axial force equilibrium to find neutral axis depth
+        d   = self.geo['h [m]'] * self.geo['ratio d/h']
+        sol = sc.optimize.root_scalar(lambda beta: self.f_alpha(a_st=a_st, beta=beta), bracket=(1e-5, d / self.geo['h [m]']), method='bisect')
+        x   = sol.root * d
 
         # Resistant moment
-        f_cd = self.mat['f_ck [kPa]'] / self.mat['gamma_c']
+        f_cd     = self.mat['f_ck [kPa]'] / self.mat['gamma_c']
         sigma_cd = alpha_c * eta_c * f_cd
-        r_cc = sigma_cd * lambda_c * x * self.geo['b_w [m]']
+        r_cc     = sigma_cd * lambda_c * x * self.geo['b_w [m]']
         
         return r_cc * (d - 0.5 * lambda_c * x)
 
-    def corrosion_index(
-                            self,
-                            temp: float
-                        ) -> float:
-        """Determines the corrosion index of steel reinforcements in reinforced 
-            concrete considering the influence of ambient temperature on the 
-            corrosion rate, according to Peng and Stewart (2016).
+    def corrosion_index(self, temp: float) -> float:
+        """Determines the corrosion index of steel reinforcements in reinforced concrete considering the influence of ambient temperature on the corrosion rate, according to Peng and Stewart (2016).
 
         :param temp: Temperature of the environment (°C)
+
         :return: Adjusted corrosion index [μA/cm²]
         """
 
@@ -798,13 +785,8 @@ class Beam():
 
         return i_corr
 
-    def design_resistant_bending_moment_with_corrosion(self,
-                                                            t: float,
-                                                            t_carb: float,
-                                                            temp: float,
-                                                      ) -> float:
-        """Computes the design resistant bending moment for a simply supported beam
-            under permanent and variable distributed loads considering corrosion effects.
+    def design_resistant_bending_moment_with_corrosion(self, t: float, t_carb: float, temp: float) -> float:
+        """Computes the design resistant bending moment for a simply supported beam under permanent and variable distributed loads considering corrosion effects.
 
         :param t: Time elapsed since the structure was built [year]
         :param t_carb: Time for carbonation to reach the reinforcement [year]
@@ -815,21 +797,21 @@ class Beam():
 
         # Corrosion parameters
         delta_time_cor = max(0.0, t - t_carb)
-        i_corr_uA = self.corrosion_index(temp)
+        i_corr_uA      = self.corrosion_index(temp)
 
         # Loss of diameter (Al-Gohi model)
-        d_0_mm = self.geo['phi [m]'] * 1000
+        d_0_mm    = self.geo['phi [m]'] * 1000
         delta_dim = 0.0232 * i_corr_uA * delta_time_cor
-        d_cor = max(0.0, (d_0_mm - delta_dim) / 1000)
-        a_s_cor = self.geo['n bars'] * (np.pi * d_cor**2 / 4)
+        d_cor     = max(0.0, (d_0_mm - delta_dim) / 1000)
+        a_s_cor   = self.geo['n bars'] * (np.pi * d_cor**2 / 4)
         
         # Resistant moment
         if delta_time_cor == 0:
             c_f = 1.0
         else:
             i_corr_mA = i_corr_uA / 1000
-            cf_aux = 5 / (d_0_mm ** 0.54 * (i_corr_mA * delta_time_cor * 365) ** 0.19)
-            c_f = min(1.0, cf_aux)
+            cf_aux    = 5 / (d_0_mm ** 0.54 * (i_corr_mA * delta_time_cor * 365) ** 0.19)
+            c_f       = min(1.0, cf_aux)
         m_raux = self.design_resistant_bending_moment_without_corrosion(a_st=a_s_cor)
         
         return m_raux * c_f
@@ -843,7 +825,7 @@ def state_limit_function_time(x: np.ndarray, carb_model: Any, time_step: float =
     for i in range(x.shape[0]):
         # Create Beam instance
         beam_instance = Beam(geo=geo[i], mat=mat[i], load=load[i], expo=expo[i])
-        gk_beam       = load[i]['g_k [kN/m]']                                                                                # Permanent load - deterministic
+        gk_beam       = load[i]['g_k [kN/m]']                                                                              # Permanent load - deterministic
 
         # Latent variables
         qk_beam   = np.random.normal(loc=load[i]['q_k [kN/m]'], scale=load[i]['q_k [kN/m]'] * 0.2, size=n_latent_samples)  # Live load - latent variable
