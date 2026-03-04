@@ -18,6 +18,7 @@ import scipy.stats as stats
 from multiprocessing import Pool, cpu_count
 from scipy.interpolate import interp1d
 import scipy as sc
+import joblib
 
 
 def find_excel_file(filename, max_depth=5):
@@ -625,10 +626,24 @@ class Beam():
         self.expo = expo
 
     def latent_variable_generator(self, n_samples: int) -> tuple:
-        
+        """Generates latent variables related the beam problem.
 
-    return (a, b, c, d)
+        :param n_samples: Number of latent samples to generate.
+        :return: Tuple containing arrays of sampled live load, temperature, and relative humidity.
+        """
 
+        # qk_mean     = self.load['q_k [kN/m]']
+        temp_mean   = self.expo['Temperature [°C]']
+        rh_mean     = self.expo['Relative humidity [%]']
+        # cov_q       = 0.20
+        cov_temp    = 0.20
+        cov_rh      = 0.20
+
+        # qk_beam   = np.random.normal(loc=qk_mean, scale=abs(qk_mean) * cov_q, size=n_samples)
+        temp_beam = np.random.normal(loc=temp_mean, scale=abs(temp_mean) * cov_temp, size=n_samples)
+        rh_beam   = np.random.normal(loc=rh_mean, scale=abs(rh_mean) * cov_rh, size=n_samples)
+
+        return (temp_beam, rh_beam)
 
     def carbonation_depth_at_time(self, model: Any, times: list, co2_perc: float, rh: float) -> tuple[float, list]:
         """Computes the carbonation depth at time t using a trained ML model.
@@ -824,13 +839,94 @@ def state_limit_function_time(x: np.ndarray, carb_model: Any, time_step: float =
     lambdas_dfs = []
     for i in range(x.shape[0]):
         # Create Beam instance
-        beam_instance = Beam(geo=geo[i], mat=mat[i], load=load[i], expo=expo[i])
+        geo = {
+                'b_w [m]':     float(x[i][0]), 
+                'h [m]':       float(x[i][1]), 
+                'cover [m]':   float(x[i][2])
+              }
+        mat = {
+                'f_ck [kPa]':  float(x[i][3]),
+                'Type of cement': 3
+              } 
+        expo = {
+                'Installation year':   1990,
+                'Exposure conditions': 2,
+               }
+        load = {}           
+        beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
+
+        # Latent variables
+        latent_data   = beam_instance.latent_variable_generator(n_samples=n_latent_samples)
+        temp_beam = latent_data[0]    # Temperature - latent variable
+        rh_beam   = latent_data[1]    # Relative Humidity - latent variable
+        df = pd.DataFrame({})
+        df['z1'] = temp_beam
+        df['z2'] = rh_beam       
+        # Resistance
+        df['r'] = float(x[i][2])
+        
+
+        # Carbonation profile
+        name_best_model = 'model_NeuralNetwork_MLP_fold_4.pkl'
+        model = joblib.load(name_best_model)
+        s = []
+        for _, row in df.iterrows():
+            # Carbonation profle
+            # df = {'t (years)': list(range(0, 150))}
+            # df = pd.DataFrame(df)
+            # co2list = []
+            # for t in df['t (years)']:
+            #     if t == 0:
+            #         co2_percentage = co2_percentage_year(1990)
+            # df['CO2 (%)']  = CO2_ppm / 10000
+            df['fc (MPa)']            = float(x[i][3]) / 1000
+            df['RH (%)']              = rh_beam
+            df['Type of cement']      = mat['Type of cement']
+            df['Exposure conditions'] = expo['Exposure conditions'] 
+            expected_order = list(model.feature_names_in_)
+            df = df[expected_order]
+            df_aux = df.copy()
+            y_pred = model.predict(df)
+            df_aux['carb. depth (mm)'] = list(y_pred)
+            df_aux['carb. depth (mm)'] = df_aux['carb. depth (mm)'].cummax()
+            s.append(df_aux[df['t (years)'] == time_step]['carb. depth (mm)'].values[0])
+
+        # State limit function and GLAM fitting
+        df['s'] = s
+        df['g'] = df['r'] - df['s']
+        lambdas, _ = fit_gld_fkml_mle(df['g'].values)
+        lambdas_dfs.append(lambdas)
+        dfs.append(df)
+
+    return np.array(lambdas_dfs), dfs
+
+
+
+# State limit function with time effect
+def state_limit_function_time(x: np.ndarray, carb_model: Any, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
+    z1, z2, z3 = [], [], []
+    dfs = []
+    lambdas_dfs = []
+    for i in range(x.shape[0]):
+        # Create Beam instance
+        geo = {
+                'b_w [m]':     float(x[i][0]), 
+                'h [m]':       float(x[i][1]), 
+                'cover [m]':   5.0
+              }
+        
+        mat = {
+                'f_ck [kPa]': 30000.0,}
+        
+        
+        beam_instance = Beam(geo=geo, mat=mat[i], load=load[i], expo=expo[i])
         gk_beam       = load[i]['g_k [kN/m]']                                                                              # Permanent load - deterministic
 
         # Latent variables
-        qk_beam   = np.random.normal(loc=load[i]['q_k [kN/m]'], scale=load[i]['q_k [kN/m]'] * 0.2, size=n_latent_samples)  # Live load - latent variable
-        temp_beam = np.random.normal(loc=expo[i]['temp [°C]'], scale=expo[i]['temp [°C]'] * 0.2, size=n_latent_samples)    # Temperature - latent variable
-        rh_beam   = np.random.normal(loc=expo[i]['rh [%]'], scale=expo[i]['rh [%]'] * 0.2, size=n_latent_samples)          # Relative Humidity - latent variable
+        latent_data   = beam_instance.latent_variable_generator(n_samples=n_latent_samples)
+        qk_beam   = latent_data[0]    # Live load - latent variable
+        temp_beam = latent_data[1]    # Temperature - latent variable
+        rh_beam   = latent_data[2]    # Relative Humidity - latent variable
         df = pd.DataFrame({})
         df['z1'] = qk_beam
         df['z2'] = temp_beam
