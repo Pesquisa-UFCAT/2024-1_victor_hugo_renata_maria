@@ -19,6 +19,7 @@ from multiprocessing import Pool, cpu_count
 from scipy.interpolate import interp1d
 import scipy as sc
 import joblib
+import pyglam as glam
 
 
 def state_limit_function(x: np.ndarray, n_latent_samples: int) -> tuple[np.ndarray, pd.DataFrame]:
@@ -684,12 +685,13 @@ class Beam():
 
 
 # State limit function with time effect
-def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
-    """
+def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, temp: float = 30.0, relative_humidity: float = 70.0, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
+    """Compute the state limit function with carbonation effects at a specific time step, considering latent variables related to temperature and relative humidity. 
     """    
+
     dfs = []
 
-    # 
+    # Looping through each sample in x
     for i in range(x.shape[0]):
         # 
         geo = {
@@ -697,34 +699,42 @@ def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, time_
               }
         mat = {
                 'f_ck [kPa]':     float(x[i][1]),
-                'Type of cement': 3
+                'Type of cement': cement_type
               } 
         expo = {
-                'Installation year':     1990,
-                'Exposure conditions':   2,
-                'Temperature [°C]':      30,
-                'Relative humidity [%]': 70
+                'Installation year':     installation_year,
+                'Exposure conditions':   exposure_conditions,
+                'Temperature [°C]':      temp,
+                'Relative humidity [%]': relative_humidity
                }
         load = {}           
-        beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
 
         # Latent variables
-        latent_data = beam_instance.latent_variable_generator(n_samples=n_latent_samples)
-        temp_beam   = latent_data[0]
-        rh_beam     = latent_data[1]
+        beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
+        latent_data   = beam_instance.latent_variable_generator(n_samples=n_latent_samples)
+        temp_beam     = latent_data[0]
+        rh_beam       = latent_data[1]
 
-        # Carbonation profile
-        profile = beam_instance.carbonation_profile(model=carb_model, lifetime=100)
-        carbonation_depth_at_time(profile, t_query)
+        # Carbonation profile and state limit function
+        profile     = beam_instance.carbonation_profile(model=carb_model, lifetime=100)
+        t_query     = time_step + expo['Installation year']
+        carb_depth  = carbonation_depth_at_time(profile, t_query)
         df          = {
                         names[0]: [x[i, 0]] * n_latent_samples,     # Cover
                         names[1]: [x[i, 1]] * n_latent_samples,     # Compressive strength
                         'z1': temp_beam,                            # Temperature - latent variable 0
                         'z2': rh_beam,                              # Relative Humidity - latent variable 1
                         'r': [geo['cover [m]']] * n_latent_samples, # Concrete cover
+                        's': [carb_depth] * n_latent_samples,       # Carbonation depth at time t_query
                       }
-        
         df = pd.DataFrame(df)
+        df['g'] = df['r'] - df['s']
+        
+        # Emulator fitting
+        emulator = glam.GlamFKML()
+        sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
+        lambdas = sol.x
+        df['lambda 1'], df['lambda 2'], df['lambda 3'], df['lambda 4'] = lambdas[0], lambdas[1], lambdas[2], lambdas[3]
         dfs.append(df)
     
     return pd.concat(dfs, ignore_index=True)
@@ -748,175 +758,4 @@ def carbonation_depth_at_time(profile: pd.DataFrame, t_query: float):
 
     return float(np.interp(t_query, t, depth))
 
-
-# # State limit function with time effect
-# def state_limit_function_time(x: np.ndarray, carb_model: Any, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
-#     z1, z2, z3 = [], [], []
-#     dfs = []
-#     lambdas_dfs = []
-#     for i in range(x.shape[0]):
-#         # Create Beam instance
-#         geo = {
-#                 'b_w [m]':     float(x[i][0]), 
-#                 'h [m]':       float(x[i][1]), 
-#                 'cover [m]':   5.0
-#               }
-        
-#         mat = {
-#                 'f_ck [kPa]': 30000.0,}
-        
-        
-#         beam_instance = Beam(geo=geo, mat=mat[i], load=load[i], expo=expo[i])
-#         gk_beam       = load[i]['g_k [kN/m]']                                                                              # Permanent load - deterministic
-
-#         # Latent variables
-#         latent_data   = beam_instance.latent_variable_generator(n_samples=n_latent_samples)
-#         qk_beam   = latent_data[0]    # Live load - latent variable
-#         temp_beam = latent_data[1]    # Temperature - latent variable
-#         rh_beam   = latent_data[2]    # Relative Humidity - latent variable
-#         df = pd.DataFrame({})
-#         df['z1'] = qk_beam
-#         df['z2'] = temp_beam
-#         df['z3'] = rh_beam
-#         df['s'] = df.apply(lambda row: beam_instance.design_bending_moment(g_k=gk_beam, q_k=float(row['z1'])), axis=1)
-        
-#         # Carbonation time
-#         times = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 125, 150, 180]
-#         co2 = co2_percentage_year(2000)
-#         df['time for carbonation to start [year]'] = df.apply(lambda row: beam_instance.carbonation_depth_at_time(model=carb_model, times=times, co2_perc=co2, rh=float(row['z3'])), axis=1)
-        
-#         # Load and resistant moment
-#         for _, row in df.iterrows():
-#             t_carb = row['time for carbonation to start [year]']
-#             if time_step <= t_carb:
-#                 a_st0 = beam_instance.geo['n bars'] * (np.pi * (beam_instance.geo['phi [m]'] / 1000)**2 / 4)
-#                 df['r'] = df.apply(lambda row: beam_instance.design_resistant_bending_moment_without_corrosion(a_st=a_st0), axis=1)
-#             else:
-#                 df['r'] = df.apply(lambda row: beam_instance.design_resistant_bending_moment_with_corrosion(t=time_step, t_carb=t_carb, temp=float(row['z2'])), axis=1)
-        
-#         # State limit function and GLAM fitting
-#         df['g'] = df['r'] - df['s']
-#         lambdas, _ = fit_gld_fkml_mle(df['g'].values)
-#         lambdas_dfs.append(lambdas)
-#         dfs.append(df)
-
-#     return np.array(lambdas_dfs), dfs
-
-
-
-# def state_limit_function_time(
-#         x: np.ndarray,
-#         carb_model: Any,
-#         time_step: float = 0.0,
-#         n_latent_samples: int = 5000
-#     ) -> tuple[np.ndarray, list]:
-
-#     dfs = []
-#     lambdas_dfs = []
-
-#     years = np.arange(0, 151)
-#     n_years = len(years)
-
-#     for i in range(x.shape[0]):
-
-#         # -------------------------
-#         # Beam instance
-#         # -------------------------
-#         geo = {
-#             'b_w [m]': float(x[i][0]),
-#             'h [m]': float(x[i][1]),
-#             'cover [mm]': float(x[i][2])
-#         }
-
-#         mat = {
-#             'f_ck [kPa]': float(x[i][3]),
-#             'Type of cement': 3
-#         }
-
-#         expo = {
-#             'Installation year': 1990,
-#             'Exposure conditions': 2
-#         }
-
-#         beam_instance = Beam(geo=geo, mat=mat, load={}, expo=expo)
-
-#         # -------------------------
-#         # Latent variables
-#         # -------------------------
-#         temp_beam, rh_beam = beam_instance.latent_variable_generator(
-#             n_samples=n_latent_samples
-#         )
-
-#         df = pd.DataFrame({
-#             'z1': temp_beam,
-#             'z2': rh_beam
-#         })
-
-#         df['r'] = geo['cover [mm]']
-
-#         # -------------------------
-#         # Preparar dados vetorizados
-#         # -------------------------
-#         co2 = co2_percentage_year(2000)
-
-#         n_samples = len(df)
-
-#         years_rep = np.tile(years, n_samples)
-
-#         RH_rep = np.repeat(df['z2'].values, n_years)
-
-#         fc_rep = np.repeat(mat['f_ck [kPa]']/1000, n_samples*n_years)
-
-#         co2_rep = np.repeat(co2, n_samples*n_years)
-
-#         cement_rep = np.repeat(mat['Type of cement'], n_samples*n_years)
-
-#         expo_rep = np.repeat(expo['Exposure conditions'], n_samples*n_years)
-
-#         profile_df = pd.DataFrame({
-#             't (years)': years_rep,
-#             'CO2 (%)': co2_rep,
-#             'fc (MPa)': fc_rep,
-#             'RH (%)': RH_rep,
-#             'Type of cement': cement_rep,
-#             'Exposure conditions': expo_rep
-#         })
-
-#         profile_df = profile_df[carb_model.feature_names_in_]
-
-#         # -------------------------
-#         # Predição única (muito mais rápida)
-#         # -------------------------
-#         depth = carb_model.predict(profile_df)
-
-#         # reshape → (samples, years)
-#         depth = depth.reshape(n_samples, n_years)
-
-#         # garantir crescimento monotônico
-#         depth = np.maximum.accumulate(depth, axis=1)
-
-#         # -------------------------
-#         # profundidade no tempo
-#         # -------------------------
-#         depth_t = np.array([
-#             np.interp(time_step, years, depth_row)
-#             for depth_row in depth
-#         ])
-
-#         df['s'] = depth_t
-
-#         # -------------------------
-#         # State limit
-#         # -------------------------
-#         df['g'] = df['r'] - df['s']
-
-#         # -------------------------
-#         # GLAM fitting
-#         # -------------------------
-#         lambdas, _ = fit_gld_fkml_mle(df['g'].values)
-
-#         lambdas_dfs.append(lambdas)
-#         dfs.append(df)
-
-#     return np.array(lambdas_dfs), dfs
 
