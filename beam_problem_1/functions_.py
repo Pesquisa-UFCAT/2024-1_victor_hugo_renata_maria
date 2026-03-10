@@ -687,6 +687,19 @@ class Beam():
 # State limit function with time effect
 def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, temp: float = 30.0, relative_humidity: float = 70.0, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
     """Compute the state limit function with carbonation effects at a specific time step, considering latent variables related to temperature and relative humidity. 
+    
+    :param x: Input variables [0] = Cover ; [1] = Compressive strength
+    :param names: List of names for the input variables (e.g., ['Cover [m]', 'Compressive strength [KPa]'])
+    :param carb_model: Trained ML model for carbonation depth prediction
+    :param cement_type: Type of cement (default is 3)
+    :param installation_year: Year of installation of the structure (default is 1990)
+    :param exposure_conditions: Exposure conditions for carbonation (default is 2)
+    :param temp: Ambient temperature (°C) for latent variable generation (default is 30.0)
+    :param relative_humidity: Relative humidity (%) for latent variable generation (default is 70.0)
+    :param time_step: Time step (years) at which to evaluate the state limit function (default is 0.0)
+    :param n_latent_samples: Number of latent samples to generate for each input sample (default is 5000)
+
+    :return: Input variables, latent variables, and state limit function results for each sample and GLAM parameters for emulator fitting.
     """    
 
     dfs = []
