@@ -405,46 +405,7 @@ def g_emulator_at_limit_time(bds, t_limit, g_col="g_emulator"):
     return g_vals_lim
 
 
-def co2_percentage_1900_1950(year):
-    """CO2 atmosférico (%) para os períodos históricos 1900–1950
-    """
-    # crescimento médio ~0.30 ppm/year
-    co2_ppm = 296.0 + 0.30 * (year - 1900)
-    return co2_ppm / 1e4
 
-
-def co2_percentage_1950_2000(year):
-    """CO2 atmosférico (%) para os períodos históricos 1950–2000
-    """
-    # crescimento médio ~1.16 ppm/year
-    co2_ppm = 311.0 + 1.16 * (year - 1950)
-    return co2_ppm / 1e4
-
-
-def co2_percentage_pos2000(year):
-    """CO2 atmosférico (%) para os períodos históricos pós-2000
-    """
-
-    t = year - 2000
-
-    C0 = 369.0   # ppm em 2000
-    a  = 1.85    # ppm/year
-    b  = 0.018   # ppm/year²
-
-    co2_ppm = C0 + a * t + b * t**2
-    return co2_ppm / 1e4
-
-
-def co2_percentage_year(year):
-    """Concentração média global de CO2 atmosférico (%) válida de 1900 em diante.
-    """
-
-    if year <= 1950:
-        return co2_percentage_1900_1950(year)
-    elif 1950 < year <= 2000:
-        return co2_percentage_1950_2000(year)
-    else:
-        return co2_percentage_pos2000(year)
 
 
 # Beam class
@@ -452,10 +413,10 @@ class Beam():
     def __init__(self, geo: dict, mat: dict, load: dict, expo: dict):  
         """Initializes a Beam object with geometric, material, load, and exposure properties.
         
-        :param geo: Geometric properties of the beam
-        :param mat: Material properties of the beam
-        :param load: Load properties of the beam
-        :param expo: Exposure conditions for carbonation
+        :param geo: Geometric properties of the beam. Expected keys: 'cover [m]' - concrete cover
+        :param mat: Material properties of the beam. Expected keys: 'f_ck [kPa]' - concrete compressive strength, 'Type of cement' - type of cement (0: CPII Z, 1: CPV -ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)
+        :param load: Load properties of the beam. 
+        :param expo: Exposure conditions for carbonation. Expected keys: 'Installation year' - year of installation, 'Exposure conditions' - exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected]), and 'Relative humidity [%]' - relative humidity
         """
 
         self.geo = geo
@@ -463,44 +424,86 @@ class Beam():
         self.load = load
         self.expo = expo
 
-    def latent_variable_generator(self, n_samples: int) -> tuple:
+    def latent_variable_generator(self, n_latent_samples: int) -> list:
         """Generates latent variables related the beam problem.
 
-        :param n_samples: Number of latent samples to generate.
+        :param n_latent_samples: Number of latent samples to generate.
 
-        :return: Tuple containing arrays of sampled live load, temperature, and relative humidity.
+        :return: Arrays of sampled relative humidity.
         """
 
-        # qk_mean = self.load['q_k [kN/m]']
-        temp_mean = self.expo['Temperature [°C]']
-        rh_mean   = self.expo['Relative humidity [%]']
-        # cov_q   = 0.20
-        cov_temp  = 0.20
-        cov_rh    = 0.20
+        rh_mean = 1.0
+        cov_rh  = 0.05
+        sigma   = np.sqrt(np.log(1 + cov_rh**2))
+        mu      = np.log(rh_mean) - sigma**2 / 2
+        rh_beam = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
+        
+        return [rh_beam]
 
-        # qk_beam = np.random.normal(loc=qk_mean, scale=abs(qk_mean) * cov_q, size=n_samples)
-        temp_beam = np.random.normal(loc=temp_mean, scale=abs(temp_mean) * cov_temp, size=n_samples)
-        rh_beam   = np.random.normal(loc=rh_mean, scale=abs(rh_mean) * cov_rh, size=n_samples)
+    def co2_percentage_1900_1950(self, year) -> float:
+        """CO2 atmospheric concentration (%) for the historical periods 1900–1950. 
 
-        return (temp_beam, rh_beam)
+        :param year: Calendar year for which to calculate the CO2 concentration
 
-    def carbonation_profile(self, model: Any, lifetime: float):
+        :return: CO2 concentration in percentage (ppm / 1e4)
+        """
+        co2_ppm = 296.0 + 0.30 * (year - 1900)
+
+        return co2_ppm / 1e4
+
+    def co2_percentage_1950_2000(self, year) -> float:
+        """CO2 atmospheric concentration (%) for the historical periods 1950–2000. 
+
+        :param year: Calendar year for which to calculate the CO2 concentration
+
+        :return: CO2 concentration in percentage (ppm / 1e4)
+        """
+
+        co2_ppm = 311.0 + 1.16 * (year - 1950)
+        
+        return co2_ppm / 1e4
+
+    def co2_percentage_pos2000(self, year) -> float:
+        """CO2 atmospheric concentration (%) for the historical periods post-2000.
+
+        :param year: Calendar year for which to calculate the CO2 concentration
+
+        :return: CO2 concentration in percentage (ppm / 1e4)
+        """
+
+        t = year - 2000
+
+        C0 = 369.0   # ppm in 2000
+        a  = 1.85    # ppm/year
+        b  = 0.018   # ppm/year²
+        co2_ppm = C0 + a * t + b * t**2
+
+        return co2_ppm / 1e4
+
+    def co2_percentage_year(self, year) -> float:
+        """Global average atmospheric CO2 concentration (%) valid from 1900 onwards.
+
+        :param year: Calendar year for which to calculate the CO2 concentration
+
+        :return: CO2 concentration in percentage (ppm / 1e4)
+        """
+
+        if year <= 1950:
+            return self.co2_percentage_1900_1950(year)
+        elif 1950 < year <= 2000:
+            return self.co2_percentage_1950_2000(year)
+        else:
+            return self.co2_percentage_pos2000(year)
+        
+    def carbonation_profile(self, model: Any, lifetime: float) -> pd.DataFrame:
         """Generate carbonation profile starting at a given calendar year.
 
-        Parameters
-        ----------
-        model : trained ML model
-        start_year : int
-        design_life : int
-        fc : concrete compressive strength [MPa]
-        rh : relative humidity [%]
-        cement_type : int
-        exposure : int
+        :param model: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.
+        :param lifetime: Design life of the structure [years]
 
-        Returns
-        -------
-        pandas.DataFrame
+        :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)
         """
+
         start_year  = self.expo['Installation year']
         rh          = self.expo['Relative humidity [%]']
         exposure    = self.expo['Exposure conditions']
@@ -514,7 +517,7 @@ class Beam():
         calendar_years = start_year + years
 
         # CO2 emition
-        co2_values = [co2_percentage_year(y) for y in calendar_years]
+        co2_values = [self.co2_percentage_year(y) for y in calendar_years]
 
         # Carbonation AI model and profile
         df      = pd.DataFrame({'t (years)': years, 'CO2 (%)': co2_values, 'fc (MPa)': [fc]*len(years), 'RH (%)': [rh]*len(years), 'Type of cement': [cement_type]*len(years), 'Exposure conditions': [exposure]*len(years)})
@@ -524,6 +527,20 @@ class Beam():
         profile['carbonation depth (mm)'] = profile['carbonation depth (mm)'].cummax()
 
         return profile
+
+    def carbonation_depth_at_time(self, profile: pd.DataFrame, t_query: float) -> float:
+        """Returns carbonation depth at a specific time.
+
+        :param profile : DataFrame with columns ['calendar year', 'carbonation depth (mm)']
+        :param t_query : Calendar year for which to query the carbonation depth
+
+        :return: Carbonation depth at the specified calendar year
+        """
+
+        t     = profile['calendar year'].values
+        depth = profile['carbonation depth (mm)'].values
+
+        return float(np.interp(t_query, t, depth))
 
     def simple_support_beam_max_bending_moment(self, p_k: float) -> float:
         """Computes the bending moment at mid-span for a simply supported beam under a uniformly distributed load.
@@ -685,15 +702,15 @@ class Beam():
 
 
 # State limit function with time effect
-def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, temp: float = 30.0, relative_humidity: float = 70.0, time_step: float = 0.0, n_latent_samples: int = 5000) -> tuple[np.ndarray, list]:
+def state_limit_function_time(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, temp: float = 30.0, relative_humidity: float = 70.0, time_step: float = 0.0, n_latent_samples: int = 5000) -> dict:
     """Compute the state limit function with carbonation effects at a specific time step, considering latent variables related to temperature and relative humidity. 
     
-    :param x: Input variables [0] = Cover ; [1] = Compressive strength
-    :param names: List of names for the input variables (e.g., ['Cover [m]', 'Compressive strength [KPa]'])
+    :param x: Input variables matrix [0] = Cover in m; [1] = Compressive strength in kPa; [2] = Relative humidity in %.
+    :param names_x_variables: List of names for the input variables (e.g., ['Cover [m]', 'Compressive strength [KPa]'])
     :param carb_model: Trained ML model for carbonation depth prediction
-    :param cement_type: Type of cement (default is 3)
+    :param cement_type: Type of cement (default is 3). 0: CPII Z, 1: CPV -ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E
     :param installation_year: Year of installation of the structure (default is 1990)
-    :param exposure_conditions: Exposure conditions for carbonation (default is 2)
+    :param exposure_conditions: Exposure conditions for carbonation (default is 2). 0: PIA (Internal Protected), 1: UEA (External Unprotected), 2: PEA (External Protected)
     :param temp: Ambient temperature (°C) for latent variable generation (default is 30.0)
     :param relative_humidity: Relative humidity (%) for latent variable generation (default is 70.0)
     :param time_step: Time step (years) at which to evaluate the state limit function (default is 0.0)
@@ -706,9 +723,9 @@ def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, cemen
 
     # Looping through each sample in x
     for i in range(x.shape[0]):
-        # 
+        # Beam properties
         geo = {
-                'cover [m]': float(x[i][0])
+                'cover [m]':      float(x[i][0])
               }
         mat = {
                 'f_ck [kPa]':     float(x[i][1]),
@@ -717,28 +734,26 @@ def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, cemen
         expo = {
                 'Installation year':     installation_year,
                 'Exposure conditions':   exposure_conditions,
-                'Temperature [°C]':      temp,
-                'Relative humidity [%]': relative_humidity
+                'Relative humidity [%]': float(x[i][2])
                }
         load = {}           
 
         # Latent variables
         beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
         latent_data   = beam_instance.latent_variable_generator(n_samples=n_latent_samples)
-        temp_beam     = latent_data[0]
-        rh_beam       = latent_data[1]
+        rh_beam       = latent_data
 
         # Carbonation profile and state limit function
         profile     = beam_instance.carbonation_profile(model=carb_model, lifetime=100)
         t_query     = time_step + expo['Installation year']
-        carb_depth  = carbonation_depth_at_time(profile, t_query)
+        carb_depth  = beam_instance.carbonation_depth_at_time(profile, t_query)
         df          = {
-                        names[0]: [x[i, 0]] * n_latent_samples,     # Cover
-                        names[1]: [x[i, 1]] * n_latent_samples,     # Compressive strength
-                        'z1': temp_beam,                            # Temperature - latent variable 0
-                        'z2': rh_beam,                              # Relative Humidity - latent variable 1
-                        'r': [geo['cover [m]']] * n_latent_samples, # Concrete cover
-                        's': [carb_depth] * n_latent_samples,       # Carbonation depth at time t_query
+                        names_x_variables[0]: [x[i, 0]] * n_latent_samples,     # Cover
+                        names_x_variables[1]: [x[i, 1]] * n_latent_samples,     # Compressive strength
+                        names_x_variables[2]: [x[i, 2]] * n_latent_samples,     # Relative humidity
+                        'z1': rh_beam,                                          # Relative Humidity - latent variable 1
+                        'r': [geo['cover [m]']] * n_latent_samples,             # Concrete cover in meters
+                        's': [carb_depth/1E3] * n_latent_samples,               # Carbonation depth at time t_query in meters
                       }
         df = pd.DataFrame(df)
         df['g'] = df['r'] - df['s']
@@ -752,23 +767,3 @@ def state_limit_function_time(x: np.ndarray, names: list, carb_model: Any, cemen
     
     return pd.concat(dfs, ignore_index=True)
         
-
-def carbonation_depth_at_time(profile: pd.DataFrame, t_query: float):
-    """Returns carbonation depth at a specific time.
-
-    Parameters
-    ----------
-    profile : DataFrame with carbonation profile
-    t_query : time [years]
-
-    Returns
-    -------
-    float
-    """
-
-    t     = profile['calendar year'].values
-    depth = profile['carbonation depth (mm)'].values
-
-    return float(np.interp(t_query, t, depth))
-
-
