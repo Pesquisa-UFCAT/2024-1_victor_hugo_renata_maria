@@ -702,7 +702,7 @@ class Beam():
 
 
 # State limit function with time effect
-def state_limit_function_time(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, temp: float = 30.0, relative_humidity: float = 70.0, time_step: float = 0.0, n_latent_samples: int = 5000) -> dict:
+def state_limit_function_time(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 5000) -> dict:
     """Compute the state limit function with carbonation effects at a specific time step, considering latent variables related to temperature and relative humidity. 
     
     :param x: Input variables matrix [0] = Cover in m; [1] = Compressive strength in kPa; [2] = Relative humidity in %.
@@ -711,8 +711,6 @@ def state_limit_function_time(x: np.ndarray, names_x_variables: list, carb_model
     :param cement_type: Type of cement (default is 3). 0: CPII Z, 1: CPV -ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E
     :param installation_year: Year of installation of the structure (default is 1990)
     :param exposure_conditions: Exposure conditions for carbonation (default is 2). 0: PIA (Internal Protected), 1: UEA (External Unprotected), 2: PEA (External Protected)
-    :param temp: Ambient temperature (°C) for latent variable generation (default is 30.0)
-    :param relative_humidity: Relative humidity (%) for latent variable generation (default is 70.0)
     :param time_step: Time step (years) at which to evaluate the state limit function (default is 0.0)
     :param n_latent_samples: Number of latent samples to generate for each input sample (default is 5000)
 
