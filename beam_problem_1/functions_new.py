@@ -448,36 +448,49 @@ class Beam():
             return self.co2_percentage_pos2000(year)
         
     def carbonation_profile(self, model: Any, lifetime: float) -> pd.DataFrame:
-        """Generate carbonation profile starting at a given calendar year.
-
-        :param model: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.
-        :param lifetime: Design life of the structure [years]
-
-        :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)
-        """
-
-        start_year  = self.expo['Installation year']
-        rh          = self.expo['Relative humidity [%]']
-        exposure    = self.expo['Exposure conditions']
-        fc          = self.mat['f_ck [kPa]'] / 1E3
+        """Generate carbonation profile starting at a given calendar year."""
+    
+        start_year = self.expo['Installation year']
+        rh = self.expo['Relative humidity [%]']
+        exposure = self.expo['Exposure conditions']
+        fc = self.mat['f_ck [kPa]'] / 1E3
         cement_type = self.mat['Type of cement']
 
         # Time steps
-        years = np.arange(0, lifetime + 1,10)
-
+        years = np.arange(0, lifetime + 1, 10)
+        
         # Romain calendar
         calendar_years = start_year + years
 
-        # CO2 emition
+        # CO2 emission
         co2_values = [self.co2_percentage_year(y) for y in calendar_years]
 
         # Carbonation AI model and profile
-        df      = pd.DataFrame({'t (years)': years, 'CO2 (%)': co2_values, 'fc (MPa)': [fc]*len(years), 'RH (%)': [rh]*len(years), 'Type of cement': [cement_type]*len(years), 'Exposure conditions': [exposure]*len(years)})
-        df      = df[model.feature_names_in_]
-        depth   = model.predict(df)
-        profile = pd.DataFrame({'calendar year': calendar_years, 't (years)': years, 'CO2 (%)': co2_values, 'carbonation depth (mm)': depth})
+        df = pd.DataFrame({
+            't (years)': years, 
+            'CO2 (%)': co2_values, 
+            'fc (MPa)': [fc] * len(years), 
+            'RH (%)': [rh] * len(years), 
+            'Type of cement': [cement_type] * len(years), 
+            'Exposure conditions': [exposure] * len(years)
+        })
+        df = df[model.feature_names_in_]
+        depth = model.predict(df)
+        
+        # CORREÇÃO: Forçar profundidade zero no tempo zero
+        depth = np.maximum(depth, 0)
+        
+        profile = pd.DataFrame({
+            'calendar year': calendar_years, 
+            't (years)': years, 
+            'CO2 (%)': co2_values, 
+            'carbonation depth (mm)': depth
+        })
         profile['carbonation depth (mm)'] = profile['carbonation depth (mm)'].cummax()
-
+        
+        # Garantir que o primeiro ponto seja zero
+        profile.loc[0, 'carbonation depth (mm)'] = 0.0
+        
         return profile
 
     def carbonation_depth_at_time(self, profile: pd.DataFrame, t_query: float) -> float:
@@ -654,86 +667,19 @@ class Beam():
         return m_raux * c_f
 
 
-# State limit function with time effect
-def state_limit_function_time(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 1000) -> dict:
-    """Compute the state limit function with carbonation effects at a specific time step, considering latent variables related to temperature and relative humidity. 
-    
-    :param x: Input variables matrix [0] = Cover in m; [1] = Compressive strength in kPa; [2] = Relative humidity in %.
-    :param names_x_variables: List of names for the input variables (e.g., ['Cover [m]', 'Compressive strength [KPa]'])
-    :param carb_model: Trained ML model for carbonation depth prediction
-    :param cement_type: Type of cement (default is 3). 0: CPII Z, 1: CPV -ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E
-    :param installation_year: Year of installation of the structure (default is 1990)
-    :param exposure_conditions: Exposure conditions for carbonation (default is 2). 0: PIA (Internal Protected), 1: UEA (External Unprotected), 2: PEA (External Protected)
-    :param time_step: Time step (years) at which to evaluate the state limit function (default is 0.0)
-    :param n_latent_samples: Number of latent samples to generate for each input sample (default is 5000)
-
-    :return: Input variables, latent variables, and state limit function results for each sample and GLAM parameters for emulator fitting.
-    """    
-
-    dfs = []
-
-    # Looping through each sample in x
-    for i in range(x.shape[0]):
-        # Beam properties
-        geo = {
-                'cover [m]':      float(x[i][0])
-              }
-        mat = {
-                'f_ck [kPa]':     float(x[i][1]),
-                'Type of cement': cement_type
-              } 
-        expo = {
-                'Installation year':     installation_year,
-                'Exposure conditions':   exposure_conditions,
-                'Relative humidity [%]': float(x[i][2])
-               }
-        load = {}           
-
-        # Latent variables
-        beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
-        
-        rh_beam = beam_instance.latent_variable_generator(n_latent_samples)
-        rh_beam = np.array(rh_beam).flatten()
-
-        # Carbonation profile and state limit function
-        profile     = beam_instance.carbonation_profile(model=carb_model, lifetime=time_step)
-        t_query     = time_step + expo['Installation year']
-        carb_depth  = beam_instance.carbonation_depth_at_time(profile, t_query)
-        df          = {
-                        names_x_variables[0]: [x[i, 0]] * n_latent_samples,     # Cover
-                        names_x_variables[1]: [x[i, 1]] * n_latent_samples,     # Compressive strength
-                        names_x_variables[2]: [x[i, 2]] * n_latent_samples,     # Relative humidity
-                        'z1': rh_beam,                                          # Relative Humidity - latent variable 1
-                        'r': [geo['cover [m]']] * n_latent_samples,             # Concrete cover in meters
-                        's': [carb_depth/1E3] * n_latent_samples,               # Carbonation depth at time t_query in meters
-                      }
-        df = pd.DataFrame(df)
-        df['g'] = df['r'] - df['s']
-        
-        # Emulator fitting
-        emulator = glam.GlamFKML()
-        sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
-        lambdas = sol.x
-        df['lambda 1'], df['lambda 2'], df['lambda 3'], df['lambda 4'] = lambdas[0], lambdas[1], lambdas[2], lambdas[3]
-        dfs.append(df)
-    
-    return pd.concat(dfs, ignore_index=True)
-
-
-def state_limit_function_time_durability(
+def state_limit_function_time_structural(
     x: np.ndarray,
     names_x_variables: list,
     carb_model: Any,
-    cement_type: int = 3,
-    installation_year: int = 1990,
-    exposure_conditions: int = 2,
-    time_step: float = 0.0,
-    n_latent_samples: int = 1000,
+    beam_ref: Any,
+    time_step: float,
+    n_latent_samples: int,
+    lifetime_max: float = 100,
     verbose: bool = False
 ) -> pd.DataFrame:
     """
-    Compute the state limit function with carbonation effects at a specific time step.
-    State limit: g = cover - carbonation_depth (durability limit state)
+    Compute structural limit state function with carbonation effects and 
+    corrosion propagation, with full uncertainty propagation.
     """
     
     dfs = []
@@ -743,44 +689,50 @@ def state_limit_function_time_durability(
             print(f"Processing sample {i+1}/{x.shape[0]}")
 
         # =========================
-        # 1. Beam properties (durability analysis)
+        # 1. Atualizar propriedades da viga
         # =========================
-        geo = {
-            'cover [m]': float(x[i][0])
-        }
-        mat = {
-            'f_ck [kPa]': float(x[i][1]),
-            'Type of cement': cement_type
-        }
-        expo = {
-            'Installation year': installation_year,
-            'Exposure conditions': exposure_conditions,
-            'Relative humidity [%]': float(x[i][2])
-        }
-        load = {}
+        geo = beam_ref.geo.copy()
+        mat = beam_ref.mat.copy()
+        load = beam_ref.load.copy()
+        expo = beam_ref.expo.copy()
+
+        geo['cover [m]'] = float(x[i][0])
+        mat['f_ck [kPa]'] = float(x[i][1])
+        expo['Relative humidity [%]'] = float(x[i][2])
+        
+        # Guardar umidade base para multiplicação
+        base_rh = expo['Relative humidity [%]']
 
         # =========================
-        # 2. Generate latent variables (humidity uncertainty)
+        # 2. Gerar variáveis latentes de umidade (propagação de incertezas)
         # =========================
-        beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
-        rh_latent = beam_instance.latent_variable_generator(n_latent_samples)
+        beam_temp = Beam(geo=geo, mat=mat, load=load, expo=expo)
+        rh_latent = beam_temp.latent_variable_generator(n_latent_samples)
         rh_latent = np.array(rh_latent).flatten()
         
         # =========================
-        # 3. Carbonation analysis for each latent humidity sample
+        # 3. Carbonatação para cada amostra latente de umidade
         # =========================
         carbonation_depths = np.zeros(n_latent_samples)
+        carbonation_times = np.full(n_latent_samples, lifetime_max)  # Default: nunca atinge
         
-        base_rh = expo['Relative humidity [%]']
-        start_year = installation_year
+        cover_mm = geo['cover [m]'] * 1e3
+        start_year = expo['Installation year']
         year_query = start_year + time_step
         
+        # Discretização adaptativa para busca do tempo de iniciação
+        if time_step > 0:
+            n_points = min(100, int(lifetime_max) + 1)
+            search_times = np.linspace(0, time_step, n_points)
+        else:
+            search_times = np.array([0.0])
+        
         for j in range(n_latent_samples):
-            # Apply latent variable to humidity (multiplicative factor)
+            # CORREÇÃO: Multiplicar umidade base pelo fator latente
             expo_with_rh = expo.copy()
             new_rh = base_rh * rh_latent[j]
             
-            # Ensure humidity is within physical limits (0-100%)
+            # Garantir que a umidade fique dentro de limites físicos (0-100%)
             if new_rh > 100:
                 new_rh = 100
             elif new_rh < 0:
@@ -788,71 +740,128 @@ def state_limit_function_time_durability(
             
             expo_with_rh['Relative humidity [%]'] = new_rh
             
-            # Create beam with updated humidity
+            # Criar beam com umidade atualizada
             beam_with_rh = Beam(geo=geo, mat=mat, load=load, expo=expo_with_rh)
             
-            # Generate carbonation profile
-            profile = beam_with_rh.carbonation_profile(model=carb_model, lifetime=time_step)
+            # Gerar perfil de carbonatação completo
+            profile = beam_with_rh.carbonation_profile(model=carb_model, lifetime=lifetime_max)
             
-            # Calculate carbonation depth at evaluation time (model returns mm)
+            # O modelo já retorna em mm
             carb_depth_mm = beam_with_rh.carbonation_depth_at_time(profile, year_query)
             
-            # Ensure no negative values
+            # Garantir que não seja negativo
             if carb_depth_mm < 0:
                 if verbose:
-                    print(f"    Warning: negative carbonation depth ({carb_depth_mm:.2f} mm), setting to 0")
+                    print(f"    Aviso: profundidade negativa detectada ({carb_depth_mm:.2f} mm), ajustando para 0")
                 carb_depth_mm = 0.0
             
             carbonation_depths[j] = carb_depth_mm
+            
+            # Calcular tempo de iniciação da corrosão
+            if carb_depth_mm >= cover_mm:
+                # Se já atingiu, encontrar tempo exato com interpolação
+                for idx, tau in enumerate(search_times):
+                    year_tau = start_year + tau
+                    depth_tau_mm = beam_with_rh.carbonation_depth_at_time(profile, year_tau)
+                    
+                    # Garantir que não seja negativo
+                    if depth_tau_mm < 0:
+                        depth_tau_mm = 0.0
+                    
+                    if depth_tau_mm >= cover_mm:
+                        if idx > 0:
+                            # Interpolação linear entre os dois pontos
+                            tau_prev = search_times[idx-1]
+                            depth_prev_mm = beam_with_rh.carbonation_depth_at_time(profile, start_year + tau_prev)
+                            
+                            if depth_prev_mm < 0:
+                                depth_prev_mm = 0.0
+                            
+                            if depth_prev_mm < cover_mm:
+                                t_carb = tau_prev + (cover_mm - depth_prev_mm) * (tau - tau_prev) / (depth_tau_mm - depth_prev_mm)
+                            else:
+                                t_carb = tau
+                        else:
+                            t_carb = tau
+                        carbonation_times[j] = t_carb
+                        break
+            else:
+                # Buscar tempo de iniciação após o tempo atual
+                future_times = np.linspace(time_step, lifetime_max, min(100, int(lifetime_max - time_step) + 1))
+                all_search_times = np.concatenate([search_times, future_times])
+                for tau in all_search_times:
+                    year_tau = start_year + tau
+                    depth_tau_mm = beam_with_rh.carbonation_depth_at_time(profile, year_tau)
+                    
+                    if depth_tau_mm < 0:
+                        depth_tau_mm = 0.0
+                    
+                    if depth_tau_mm >= cover_mm:
+                        carbonation_times[j] = tau
+                        break
 
         # =========================
-        # 4. State limit function (durability: cover - carbonation depth)
+        # 4. Amostragem latente estrutural (fatores de incerteza)
         # =========================
-        cover_m = geo['cover [m]']
-        cover_mm = cover_m * 1000
-        
-        # State limit in mm (positive = safe, negative = failure)
-        g_vals = cover_mm - carbonation_depths
-        
+        theta_R = np.random.lognormal(mean=0.0, sigma=0.05, size=n_latent_samples)
+        theta_S = np.random.lognormal(mean=0.0, sigma=0.10, size=n_latent_samples)
+
         # =========================
-        # 5. Create DataFrame with results
+        # 5. Resistência com corrosão
+        # =========================
+        R_vals = np.zeros(n_latent_samples)
+        
+        # Parâmetros de carga
+        g_k = load.get('g_k [kN/m]', 5.0)
+        q_k = load.get('q_k [kN/m]', 2.0)
+        S_base = beam_ref.design_bending_moment(g_k=g_k, q_k=q_k)
+        S_vals = S_base * theta_S
+
+        for j in range(n_latent_samples):
+            # Calcular resistência considerando corrosão no tempo atual
+            R = beam_ref.design_resistant_bending_moment_with_corrosion(
+                t=time_step,
+                t_carb=carbonation_times[j],
+                temp=expo.get('temp [°C]', 20.0)
+            )
+            R_vals[j] = R * theta_R[j]
+
+        # =========================
+        # 6. Estado limite
+        # =========================
+        g_vals = R_vals - S_vals
+
+        # =========================
+        # 7. Criar DataFrame com resultados
         # =========================
         df = pd.DataFrame({
             names_x_variables[0]: [x[i, 0]] * n_latent_samples,
             names_x_variables[1]: [x[i, 1]] * n_latent_samples,
             names_x_variables[2]: [x[i, 2]] * n_latent_samples,
             'RH_latent': rh_latent,
-            'RH_effective': [base_rh * r for r in rh_latent],
+            'RH_effective': [base_rh * r for r in rh_latent],  # Umidade efetiva após multiplicação
             'Carbonation_depth_mm': carbonation_depths,
-            'Cover_mm': [cover_mm] * n_latent_samples,
+            'Carbonation_time_years': carbonation_times,
             'Time (years)': time_step,
+            'R': R_vals,
+            'S': S_vals,
             'g': g_vals
         })
 
         # =========================
-        # 6. GLAM fitting with handling for constant distributions
+        # 8. GLAM fitting com tratamento de erro robusto
         # =========================
-        
-        # CORREÇÃO: Verificar se g é praticamente constante
-        if np.std(g_vals) < 1e-6:
-            # Distribuição constante - não é possível fazer fitting do GLAM
-            lambdas = [np.nan, np.nan, np.nan, np.nan]
-            if verbose and time_step == 0:
-                print(f"  Aviso: g constante (std={np.std(g_vals):.2e}) para t={time_step}, usando lambdas NaN")
-        else:
-            try:
-                emulator = glam.GlamFKML()
-                sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
-                if sol.success:
-                    lambdas = sol.x
-                else:
-                    lambdas = [np.nan] * 4
-                    if verbose:
-                        print(f"  Aviso: GLAM não convergiu para sample {i} (t={time_step})")
-            except Exception as e:
-                if verbose:
-                    print(f"  GLAM fitting failed for sample {i} (t={time_step}): {e}")
+        try:
+            emulator = glam.GlamFKML()
+            sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
+            if sol.success:
+                lambdas = sol.x
+            else:
                 lambdas = [np.nan] * 4
+        except Exception as e:
+            if verbose:
+                print(f"GLAM fitting failed for sample {i}: {e}")
+            lambdas = [np.nan] * 4
 
         df['lambda 1'] = lambdas[0]
         df['lambda 2'] = lambdas[1]
@@ -862,9 +871,164 @@ def state_limit_function_time_durability(
         dfs.append(df)
         
         if verbose:
+            # Estatísticas para monitoramento
             print(f"  Sample {i+1}:")
             print(f"    P(g < 0) = {np.mean(g_vals < 0):.4f}")
             print(f"    Mean carbonation depth = {np.mean(carbonation_depths):.2f} mm")
-            print(f"    GLAM converged: {not np.isnan(lambdas[0])}")
+            print(f"    Mean initiation time = {np.mean(carbonation_times):.2f} years")
+            n_reached = np.sum(carbonation_times < lifetime_max)
+            print(f"    Samples that reached cover: {n_reached}/{n_latent_samples} ({100*n_reached/n_latent_samples:.1f}%)")
+            print(f"    GLAM converged: {sol.success if 'sol' in locals() else False}")
 
     return pd.concat(dfs, ignore_index=True)
+
+
+def get_carbonation_statistics(beam_instance, n_samples=1000, time_step=50, lifetime_max=100):
+    """
+    Calcula estatísticas de carbonatação para um beam específico,
+    considerando incertezas nas variáveis latentes.
+    
+    :param beam_instance: Instância da classe Beam
+    :param n_samples: Número de amostras latentes
+    :param time_step: Tempo de avaliação
+    :param lifetime_max: Vida útil máxima
+    :return: Dicionário com estatísticas
+    """
+    
+    rh_latent = beam_instance.latent_variable_generator(n_samples)
+    rh_latent = np.array(rh_latent).flatten()
+    
+    depths = []
+    times_to_cover = []
+    
+    start_year = beam_instance.expo['Installation year']
+    cover_mm = beam_instance.geo['cover [m]'] * 1e3
+    
+    for rh in rh_latent:
+        expo_copy = beam_instance.expo.copy()
+        expo_copy['Relative humidity [%]'] = rh
+        
+        beam_rh = Beam(
+            geo=beam_instance.geo,
+            mat=beam_instance.mat,
+            load=beam_instance.load,
+            expo=expo_copy
+        )
+        
+        profile = beam_rh.carbonation_profile(model=carb_model, lifetime=lifetime_max)
+        
+        year_query = start_year + time_step
+        depth = beam_rh.carbonation_depth_at_time(profile, year_query)
+        depths.append(depth)
+        
+        # Encontrar tempo para atingir a cobertura
+        t_carb = lifetime_max
+        for tau in np.linspace(0, lifetime_max, 200):
+            year_tau = start_year + tau
+            if beam_rh.carbonation_depth_at_time(profile, year_tau) >= cover_mm:
+                t_carb = tau
+                break
+        times_to_cover.append(t_carb)
+    
+    return {
+        'depth_mean': np.mean(depths),
+        'depth_std': np.std(depths),
+        'depth_percentiles': np.percentile(depths, [5, 50, 95]),
+        'time_mean': np.mean(times_to_cover),
+        'time_std': np.std(times_to_cover),
+        'time_percentiles': np.percentile(times_to_cover, [5, 50, 95])
+    }
+
+
+# No arquivo functions_.py, após a função state_limit_function_time_structural
+# e antes do final do arquivo, adicione:
+
+def validate_results(results, x_samples, lifetime_max=100):
+    """
+    Valida os resultados e gera estatísticas resumidas.
+    
+    :param results: Dicionário com resultados por tempo (output de state_limit_function_time_structural)
+    :param x_samples: Matriz de amostras de entrada
+    :param lifetime_max: Vida útil máxima para filtrar tempos de iniciação
+    """
+    
+    print("\n" + "="*60)
+    print("VALIDAÇÃO DOS RESULTADOS")
+    print("="*60)
+    
+    for t, df in results.items():
+        print(f"\n{'='*40}")
+        print(f"TEMPO: {t} anos")
+        print(f"{'='*40}")
+        print(f"  Número de amostras totais: {len(df)}")
+        print(f"  Probabilidade de falha P(g < 0): {np.mean(df['g'] < 0):.4f}")
+        print(f"  g - média: {df['g'].mean():.4f}")
+        print(f"  g - desvio padrão: {df['g'].std():.4f}")
+        print(f"  g - mínimo: {df['g'].min():.4f}")
+        print(f"  g - máximo: {df['g'].max():.4f}")
+        print(f"  R - média: {df['R'].mean():.4f}")
+        print(f"  S - média: {df['S'].mean():.4f}")
+        
+        # Verificar carbonation_times se existir
+        if 'Carbonation_time_years' in df.columns:
+            valid_times = df['Carbonation_time_years'] < lifetime_max
+            n_valid = valid_times.sum()
+            n_invalid = len(df) - n_valid
+            
+            print(f"\n  ANÁLISE DE CARBONATAÇÃO:")
+            print(f"    Amostras que atingiram a armadura: {n_valid} ({100*n_valid/len(df):.1f}%)")
+            print(f"    Amostras que NÃO atingiram: {n_invalid} ({100*n_invalid/len(df):.1f}%)")
+            
+            if n_valid > 0:
+                print(f"    Tempo de iniciação - média: {df['Carbonation_time_years'][valid_times].mean():.2f} anos")
+                print(f"    Tempo de iniciação - desvio: {df['Carbonation_time_years'][valid_times].std():.2f} anos")
+                print(f"    Tempo de iniciação - percentis (5%, 50%, 95%): "
+                      f"{np.percentile(df['Carbonation_time_years'][valid_times], [5, 50, 95])}")
+            
+            print(f"    Profundidade carbonatação - média: {df['Carbonation_depth_mm'].mean():.2f} mm")
+            print(f"    Profundidade carbonatação - desvio: {df['Carbonation_depth_mm'].std():.2f} mm")
+        
+        # Verificar lambdas
+        lambda_cols = ['lambda 1', 'lambda 2', 'lambda 3', 'lambda 4']
+        if all(col in df.columns for col in lambda_cols):
+            print(f"\n  PARÂMETROS GLAM (média):")
+            for col in lambda_cols:
+                # Ignorar NaNs se houver
+                valid_lam = df[col][~np.isnan(df[col])]
+                if len(valid_lam) > 0:
+                    print(f"    {col}: {valid_lam.mean():.4f} ± {valid_lam.std():.4f}")
+                else:
+                    print(f"    {col}: NaN")
+    
+    # Análise geral
+    print("\n" + "="*60)
+    print("RESUMO GERAL")
+    print("="*60)
+    
+    tempos = sorted(results.keys())
+    prob_falha = [np.mean(results[t]['g'] < 0) for t in tempos]
+    
+    print("\nEvolução da probabilidade de falha:")
+    for t, pf in zip(tempos, prob_falha):
+        print(f"  t = {t:3d} anos: P(falha) = {pf:.4f}")
+    
+    # Identificar quando a probabilidade de falha ultrapassa 5% e 10%
+    limiar_5 = None
+    limiar_10 = None
+    for t, pf in zip(tempos, prob_falha):
+        if limiar_5 is None and pf >= 0.05:
+            limiar_5 = t
+        if limiar_10 is None and pf >= 0.10:
+            limiar_10 = t
+    
+    if limiar_5:
+        print(f"\nTempo para P(falha) >= 5%: {limiar_5} anos")
+    if limiar_10:
+        print(f"Tempo para P(falha) >= 10%: {limiar_10} anos")
+    
+    return {
+        'tempos': tempos,
+        'prob_falha': prob_falha,
+        'limiar_5': limiar_5,
+        'limiar_10': limiar_10
+    }
