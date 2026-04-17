@@ -59,47 +59,6 @@ import pyglam as glam
 #         y = np.array(y_aux)
 #     return y, dfs
 
-
-def state_limit_function_time(x: np.ndarray, n_latent_samples: int, t: float = 0.0) -> tuple[np.ndarray, pd.DataFrame]:
-    """State limit function with time effect. Considering Z_1 and Z_2 are the latent variables.
-    
-    :param x: Input variables [0] = Resistance R ; [1] = Load S
-    :param n_latent_samples: Number of latent samples to be generated for each input sample
-    :param t: Time parameter affecting the state limit function
-    
-    :return: [0] = GLAM parameters ; [1] = Dataset with Resitance 'r', Load 's', latent variables 'z1' and 'z2', and state limit function 'g'
-    """
-    
-    y_aux = []
-    dfs = []
-    for i in range(x.shape[0]):
-        df = {'r': [x[i, 0]] * n_latent_samples, 's': [x[i, 1]] * n_latent_samples}
-        df = pd.DataFrame(df)
-        z1aux = []
-        z2aux = []
-        for i in df.iterrows():
-            z1_mu = 1.
-            z1_sc = 0.028
-            s = np.sqrt(np.log(1 + (z1_sc/z1_mu)**2))
-            scale = z1_mu / np.sqrt(1 + (z1_sc/z1_mu)**2)
-            z1aux.append(stats.lognorm.rvs(s=s, scale=scale, size=1)[0])
-            z2_mu = 1.
-            z2_sc = 0.096
-            s = np.sqrt(np.log(1 + (z2_sc/z2_mu)**2))
-            scale = z2_mu / np.sqrt(1 + (z2_sc/z2_mu)**2)
-            z2aux.append(stats.lognorm.rvs(s=s, scale=scale, size=1)[0])
-        df['z1'] = z1aux
-        df['z2'] = z2aux
-        k_factor = 1 + (0.3 - 1) * t / 100
-        df['g'] = k_factor * df['r']/df['z1'] - df['s'] * df['z2']
-        dfs.append(df)
-        lambdas, _ = fit_gld_fkml_mle(df['g'].values)
-        y_aux.append(lambdas)
-        y = np.array(y_aux)
-    
-    return y, dfs
-
-
 def execute_parallel_process(k: float | int, n_samples: int, n_latent_samples: int) -> dict:
     """Execute parallel process for training, saving, and validating the PCE metamodel at time k.
     
@@ -389,53 +348,92 @@ class Beam():
         
         return [rh_beam]
 
-    def co2_percentage_1900_1950(self, year) -> float:
-        """CO2 atmospheric concentration (%) for the historical periods 1900–1950. 
+class CO2Predictor:
+    """
+    Predictor for historical and modern atmospheric CO2 concentrations.
+    
+    Data Sources & Methodology:
+    - Historical CO2 data is primarily sourced from ice core records (e.g., Law Dome, 
+      Antarctica) and direct atmospheric measurements from observatories like Mauna Loa 
+      (NOAA/Scripps) [citation:1][citation:6].
+    - The formulas for 1900-1950, 1950-2000, and post-2000 appear to be linear or 
+      quadratic approximations/regressions fitted to this observed data, rather than 
+      exact mechanistic models. This is a standard approach for capturing long-term 
+      trends and interannual variability in climate modeling [citation:5].
+    """
 
-        :param year: Calendar year for which to calculate the CO2 concentration
-
-        :return: CO2 concentration in percentage (ppm / 1e4)
+    def __init__(self, beam: Optional[Any] = None):
         """
-        co2_ppm = 296.0 + 0.30 * (year - 1900)
-
-        return co2_ppm / 1e4
-
-    def co2_percentage_1950_2000(self, year) -> float:
-        """CO2 atmospheric concentration (%) for the historical periods 1950–2000. 
-
-        :param year: Calendar year for which to calculate the CO2 concentration
-
-        :return: CO2 concentration in percentage (ppm / 1e4)
-        """
-
-        co2_ppm = 311.0 + 1.16 * (year - 1950)
+        Initialize CO2Predictor with beam properties.
         
+        :param beam: Beam object containing exposure and material properties
+        """
+        self.beam = beam
+    
+    def set_beam(self, beam: Any):
+        """Set or update the beam properties."""
+        self.beam = beam
+
+    @staticmethod
+    def co2_percentage_1900_1950(year: int) -> float:
+        """
+        CO2 atmospheric concentration (%) for historical period 1900–1950.
+        Based on a linear approximation of the upward trend during this period.
+        
+        :param year: Calendar year (1900 <= year <= 1950)
+        :return: CO2 concentration in percentage (ppm / 10000)
+        """
+        if not 1900 <= year <= 1950:
+            raise ValueError("Year must be between 1900 and 1950 for this method.")
+            
+        co2_ppm = 296.0 + 0.30 * (year - 1900)
         return co2_ppm / 1e4
 
-    def co2_percentage_pos2000(self, year) -> float:
-        """CO2 atmospheric concentration (%) for the historical periods post-2000.
-
-        :param year: Calendar year for which to calculate the CO2 concentration
-
-        :return: CO2 concentration in percentage (ppm / 1e4)
+    @staticmethod
+    def co2_percentage_1950_2000(year: int) -> float:
         """
+        CO2 atmospheric concentration (%) for historical period 1950–2000.
+        Based on a linear approximation of the accelerating upward trend.
+        
+        :param year: Calendar year (1950 <= year <= 2000)
+        :return: CO2 concentration in percentage (ppm / 10000)
+        """
+        if not 1950 <= year <= 2000:
+            raise ValueError("Year must be between 1950 and 2000 for this method.")
+            
+        co2_ppm = 311.0 + 1.16 * (year - 1950)
+        return co2_ppm / 1e4
 
+    @staticmethod
+    def co2_percentage_pos2000(year: int) -> float:
+        """
+        CO2 atmospheric concentration (%) for post-2000 period.
+        Captures the non-linear (quadratic) acceleration in CO2 buildup observed
+        in recent decades [citation:5].
+        
+        :param year: Calendar year (>= 2000)
+        :return: CO2 concentration in percentage (ppm / 10000)
+        """
+        if year < 2000:
+            raise ValueError("Year must be >= 2000 for this method.")
+            
         t = year - 2000
-
-        C0 = 369.0   # ppm in 2000
-        a  = 1.85    # ppm/year
-        b  = 0.018   # ppm/year²
+        C0 = 369.0   # ppm in 2000 (approximate observed value)
+        a  = 1.85    # ppm/year (linear component)
+        b  = 0.018   # ppm/year² (quadratic component)
         co2_ppm = C0 + a * t + b * t**2
-
         return co2_ppm / 1e4
 
-    def co2_percentage_year(self, year) -> float:
-        """Global average atmospheric CO2 concentration (%) valid from 1900 onwards.
-
-        :param year: Calendar year for which to calculate the CO2 concentration
-
-        :return: CO2 concentration in percentage (ppm / 1e4)
+    def co2_percentage_year(self, year: int) -> float:
         """
+        Global average atmospheric CO2 concentration (%) valid from 1900 onwards.
+        Routes the calculation to the correct historical formula based on the year.
+        
+        :param year: Calendar year (>= 1900)
+        :return: CO2 concentration in percentage (ppm / 10000)
+        """
+        if year < 1900:
+            raise ValueError(f"Year must be >= 1900. Received: {year}")
 
         if year <= 1950:
             return self.co2_percentage_1900_1950(year)
@@ -452,12 +450,14 @@ class Beam():
 
         :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)
         """
+        if self.beam is None:
+            raise ValueError("Beam not set. Use set_beam() or pass beam to constructor.")
 
-        start_year  = self.expo['Installation year']
-        rh          = self.expo['Relative humidity [%]']
-        exposure    = self.expo['Exposure conditions']
-        fc          = self.mat['f_ck [kPa]'] / 1E3
-        cement_type = self.mat['Type of cement']
+        start_year  = self.beam.expo['Installation year']
+        rh          = self.beam.expo['Relative humidity [%]']
+        exposure    = self.beam.expo['Exposure conditions']
+        fc          = self.beam.mat['f_ck [kPa]'] / 1E3
+        cement_type = self.beam.mat['Type of cement']
 
         # Time steps
         years = np.arange(0, lifetime + 1,10)
@@ -490,114 +490,114 @@ class Beam():
         depth = profile['carbonation depth (mm)'].values
 
         return float(np.interp(t_query, t, depth))
-
-    def simple_support_beam_max_bending_moment(self, p_k: float) -> float:
-        """Computes the bending moment at mid-span for a simply supported beam under a uniformly distributed load.
-
-        :param p_k: Characteristic distributed load [kN/m]
-
-        :return: Bending moment at mid-span [kNm]
-        """
-
-        return p_k * self.geo['l [m]']**2 / 8
-
-    def design_bending_moment(self, g_k: float, q_k: float) -> float:
-        """Computes the design bending moment for a simply supported beam under permanent and variable distributed loads.
-
-        :param g_k: Permanent load [kN/m]
-        :param q_k: Variable load [kN/m]
-
-        :return: Design bending moment Sd [kNm] considering load partial safety factors
-        """
-
-        m_gk = self.simple_support_beam_max_bending_moment(p_k=g_k)
-        m_qk = self.simple_support_beam_max_bending_moment(p_k=q_k)
-
-        return self.load['gamma_g'] * m_gk + self.load['gamma_q'] * m_qk
-
-    def f_alpha(self, a_st: float, beta: float) -> float:
-        """Residual of the axial force equilibrium equation for a rectangular reinforced concrete section, using the simplified stress block of NBR 6118 (2023).
-
-        :param a_st: Tensile steel area [m²]
-        :param beta: Neutral axis ratio x/d
-
-        :return: Residual of force equilibrium (concrete – steel)
-        """
-
-        # Concrete parameters
-        if self.mat['f_ck [kPa]'] > 50000:
-            lambda_c   = 0.80 - ((self.mat['f_ck [kPa]']/1000) - 50) / 400
-            alpha_c    = (1.00 - ((self.mat['f_ck [kPa]']/1000) - 50) / 200) * 0.85
-            eta_c      = (40 / (self.mat['f_ck [kPa]']/1000)) ** (1/3)
-            epsilon_cu = 2.6e-3 + 35e-3 * ((90 - self.mat['f_ck [kPa]']/1000) / 100) ** 4
-        else:
-            lambda_c   = 0.80
-            alpha_c    = 0.85
-            eta_c      = 1.00
-            epsilon_cu = 3.5e-3
-
-        # Concrete stress block
-        f_cd     = self.mat['f_ck [kPa]'] / self.mat['gamma_c']
-        sigma_cd = alpha_c * eta_c * f_cd
-
-        # Neutral axis depth
-        x = beta *  (self.geo['h [m]'] * self.geo['ratio d/h'])
-
-        # Resultant concrete force
-        r_cc = sigma_cd * lambda_c * x * self.geo['b_w [m]']
-
-        # Domain limit between 2 and 3
-        beta_lim = epsilon_cu / (epsilon_cu + 10e-3)
-
-        # Steel strain
-        if beta <= beta_lim:
-            epsilon_st = 10e-3
-        else:
-            epsilon_st = epsilon_cu * (1 - beta) / beta
-
-        # Steel stress
-        f_yd       = self.mat['f_yk [kPa]'] / self.mat['gamma_s']
-        epsilon_yd = f_yd / self.mat['e_s [kPa]']
-
-        if abs(epsilon_st) <= epsilon_yd:
-            sigma_st = self.mat['e_s [kPa]'] * epsilon_st
-        else:
-            sigma_st = np.sign(epsilon_st) * f_yd
-
-        # Resultant steel force
-        r_st = sigma_st * a_st
-
-        return r_cc - r_st
     
-    def design_resistant_bending_moment_without_corrosion(self, a_st: float) -> float:
-        """Computes the design resistant bending moment for a simply supported beam under permanent and variable distributed loads.
+    # def simple_support_beam_max_bending_moment(self, p_k: float) -> float:
+    #     """Computes the bending moment at mid-span for a simply supported beam under a uniformly distributed load.
 
-        :param a_st: Tensile steel area [m²]
+    #     :param p_k: Characteristic distributed load [kN/m]
+
+    #     :return: Bending moment at mid-span [kNm]
+    #     """
+
+    #     return p_k * self.geo['l [m]']**2 / 8
+
+    # def design_bending_moment(self, g_k: float, q_k: float) -> float:
+    #     """Computes the design bending moment for a simply supported beam under permanent and variable distributed loads.
+
+    #     :param g_k: Permanent load [kN/m]
+    #     :param q_k: Variable load [kN/m]
+
+    #     :return: Design bending moment Sd [kNm] considering load partial safety factors
+    #     """
+
+    #     m_gk = self.simple_support_beam_max_bending_moment(p_k=g_k)
+    #     m_qk = self.simple_support_beam_max_bending_moment(p_k=q_k)
+
+    #     return self.load['gamma_g'] * m_gk + self.load['gamma_q'] * m_qk
+
+    # def f_alpha(self, a_st: float, beta: float) -> float:
+    #     """Residual of the axial force equilibrium equation for a rectangular reinforced concrete section, using the simplified stress block of NBR 6118 (2023).
+
+    #     :param a_st: Tensile steel area [m²]
+    #     :param beta: Neutral axis ratio x/d
+
+    #     :return: Residual of force equilibrium (concrete – steel)
+    #     """
+
+    #     # Concrete parameters
+    #     if self.mat['f_ck [kPa]'] > 50000:
+    #         lambda_c   = 0.80 - ((self.mat['f_ck [kPa]']/1000) - 50) / 400
+    #         alpha_c    = (1.00 - ((self.mat['f_ck [kPa]']/1000) - 50) / 200) * 0.85
+    #         eta_c      = (40 / (self.mat['f_ck [kPa]']/1000)) ** (1/3)
+    #         epsilon_cu = 2.6e-3 + 35e-3 * ((90 - self.mat['f_ck [kPa]']/1000) / 100) ** 4
+    #     else:
+    #         lambda_c   = 0.80
+    #         alpha_c    = 0.85
+    #         eta_c      = 1.00
+    #         epsilon_cu = 3.5e-3
+
+    #     # Concrete stress block
+    #     f_cd     = self.mat['f_ck [kPa]'] / self.mat['gamma_c']
+    #     sigma_cd = alpha_c * eta_c * f_cd
+
+    #     # Neutral axis depth
+    #     x = beta *  (self.geo['h [m]'] * self.geo['ratio d/h'])
+
+    #     # Resultant concrete force
+    #     r_cc = sigma_cd * lambda_c * x * self.geo['b_w [m]']
+
+    #     # Domain limit between 2 and 3
+    #     beta_lim = epsilon_cu / (epsilon_cu + 10e-3)
+
+    #     # Steel strain
+    #     if beta <= beta_lim:
+    #         epsilon_st = 10e-3
+    #     else:
+    #         epsilon_st = epsilon_cu * (1 - beta) / beta
+
+    #     # Steel stress
+    #     f_yd       = self.mat['f_yk [kPa]'] / self.mat['gamma_s']
+    #     epsilon_yd = f_yd / self.mat['e_s [kPa]']
+
+    #     if abs(epsilon_st) <= epsilon_yd:
+    #         sigma_st = self.mat['e_s [kPa]'] * epsilon_st
+    #     else:
+    #         sigma_st = np.sign(epsilon_st) * f_yd
+
+    #     # Resultant steel force
+    #     r_st = sigma_st * a_st
+
+    #     return r_cc - r_st
+    
+    # def design_resistant_bending_moment_without_corrosion(self, a_st: float) -> float:
+    #     """Computes the design resistant bending moment for a simply supported beam under permanent and variable distributed loads.
+
+    #     :param a_st: Tensile steel area [m²]
         
-        :return: Design resistant bending moment Rd [kNm]
-        """
+    #     :return: Design resistant bending moment Rd [kNm]
+    #     """
 
-        # Concrete parameters
-        if self.mat['f_ck [kPa]'] > 50000:
-            lambda_c = 0.80 - ((self.mat['f_ck [kPa]']/1000) - 50) / 400
-            alpha_c  = (1.00 - ((self.mat['f_ck [kPa]']/1000) - 50) / 200) * 0.85
-            eta_c    = (40 / (self.mat['f_ck [kPa]']/1000)) ** (1/3)
-        else:
-            lambda_c = 0.80
-            alpha_c  = 0.85
-            eta_c    = 1.00
+    #     # Concrete parameters
+    #     if self.mat['f_ck [kPa]'] > 50000:
+    #         lambda_c = 0.80 - ((self.mat['f_ck [kPa]']/1000) - 50) / 400
+    #         alpha_c  = (1.00 - ((self.mat['f_ck [kPa]']/1000) - 50) / 200) * 0.85
+    #         eta_c    = (40 / (self.mat['f_ck [kPa]']/1000)) ** (1/3)
+    #     else:
+    #         lambda_c = 0.80
+    #         alpha_c  = 0.85
+    #         eta_c    = 1.00
 
-        # Axial force equilibrium to find neutral axis depth
-        d   = self.geo['h [m]'] * self.geo['ratio d/h']
-        sol = sc.optimize.root_scalar(lambda beta: self.f_alpha(a_st=a_st, beta=beta), bracket=(1e-5, d / self.geo['h [m]']), method='bisect')
-        x   = sol.root * d
+    #     # Axial force equilibrium to find neutral axis depth
+    #     d   = self.geo['h [m]'] * self.geo['ratio d/h']
+    #     sol = sc.optimize.root_scalar(lambda beta: self.f_alpha(a_st=a_st, beta=beta), bracket=(1e-5, d / self.geo['h [m]']), method='bisect')
+    #     x   = sol.root * d
 
-        # Resistant moment
-        f_cd     = self.mat['f_ck [kPa]'] / self.mat['gamma_c']
-        sigma_cd = alpha_c * eta_c * f_cd
-        r_cc     = sigma_cd * lambda_c * x * self.geo['b_w [m]']
+    #     # Resistant moment
+    #     f_cd     = self.mat['f_ck [kPa]'] / self.mat['gamma_c']
+    #     sigma_cd = alpha_c * eta_c * f_cd
+    #     r_cc     = sigma_cd * lambda_c * x * self.geo['b_w [m]']
         
-        return r_cc * (d - 0.5 * lambda_c * x)
+    #     return r_cc * (d - 0.5 * lambda_c * x)
 
     def corrosion_index(self, temp: float) -> float:
         """Determines the corrosion index of steel reinforcements in reinforced concrete considering the influence of ambient temperature on the corrosion rate, according to Peng and Stewart (2016).
@@ -618,103 +618,36 @@ class Beam():
 
         return i_corr
 
-    def design_resistant_bending_moment_with_corrosion(self, t: float, t_carb: float, temp: float) -> float:
-        """Computes the design resistant bending moment for a simply supported beam under permanent and variable distributed loads considering corrosion effects.
+    # def design_resistant_bending_moment_with_corrosion(self, t: float, t_carb: float, temp: float) -> float:
+    #     """Computes the design resistant bending moment for a simply supported beam under permanent and variable distributed loads considering corrosion effects.
 
-        :param t: Time elapsed since the structure was built [year]
-        :param t_carb: Time for carbonation to reach the reinforcement [year]
-        :param temp: Temperature of the environment (°C)
+    #     :param t: Time elapsed since the structure was built [year]
+    #     :param t_carb: Time for carbonation to reach the reinforcement [year]
+    #     :param temp: Temperature of the environment (°C)
 
-        :return: Design resistant bending moment Rd [kNm] with corrosion effects
-        """
+    #     :return: Design resistant bending moment Rd [kNm] with corrosion effects
+    #     """
 
-        # Corrosion parameters
-        delta_time_cor = max(0.0, t - t_carb)
-        i_corr_uA      = self.corrosion_index(temp)
+    #     # Corrosion parameters
+    #     delta_time_cor = max(0.0, t - t_carb)
+    #     i_corr_uA      = self.corrosion_index(temp)
 
-        # Loss of diameter (Al-Gohi model)
-        d_0_mm    = self.geo['phi [m]'] * 1000
-        delta_dim = 0.0232 * i_corr_uA * delta_time_cor
-        d_cor     = max(0.0, (d_0_mm - delta_dim) / 1000)
-        a_s_cor   = self.geo['n bars'] * (np.pi * d_cor**2 / 4)
+    #     # Loss of diameter (Al-Gohi model)
+    #     d_0_mm    = self.geo['phi [m]'] * 1000
+    #     delta_dim = 0.0232 * i_corr_uA * delta_time_cor
+    #     d_cor     = max(0.0, (d_0_mm - delta_dim) / 1000)
+    #     a_s_cor   = self.geo['n bars'] * (np.pi * d_cor**2 / 4)
         
-        # Resistant moment
-        if delta_time_cor == 0:
-            c_f = 1.0
-        else:
-            i_corr_mA = i_corr_uA / 1000
-            cf_aux    = 5 / (d_0_mm ** 0.54 * (i_corr_mA * delta_time_cor * 365) ** 0.19)
-            c_f       = min(1.0, cf_aux)
-        m_raux = self.design_resistant_bending_moment_without_corrosion(a_st=a_s_cor)
+    #     # Resistant moment
+    #     if delta_time_cor == 0:
+    #         c_f = 1.0
+    #     else:
+    #         i_corr_mA = i_corr_uA / 1000
+    #         cf_aux    = 5 / (d_0_mm ** 0.54 * (i_corr_mA * delta_time_cor * 365) ** 0.19)
+    #         c_f       = min(1.0, cf_aux)
+    #     m_raux = self.design_resistant_bending_moment_without_corrosion(a_st=a_s_cor)
         
-        return m_raux * c_f
-
-
-# State limit function with time effect
-def state_limit_function_time(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 1000) -> dict:
-    """Compute the state limit function with carbonation effects at a specific time step, considering latent variables related to temperature and relative humidity. 
-    
-    :param x: Input variables matrix [0] = Cover in m; [1] = Compressive strength in kPa; [2] = Relative humidity in %.
-    :param names_x_variables: List of names for the input variables (e.g., ['Cover [m]', 'Compressive strength [KPa]'])
-    :param carb_model: Trained ML model for carbonation depth prediction
-    :param cement_type: Type of cement (default is 3). 0: CPII Z, 1: CPV -ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E
-    :param installation_year: Year of installation of the structure (default is 1990)
-    :param exposure_conditions: Exposure conditions for carbonation (default is 2). 0: PIA (Internal Protected), 1: UEA (External Unprotected), 2: PEA (External Protected)
-    :param time_step: Time step (years) at which to evaluate the state limit function (default is 0.0)
-    :param n_latent_samples: Number of latent samples to generate for each input sample (default is 5000)
-
-    :return: Input variables, latent variables, and state limit function results for each sample and GLAM parameters for emulator fitting.
-    """    
-
-    dfs = []
-
-    # Looping through each sample in x
-    for i in range(x.shape[0]):
-        # Beam properties
-        geo = {
-                'cover [m]':      float(x[i][0])
-              }
-        mat = {
-                'f_ck [kPa]':     float(x[i][1]),
-                'Type of cement': cement_type
-              } 
-        expo = {
-                'Installation year':     installation_year,
-                'Exposure conditions':   exposure_conditions,
-                'Relative humidity [%]': float(x[i][2])
-               }
-        load = {}           
-
-        # Latent variables
-        beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
-        
-        rh_beam = beam_instance.latent_variable_generator(n_latent_samples)
-        rh_beam = np.array(rh_beam).flatten()
-
-        # Carbonation profile and state limit function
-        profile     = beam_instance.carbonation_profile(model=carb_model, lifetime=time_step)
-        t_query     = time_step + expo['Installation year']
-        carb_depth  = beam_instance.carbonation_depth_at_time(profile, t_query)
-        df          = {
-                        names_x_variables[0]: [x[i, 0]] * n_latent_samples,     # Cover
-                        names_x_variables[1]: [x[i, 1]] * n_latent_samples,     # Compressive strength
-                        names_x_variables[2]: [x[i, 2]] * n_latent_samples,     # Relative humidity
-                        'z1': rh_beam,                                          # Relative Humidity - latent variable 1
-                        'r': [geo['cover [m]']] * n_latent_samples,             # Concrete cover in meters
-                        's': [carb_depth/1E3] * n_latent_samples,               # Carbonation depth at time t_query in meters
-                      }
-        df = pd.DataFrame(df)
-        df['g'] = df['r'] - df['s']
-        
-        # Emulator fitting
-        emulator = glam.GlamFKML()
-        sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
-        lambdas = sol.x
-        df['lambda 1'], df['lambda 2'], df['lambda 3'], df['lambda 4'] = lambdas[0], lambdas[1], lambdas[2], lambdas[3]
-        dfs.append(df)
-    
-    return pd.concat(dfs, ignore_index=True)
-
+    #     return m_raux * c_f
 
 def state_limit_function_time_durability(
                                             x: np.ndarray, names_x_variables: list, carb_model: Any, 
@@ -727,26 +660,22 @@ def state_limit_function_time_durability(
     """
     
     dfs = []
+    predictor = CO2Predictor()  # Create predictor instance (sem beam ainda)
 
     for i in range(x.shape[0]):
-        # if verbose:
-        #     print(f"Processing sample {i+1}/{x.shape[0]}")
-
         # =========================
         # 1. Beam properties (durability analysis)
         # =========================
-        geo = {
-                    'cover [m]': float(x[i][0])
-                }
+        geo = {'cover [m]': float(x[i][0])}
         mat = {
-                    'f_ck [kPa]': float(x[i][1]),
-                    'Type of cement': cement_type
-                }
+            'f_ck [kPa]': float(x[i][1]),
+            'Type of cement': cement_type
+        }
         expo = {
-                    'Installation year': installation_year,
-                    'Exposure conditions': exposure_conditions,
-                    'Relative humidity [%]': float(x[i][2])
-                }
+            'Installation year': installation_year,
+            'Exposure conditions': exposure_conditions,
+            'Relative humidity [%]': float(x[i][2])
+        }
         load = {}
 
         # =========================
@@ -761,16 +690,16 @@ def state_limit_function_time_durability(
         # =========================
         carbonation_depths = np.zeros(n_latent_samples)
         
-        base_rh    = expo['Relative humidity [%]']
+        base_rh = expo['Relative humidity [%]']
         start_year = installation_year
         year_query = start_year + time_step
         
         for j in range(n_latent_samples):
-            # Apply latent variable to humidity (multiplicative factor)
+            # Apply latent variable to humidity
             expo_with_rh = expo.copy()
-            new_rh       = base_rh * rh_latent[j]
+            new_rh = base_rh * rh_latent[j]
             
-            # Ensure humidity is within physical limits (0-100%)
+            # Ensure humidity is within physical limits
             if new_rh > 100:
                 new_rh = 100
             elif new_rh < 0:
@@ -781,31 +710,29 @@ def state_limit_function_time_durability(
             # Create beam with updated humidity
             beam_with_rh = Beam(geo=geo, mat=mat, load=load, expo=expo_with_rh)
             
+            # CORREÇÃO: Passar o beam para o predictor
+            predictor.set_beam(beam_with_rh)
+            
             # Generate carbonation profile
-            profile = beam_with_rh.carbonation_profile(model=carb_model, lifetime=time_step)
+            profile = predictor.carbonation_profile(model=carb_model, lifetime=time_step)
             
-            # Calculate carbonation depth at evaluation time (model returns mm)
-            carb_depth_mm = beam_with_rh.carbonation_depth_at_time(profile, year_query)
+            # Calculate carbonation depth
+            carb_depth_mm = predictor.carbonation_depth_at_time(profile, year_query)
             
-            # Ensure no negative values
             if carb_depth_mm < 0:
-                # if verbose:
-                #     print(f"    Warning: negative carbonation depth ({carb_depth_mm:.2f} mm), setting to 0")
                 carb_depth_mm = 0.0
             
             carbonation_depths[j] = carb_depth_mm
 
         # =========================
-        # 4. State limit function (durability: cover - carbonation depth)
+        # 4. State limit function
         # =========================
         cover_m = geo['cover [m]']
         cover_mm = cover_m * 1000
-        
-        # State limit in mm (positive = safe, negative = failure)
         g_vals = cover_mm - carbonation_depths
         
         # =========================
-        # 5. Create DataFrame with results
+        # 5. Create DataFrame
         # =========================
         df = pd.DataFrame({
             names_x_variables[0]: [x[i, 0]] * n_latent_samples,
@@ -820,15 +747,10 @@ def state_limit_function_time_durability(
         })
 
         # =========================
-        # 6. GLAM fitting with handling for constant distributions
+        # 6. GLAM fitting
         # =========================
-        
-        # CORREÇÃO: Verificar se g é praticamente constante
         if np.std(g_vals) < 1e-6:
-            # Distribuição constante - não é possível fazer fitting do GLAM
             lambdas = [np.nan, np.nan, np.nan, np.nan]
-            if verbose and time_step == 0:
-                print(f"  Aviso: g constante (std={np.std(g_vals):.2e}) para t={time_step}, usando lambdas NaN")
         else:
             try:
                 emulator = glam.GlamFKML()
@@ -837,11 +759,9 @@ def state_limit_function_time_durability(
                     lambdas = sol.x
                 else:
                     lambdas = [np.nan] * 4
-                    if verbose:
-                        print(f"  Aviso: GLAM não convergiu para sample {i} (t={time_step})")
             except Exception as e:
                 if verbose:
-                    print(f"  GLAM fitting failed for sample {i} (t={time_step}): {e}")
+                    print(f"  GLAM fitting failed: {e}")
                 lambdas = [np.nan] * 4
 
         df['lambda 1'] = lambdas[0]
@@ -855,6 +775,5 @@ def state_limit_function_time_durability(
             print(f"  Sample {i+1}:")
             print(f"    P(g < 0) = {np.mean(g_vals < 0):.4f}")
             print(f"    Mean carbonation depth = {np.mean(carbonation_depths):.2f} mm")
-            print(f"    GLAM converged: {not np.isnan(lambdas[0])}")
 
     return pd.concat(dfs, ignore_index=True)
