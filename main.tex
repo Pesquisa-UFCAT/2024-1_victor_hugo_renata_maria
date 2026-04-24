@@ -1,0 +1,128 @@
+\documentclass[preprint,11pt]{elsarticle}
+
+\usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    citecolor=blue,
+    linkcolor=black,
+    urlcolor=blue,
+    pdfborder={0 0 0}
+}
+\usepackage{adjustbox}
+\usepackage{verbatim}
+\usepackage{amssymb}
+\usepackage{lineno}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{dsfont}
+\usepackage[multiple]{footmisc}
+\usepackage{mathtools}
+\usepackage{url}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{natbib}
+\usepackage{color}
+\biboptions{sort&compress}
+\restylefloat{table}
+\usepackage{upgreek}
+\usepackage{nicefrac}
+\usepackage{xargs}                      
+\usepackage[pdftex,dvipsnames]{xcolor} 
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+%\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{multicol}
+% \usepackage{algorithm}
+%\usepackage[noend]{algpseudocode}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\makeatletter
+%\def\BState{\State\hskip-\ALG@thistlm}
+\usepackage{lipsum}
+\makeatother
+\usepackage{nomencl}
+\makenomenclature
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argminB}{arg\,min}
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem*{cor}{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{conj}{Conjecture}[section]
+\newtheorem{exmp}{Example}[section]
+
+\theoremstyle{remark}
+\newtheorem*{rem}{Remark}
+\newtheorem*{note}{Note}
+
+
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
+
+\usepackage{lineno}
+
+\journal{XXXXXX}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Forecasting Remaining Useful Life of Reinforced Concrete Structures Subjected to Carbonation-Induced Corrosion Using Emulators}
+
+\author[label1]{Victor Hugo Moreira do Couto Souza}
+\author[label1,label2]{Wanderlei Malaquias Pereira Junior}
+\author[label2,label3]{Ketson dos Santos}
+\author[label4]{Marcos Luiz Henrique}
+\author[label1]{Renata Maria Pensin}
+
+\address[label1]{Federal University of Catalão – UFCAT, Catalão, 75701-180, Goiás, Brazil}
+\address[label2]{University of Minnesota, Minneapolis, MN 55455, United States}
+\address[label3]{CEGE - UMN Department of Civil, Environmental, and Geo-Engineering, 790 Civil Engineering Bldg, 122, 500 Pillsbury Dr SE, Minneapolis, MN 55455, United States}
+\address[label4]{NICEN - Interdisciplinary Center for Exact and Natural Sciences - CA, Caruaru, 55014-900, Pernambuco, Brazil}
+
+\begin{abstract}
+%% Text of abstract
+\lipsum[1]
+\end{abstract}
+
+\begin{keyword}
+word \sep word \sep word \sep word \sep word \sep word
+
+\end{keyword}
+
+\end{frontmatter}
+
+\linenumbers
+
+\section{Introduction}\label{sec:intro}\input{Section_1}
+\section{Carbonation-induced corrosion dataset}\label{sec:carb}\input{Section_2}
+\section{Evaluate of flexural strength}\label{sec:concrete}\input{Section_3}
+\section{Results}\label{sec:res}\input{Section_4}
+\section{Example}\label{sec:exem}\input{Section_5}
+%%%%%%%%%%%%%%
+%\input{spce_Marcos}
+\section{Time-dependent Emulator based on Generalized Lambda Distribution}\input{GLaM_Marcos}
+%%%%%%%%%%%%%
+\bibliographystyle{model1-num-names}
+\bibliography{mybibfile.bib}
+
+\end{document}
