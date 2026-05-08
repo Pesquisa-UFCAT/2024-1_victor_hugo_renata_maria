@@ -301,7 +301,7 @@ class Beam():
 
         :param n_latent_samples: Number of latent samples to generate.
 
-        :return: Arrays of sampled relative humidity.
+        :return: Arrays of sampled relative humidity and concrete compressive strength deviations.
         """
 
         rh_mean = 1.0
@@ -310,7 +310,11 @@ class Beam():
         mu      = np.log(rh_mean) - sigma**2 / 2
         rh_beam = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
         
-        return [rh_beam]
+        fck_mean      = 1.0
+        cov_fck       = 0.10
+        fck_deviation = np.random.normal(loc=fck_mean, scale=cov_fck*fck_mean, size=n_latent_samples)
+        
+        return [rh_beam, fck_deviation]
 
 class CO2Predictor:
     """Predictor for historical and modern atmospheric CO2 concentrations.   
@@ -472,34 +476,41 @@ def emulator_function_time_durability(
         # =========================
         # 2. Generate latent variables (humidity uncertainty)
         # =========================
+        base_rh       = expo['Relative humidity [%]']
+        base_fck      = mat['f_ck [kPa]']
         beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
-        rh_latent = beam_instance.latent_variable_generator(n_latent_samples)
-        rh_latent = np.array(rh_latent).flatten()
+        res        = beam_instance.latent_variable_generator(n_latent_samples)
+        rh_latent  = np.array(res[0]).flatten()
+        fck_latent = np.array(res[1]).flatten()
         
         # =========================
         # 3. Carbonation analysis for each latent humidity sample
         # =========================
         carbonation_depths = np.zeros(n_latent_samples)
-        
-        base_rh = expo['Relative humidity [%]']
         start_year = installation_year
         year_query = start_year + time_step
         
         for j in range(n_latent_samples):
             # Apply latent variable to humidity
             expo_with_rh = expo.copy()
-            new_rh = base_rh * rh_latent[j]
+            mat_with_fck = mat.copy()
+            new_rh       = expo['Relative humidity [%]'] * rh_latent[j]
+            new_fck      = mat['f_ck [kPa]'] * fck_latent[j]
             
             # Ensure humidity is within physical limits
             if new_rh > 100:
                 new_rh = 100
             elif new_rh < 0:
                 new_rh = 0
+                
+            if new_fck < 0:
+                new_fck = 0
             
             expo_with_rh['Relative humidity [%]'] = new_rh
+            mat_with_fck['f_ck [kPa]']            = new_fck
             
             # Create beam with updated humidity
-            beam_with_rh = Beam(geo=geo, mat=mat, load=load, expo=expo_with_rh)
+            beam_with_rh = Beam(geo=geo, mat=mat_with_fck, load=load, expo=expo_with_rh)
             
             # Generate carbonation profile
             predictor.set_beam(beam_with_rh)
@@ -526,6 +537,8 @@ def emulator_function_time_durability(
                             names_x_variables[1]: [x[i, 1]] * n_latent_samples,
                             'RH_latent': rh_latent,
                             'RH_effective': [base_rh * r for r in rh_latent],
+                            'FCK_latent': fck_latent,
+                            'FCK_effective': [base_fck * f for f in fck_latent],
                             'Carbonation_depth_mm': carbonation_depths,
                             'Time (years)': time_step,
                             'g': g_vals
