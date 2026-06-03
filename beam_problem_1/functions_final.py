@@ -303,18 +303,24 @@ class Beam():
 
         :return: Arrays of sampled relative humidity and concrete compressive strength deviations.
         """
+        cov_cov       = 0.05
+        cov_mean      = 1.0
+        sigma_cov     = np.sqrt(np.log(1 + cov_cov**2))
+        mu_cov        = np.log(cov_mean) - sigma_cov**2 / 2
+        cov_latent    = np.random.lognormal(mean=mu_cov, sigma=sigma_cov, size=n_latent_samples)
 
         rh_mean = 1.0
         cov_rh  = 0.02
         sigma   = np.sqrt(np.log(1 + cov_rh**2))
         mu      = np.log(rh_mean) - sigma**2 / 2
         rh_beam = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
+
         
         fck_mean      = 1.0
         cov_fck       = 0.10
         fck_deviation = np.random.normal(loc=fck_mean, scale=cov_fck*fck_mean, size=n_latent_samples)
         
-        return [rh_beam, fck_deviation]
+        return [rh_beam, fck_deviation, cov_latent]
 
 class CO2Predictor:
     """Predictor for historical and modern atmospheric CO2 concentrations.   
@@ -470,7 +476,8 @@ def emulator_function_time_durability(
                  'Exposure conditions': exposure_conditions,
                  'Relative humidity [%]': float(x[i][1])
                }
-        geo, load = {}, {}
+        geo = {'cover[mm]':float(x[i][2])}
+        load = {}
 
 
         # =========================
@@ -478,10 +485,12 @@ def emulator_function_time_durability(
         # =========================
         base_rh       = expo['Relative humidity [%]']
         base_fck      = mat['f_ck [kPa]']
+        base_cov      = geo['cover[mm]']
         beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
         res        = beam_instance.latent_variable_generator(n_latent_samples)
         rh_latent  = np.array(res[0]).flatten()
         fck_latent = np.array(res[1]).flatten()
+        cov_latent = np.array(res[2]).flatten()     
         
         # =========================
         # 3. Carbonation analysis for each latent humidity sample
@@ -494,8 +503,10 @@ def emulator_function_time_durability(
             # Apply latent variable to humidity
             expo_with_rh = expo.copy()
             mat_with_fck = mat.copy()
+            geo_with_cov = geo.copy()
             new_rh       = expo['Relative humidity [%]'] * rh_latent[j]
             new_fck      = mat['f_ck [kPa]'] * fck_latent[j]
+            new_cov      = geo['cover[mm]'] * cov_latent[j]
             
             # Ensure humidity is within physical limits
             if new_rh > 100:
@@ -508,10 +519,11 @@ def emulator_function_time_durability(
             
             expo_with_rh['Relative humidity [%]'] = new_rh
             mat_with_fck['f_ck [kPa]']            = new_fck
+            geo_with_cov['cover[mm]']             = new_cov
             
             # Create beam with updated humidity
-            beam_with_rh = Beam(geo=geo, mat=mat_with_fck, load=load, expo=expo_with_rh)
-            
+            beam_with_rh = Beam(geo=geo_with_cov, mat=mat_with_fck, load=load, expo=expo_with_rh)
+
             # Generate carbonation profile
             predictor.set_beam(beam_with_rh)
             profile = predictor.carbonation_profile(model=carb_model, lifetime=time_step)
@@ -527,7 +539,7 @@ def emulator_function_time_durability(
         # =========================
         # 4. Emulator of carbonation depth
         # =========================
-        g_vals = carbonation_depths
+        g_vals = x[i, 2] - carbonation_depths  # g = cover - carbonation depth (failure if g < 0)
         
         # =========================
         # 5. Create DataFrame
@@ -535,10 +547,13 @@ def emulator_function_time_durability(
         df = pd.DataFrame({
                             names_x_variables[0]: [x[i, 0]] * n_latent_samples,
                             names_x_variables[1]: [x[i, 1]] * n_latent_samples,
+                            names_x_variables[2]: [x[i, 2]] * n_latent_samples,
                             'RH_latent': rh_latent,
                             'RH_effective': [base_rh * r for r in rh_latent],
                             'FCK_latent': fck_latent,
                             'FCK_effective': [base_fck * f for f in fck_latent],
+                            'cov_latent': cov_latent,
+                            'cov_effective': [base_cov * c for c in cov_latent],
                             'Carbonation_depth_mm': carbonation_depths,
                             'Time (years)': time_step,
                             'g': g_vals
