@@ -301,26 +301,26 @@ class Beam():
 
         :param n_latent_samples: Number of latent samples to generate.
 
-        :return: Arrays of sampled relative humidity and concrete compressive strength deviations.
+        :return: Arrays of sampled relative humidity, concrete compressive strength, and concrete cover.
         """
-        cov_cov       = 0.05
+
         cov_mean      = 1.0
+        cov_cov       = 0.05
         sigma_cov     = np.sqrt(np.log(1 + cov_cov**2))
         mu_cov        = np.log(cov_mean) - sigma_cov**2 / 2
         cov_latent    = np.random.lognormal(mean=mu_cov, sigma=sigma_cov, size=n_latent_samples)
 
         rh_mean = 1.0
-        cov_rh  = 0.02
-        sigma   = np.sqrt(np.log(1 + cov_rh**2))
+        rh_cov  = 0.05
+        sigma   = np.sqrt(np.log(1 + rh_cov**2))
         mu      = np.log(rh_mean) - sigma**2 / 2
-        rh_beam = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
+        rh_latent = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
 
+        fck_mean   = 1.0
+        fck_cov    = 0.10
+        fck_latent = np.random.normal(loc=fck_mean, scale=fck_cov*fck_mean, size=n_latent_samples)
         
-        fck_mean      = 1.0
-        cov_fck       = 0.10
-        fck_deviation = np.random.normal(loc=fck_mean, scale=cov_fck*fck_mean, size=n_latent_samples)
-        
-        return [rh_beam, fck_deviation, cov_latent]
+        return [rh_latent, fck_latent, cov_latent]
 
 class CO2Predictor:
     """Predictor for historical and modern atmospheric CO2 concentrations.   
