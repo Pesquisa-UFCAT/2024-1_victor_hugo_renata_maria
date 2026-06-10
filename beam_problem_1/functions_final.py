@@ -402,7 +402,7 @@ class CO2Predictor:
         else:
             return self.co2_percentage_pos2000(year)
         
-    def carbonation_profile(self, model: Any, lifetime: float) -> pd.DataFrame:
+    def carbonation_profile(self, model_: Any, lifetime: float) -> pd.DataFrame:
         """Generate carbonation profile starting at a given calendar year.
 
         :param model: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.
@@ -416,7 +416,7 @@ class CO2Predictor:
         start_year  = self.beam.expo['Installation year']
         rh          = self.beam.expo['Relative humidity [%]']
         exposure    = self.beam.expo['Exposure conditions']
-        fc          = self.beam.mat['f_ck [kPa]'] / 1E3
+        fc          = self.beam.mat['f_ck [MPa]']
         cement_type = self.beam.mat['Type of cement']
 
         # Time steps
@@ -430,8 +430,8 @@ class CO2Predictor:
    
         # Carbonation AI model and profile
         df      = pd.DataFrame({'t (years)': years, 'CO2 (%)': co2_values, 'fc (MPa)': [fc]*len(years), 'RH (%)': [rh]*len(years), 'Type of cement': [cement_type]*len(years), 'Exposure conditions': [exposure]*len(years)})
-        df      = df[model.feature_names_in_]
-        depth   = model.predict(df)
+        df      = df[model_.feature_names_in_]
+        depth   = model_.predict(df)
         profile = pd.DataFrame({'calendar year': calendar_years, 't (years)': years, 'CO2 (%)': co2_values, 'carbonation depth (mm)': depth})
         profile['carbonation depth (mm)'] = profile['carbonation depth (mm)'].cummax()
 
@@ -468,7 +468,7 @@ def emulator_function_time_durability(
         # 1. Beam properties (durability analysis)
         # =========================
         mat = {
-                'f_ck [kPa]': float(x[i][0]),
+                'f_ck [MPa]': float(x[i][0]),
                 'Type of cement': cement_type
               }
         expo = {
@@ -483,19 +483,20 @@ def emulator_function_time_durability(
         # =========================
         # 2. Generate latent variables (humidity uncertainty)
         # =========================
+        base_fck      = mat['f_ck [MPa]']
         base_rh       = expo['Relative humidity [%]']
-        base_fck      = mat['f_ck [kPa]']
         base_cov      = geo['cover[mm]']
         beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
         res        = beam_instance.latent_variable_generator(n_latent_samples)
         rh_latent  = np.array(res[0]).flatten()
         fck_latent = np.array(res[1]).flatten()
-        cov_latent = np.array(res[2]).flatten()     
+        cov_latent = np.array(res[2]).flatten()
         
         # =========================
-        # 3. Carbonation analysis for each latent humidity sample
+        # 3. Carbonation analysis for each latent humidity, fck and cover sample
         # =========================
         carbonation_depths = np.zeros(n_latent_samples)
+        g_vals = np.zeros(n_latent_samples)
         start_year = installation_year
         year_query = start_year + time_step
         
@@ -505,44 +506,47 @@ def emulator_function_time_durability(
             mat_with_fck = mat.copy()
             geo_with_cov = geo.copy()
             new_rh       = expo['Relative humidity [%]'] * rh_latent[j]
-            new_fck      = mat['f_ck [kPa]'] * fck_latent[j]
+            new_fck      = mat['f_ck [MPa]'] * fck_latent[j]
             new_cov      = geo['cover[mm]'] * cov_latent[j]
-            
+
             # Ensure humidity is within physical limits
             if new_rh > 100:
                 new_rh = 100
             elif new_rh < 0:
                 new_rh = 0
-                
+
             if new_fck < 0:
                 new_fck = 0
-            
+
+            if new_cov < 0:
+                new_cov = 0
+
             expo_with_rh['Relative humidity [%]'] = new_rh
-            mat_with_fck['f_ck [kPa]']            = new_fck
+            mat_with_fck['f_ck [MPa]']            = new_fck
             geo_with_cov['cover[mm]']             = new_cov
-            
+
             # Create beam with updated humidity
             beam_with_rh = Beam(geo=geo_with_cov, mat=mat_with_fck, load=load, expo=expo_with_rh)
 
             # Generate carbonation profile
             predictor.set_beam(beam_with_rh)
-            profile = predictor.carbonation_profile(model=carb_model, lifetime=time_step)
-            
+            profile = predictor.carbonation_profile(model_=carb_model, lifetime=150)
+
             # Calculate carbonation depth
             carb_depth_mm = predictor.carbonation_depth_at_time(profile, year_query)
-            
+
             if carb_depth_mm < 0:
                 carb_depth_mm = 0.0
-            
+
             carbonation_depths[j] = carb_depth_mm
 
+            # =========================
+            # 3.1. Emulator of state limit function g = cover - carbonation depth
+            # =========================
+            g_vals[j] = new_cov - carb_depth_mm  # g = cover - carbonation depth (failure if g < 0)
+            
         # =========================
-        # 4. Emulator of carbonation depth
-        # =========================
-        g_vals = x[i, 2] - carbonation_depths  # g = cover - carbonation depth (failure if g < 0)
-        
-        # =========================
-        # 5. Create DataFrame
+        # 4. Create DataFrame
         # =========================
         df = pd.DataFrame({
                             names_x_variables[0]: [x[i, 0]] * n_latent_samples,
@@ -560,7 +564,7 @@ def emulator_function_time_durability(
                         })
 
         # =========================
-        # 6. GLAM fitting
+        # 5. GLAM fitting
         # =========================
         if np.std(g_vals) < 1e-6:
             lambdas = [np.nan, np.nan, np.nan, np.nan]
@@ -590,3 +594,37 @@ def emulator_function_time_durability(
             print(f"    Mean carbonation depth = {np.mean(carbonation_depths):.2f} mm")
 
     return pd.concat(dfs, ignore_index=True)
+
+
+# if __name__ == "__main__":
+#     name_best_model = r'D:\github\2024-1_victor_hugo_renata_maria\beam_problem_1\model_NeuralNetwork_MLP_fold_4.pkl'
+#     # Load the model
+#     model = joblib.load(name_best_model)
+#     print("Carbonation model loaded successfully!")
+#     print(f"   Expected features: {model.feature_names_in_}")
+#     # Example usage
+#     x_pce_rvs = np.array([[30, 40, 30]])
+#     cement_type          = 3
+#     installation_year    = 1990
+#     exposure_conditions  = 2
+#     n_samples            = 50          # Number of design samples. Use 1 for testing one sample
+#     n_latent_samples     = 500        # Number of latent samples per design sample
+#     n_samples_validation = 3           # Number of validation samples
+#     n_lambdas            = 4           # Number of λs to be predicted (λ1, λ2, λ3, λ4)
+#     times = [10]
+#     for t in times:
+#         # ============================================================
+#         # EMULATOR FUNCTION - CARBONATION DEPTH AND LAMBDAS
+#         # ============================================================
+#         df = emulator_function_time_durability(
+#                                                     x=x_pce_rvs,
+#                                                     names_x_variables=["fck", "rh", "cov"],
+#                                                     carb_model=model,
+#                                                     cement_type=cement_type,
+#                                                     installation_year=installation_year,
+#                                                     exposure_conditions=exposure_conditions,
+#                                                     time_step=t,
+#                                                     n_latent_samples=n_latent_samples,
+#                                                     verbose=False
+#                                                 )
+#     print(df.head())
