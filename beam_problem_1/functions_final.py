@@ -453,7 +453,7 @@ class CO2Predictor:
 
 
 def emulator_function_time_durability(
-                                            x: np.ndarray, names_x_variables: list, carb_model: Any, 
+                                            x: np.ndarray, names_x_variables: list, carb_model: Any,
                                             cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2,
                                             time_step: float = 0.0, n_latent_samples: int = 1000, verbose: bool = False
                                         ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -601,36 +601,36 @@ def emulator_function_time_durability(
     return df_full, df_unique
 
 
-if __name__ == "__main__":
-    name_best_model = r'D:\github\2024-1_victor_hugo_renata_maria\beam_problem_1\model_NeuralNetwork_MLP_fold_4.pkl'
-    # Load the model
-    model = joblib.load(name_best_model)
-    print("Carbonation model loaded successfully!")
-    print(f"   Expected features: {model.feature_names_in_}")
-    # Example usage
-    x_pce_rvs = np.array([[30, 40, 30], [35, 40, 28]])
-    cement_type          = 3
-    installation_year    = 1990
-    exposure_conditions  = 2
-    n_samples            = 50          # Number of design samples. Use 1 for testing one sample
-    n_latent_samples     = 500        # Number of latent samples per design sample
-    n_samples_validation = 3           # Number of validation samples
-    n_lambdas            = 4           # Number of λs to be predicted (λ1, λ2, λ3, λ4)
-    times = [10]
-    for t in times:
-        # ============================================================
-        # EMULATOR FUNCTION - CARBONATION DEPTH AND LAMBDAS
-        # ============================================================
-        df_full, df_unique = emulator_function_time_durability(
-                                                    x=x_pce_rvs,
-                                                    names_x_variables=["fck", "rh", "cov"],
-                                                    carb_model=model,
-                                                    cement_type=cement_type,
-                                                    installation_year=installation_year,
-                                                    exposure_conditions=exposure_conditions,
-                                                    time_step=t,
-                                                    n_latent_samples=n_latent_samples,
-                                                    verbose=False
-                                                )
-        print(df_unique.head())
-        print(df_full.describe())
+# if __name__ == "__main__":
+#     name_best_model = r'D:\github\2024-1_victor_hugo_renata_maria\beam_problem_1\model_NeuralNetwork_MLP_fold_4.pkl'
+#     # Load the model
+#     model = joblib.load(name_best_model)
+#     print("Carbonation model loaded successfully!")
+#     print(f"   Expected features: {model.feature_names_in_}")
+#     # Example usage
+#     x_pce_rvs = np.array([[30, 40, 30], [35, 40, 28]])
+#     cement_type          = 3
+#     installation_year    = 1990
+#     exposure_conditions  = 2
+#     n_samples            = 50          # Number of design samples. Use 1 for testing one sample
+#     n_latent_samples     = 500        # Number of latent samples per design sample
+#     n_samples_validation = 3           # Number of validation samples
+#     n_lambdas            = 4           # Number of λs to be predicted (λ1, λ2, λ3, λ4)
+#     times = [10]
+#     for t in times:
+#         # ============================================================
+#         # EMULATOR FUNCTION - CARBONATION DEPTH AND LAMBDAS
+#         # ============================================================
+#         df_full, df_unique = emulator_function_time_durability(
+#                                                     x=x_pce_rvs,
+#                                                     names_x_variables=["fck", "rh", "cov"],
+#                                                     carb_model=model,
+#                                                     cement_type=cement_type,
+#                                                     installation_year=installation_year,
+#                                                     exposure_conditions=exposure_conditions,
+#                                                     time_step=t,
+#                                                     n_latent_samples=n_latent_samples,
+#                                                     verbose=False
+#                                                 )
+#         print(df_unique.head())
+#         print(df_full.describe())
