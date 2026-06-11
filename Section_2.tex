@@ -146,11 +146,11 @@ Seven machine learning models were trained to predict carbonation depth in concr
 The Figure \ref{fig:model_comparison} comparison between predicted and observed carbonation depth values for (a) the worst-performing model (Lasso, $R^2$ = 0.52) and (b) best-performing model (Neural Network MLP, $R^2$ = 0.99). The dashed line represents perfect prediction.
 
 \subsubsection{CO2 profile}
-To model the temporal evolution of atmospheric carbon dioxide ($CO_2$) concentration, a fundamental parameter for structural degradation simulations, an approach based on historical and instrumental records covering the period from 1900 to the present was adopted. The data used to calibrate the model were sourced from renowned international climate research and monitoring associations. For the initial historical period (1900 to 1950), the dataset derives from paleoclimatic records extracted from Antarctic ice cores (Law Dome), managed by the National Centers for Environmental Information of the National Oceanic and Atmospheric Administration (NOAA/NCEI). From 1950 onwards, the model is anchored in continuous direct atmospheric measurements provided by the NOAA Global Monitoring Laboratory (GML) at the Mauna Loa observatory in Hawaii, along with records from the Scripps Institution of Oceanography and the World Data Centre for Greenhouse Gases (WDCGG).
+To model the temporal evolution of atmospheric carbon dioxide ($CO_2$) concentration, a fundamental parameter for structural degradation simulations, an approach based on historical and instrumental records was adopted. For the initial historical period (1900 to 1950), the dataset derives from high-resolution paleoclimatic records extracted from Antarctic ice cores (Law Dome), which provide critical data covering the pre-industrial period to the 20th century and are managed by the NOAA National Centers for Environmental Information (NOAA/NCEI) \cite{noaa_law_dome}. From 1950 onwards, the model is anchored in continuous direct atmospheric measurements provided by the NOAA Global Monitoring Laboratory (GML) at the Mauna Loa observatory in Hawaii \cite{noaa_gml}, alongside records from the World Data Centre for Greenhouse Gases (WDCGG) \cite{wmo_wdcgg}.
 
-For use in this research, a piecewise analytical regression (incorporating both linear and non-linear behaviors) was created to simulate this $CO_2$ accumulation profile over time, yielding a coefficient of determination ($R^2$) of 0.99. The mathematical framework divides the time series into three continuous regimes of anthropogenic growth: slow linear growth between 1900 and 1950 (rate of 0.30 ppm/year), accelerated linear growth between 1950 and 2000 (rate of 1.16 ppm/year), and quadratic (non-linear) growth post-2000, designed to capture the contemporary intensification of global emissions.
+For use in this research, a piecewise analytical regression was created to simulate this $CO_2$ accumulation profile, yielding a coefficient of determination ($R^2$) of 0.99. The mathematical framework divides the time series into three continuous regimes of anthropogenic growth, illustrated in Figure \ref{fig:evolution_co2}. These include a slow linear growth between 1900 and 1950, an accelerated linear growth between 1950 and 2000, and a quadratic growth post-2000, capturing the contemporary intensification of global emissions.
 
-To illustrate the practical application of the described models, parametric simulations were conducted covering the period from 1900 to 2024. The subsequent graphs present the temporal evolution of the carbonation front, highlighting the direct influence of the concrete compressive strength class ($f_{ck}$) and the environmental relative humidity on the degradation rate. For service life assessment purposes, a reference line was set at 30 mm, corresponding to a typical normative concrete cover, indicating the theoretical threshold for reinforcement depassivation
+To illustrate the practical application of the described models, parametric simulations were conducted projecting the carbonation advancement for the extended period from 1900 to 2150. The subsequent graphs present the temporal evolution of the carbonation front, highlighting the direct influence of the concrete compressive strength class ($f_{ck}$) (Figure \ref{fig:evolution_fck}) and the environmental relative humidity (Figure \ref{fig:evolution_h}) on the degradation rate. For service life assessment purposes, a reference line was set at 30 mm, corresponding to a typical normative concrete cover \cite{nbr6118}, indicating the theoretical threshold for reinforcement depassivation.
 
 \begin{figure}
     \centering
@@ -159,7 +159,7 @@ To illustrate the practical application of the described models, parametric simu
     \label{fig:evolution_co2}
 \end{figure}
 
-Figure \ref{fig:evolution_co2} temporal evolution of carbonation depth for different compressive strength classes ($f_{ck}$), considering a constant relative humidity of 65\% (critical scenario) and a normative concrete cover of 30 mm, simulated for the period from 1900 to 2024.
+Figure \ref{fig:evolution_co2} piecewise regression curve of atmospheric carbon dioxide ($CO_2$) concentration simulated from 1900 to 2150. The graph illustrates the model's transitions between the slow linear historical regime (pre-1950), the accelerated linear regime (1950–2000), and the contemporary quadratic non-linear behavior (post-2000) projecting future accumulations.
 
 \begin{figure}
     \centering
@@ -168,7 +168,7 @@ Figure \ref{fig:evolution_co2} temporal evolution of carbonation depth for diffe
     \label{fig:evolution_fck}
 \end{figure}
 
-Figure \ref{fig:evolution_fck} influence of relative humidity on the advancement of the carbonation front over time for concrete with an $f_{ck}$ of 30 MPa. The graph highlights the acceleration of degradation in environments with intermediate humidity (65\%) compared to drier (50\%) or more humid (80\%) environments, during the period from 1900 to 2024.
+Figure \ref{fig:evolution_fck} temporal evolution of carbonation depth for different compressive strength classes ($f_{ck}$), considering a constant relative humidity of 65\% (critical scenario) and a normative concrete cover of 30 mm, simulated for the period from 1900 to 2150.
 
 \begin{figure}
     \centering
@@ -177,7 +177,7 @@ Figure \ref{fig:evolution_fck} influence of relative humidity on the advancement
     \label{fig:evolution_h}
 \end{figure}
 
-Figure \ref{fig:evolution_h} piecewise regression curve of atmospheric carbon dioxide ($CO_2$) concentration from 1900 to 2024. The graph illustrates the model's transitions between the slow linear historical regime (pre-1950), the accelerated linear regime (1950–2000), and the contemporary quadratic non-linear behavior (post-2000).
+Figure \ref{fig:evolution_h} influence of relative humidity on the advancement of the carbonation front over time for concrete with an $f_{ck}$ of 30 MPa. The graph highlights the acceleration of degradation in environments with intermediate humidity (65\%) compared to drier (50\%) or more humid (80\%) environments, simulated for the period from 1900 to 2150.
 
 \subsubsection{Carbonation profile}
 
@@ -198,7 +198,11 @@ Machine Learning (ML) is a subfield of Artificial Intelligence focused on the de
 
 This paradigm relies on generalization capability: the algorithm analyzes a training dataset to construct a model capable of making accurate predictions on new, unseen data. ML techniques are broadly categorized into supervised, unsupervised, and reinforcement learning. In the context of predicting the service life of structures, supervised learning is predominant. Here, the model is trained with known input-output pairs, enabling the mapping of complex, non-linear interactions that often elude conventional analytical formulations.
 
- \subsection{Theoretical Background: Histogram-based Gradient Boosting Regressor (HGBR)}
+\subsection{Neural Networks}
+
+Artificial Neural Networks (ANNs) are computational models inspired by the biological neural networks of the human brain. As a fundamental subset of machine learning and deep learning, ANNs are designed to recognize complex patterns, map non-linear relationships, and process large volumes of data. The architecture of a standard neural network is structured into three main parts: an input layer, one or more hidden layers, and an output layer. These layers are composed of interconnected nodes, known as artificial neurons, which process information by applying synaptic weights and activation functions. During the training phase, the network employs optimization algorithms, such as backpropagation, to iteratively adjust these mathematical weights in order to minimize the loss function (error). This continuous adjustment process grants the model the ability to autonomously learn and generalize solutions from the provided data.
+
+\subsection{Theoretical Background: Histogram-based Gradient Boosting Regressor (HGBR)}
 
 The \textit{Histogram-based Gradient Boosting Regressor} (HGBR) is an advanced machine learning technique belonging to the \textit{Gradient Boosting Decision Trees} (GBDT) family. This approach is grounded in the principle of ensemble learning, where multiple simple predictive models—termed "weak learners"—are combined sequentially to form a robust and high-precision predictor.
 
@@ -253,3 +257,50 @@ However, the traditional $R^2$ tends to increase mechanically with the addition 
 \end{equation}
 
 Where $n$ represents the total number of samples and $p$ is the number of independent variables (features) in the model. Thus, an increase in the $R^2_{adj}$ value confirms that the complexity added to the model resulted in a real gain in predictive capacity.
+
+\subsubsection{Relative Entropy or Kullback–Leibler divergence}
+
+Considere uma variável aleatória discreta $X$   com função massa de probabilidade
+\[
+p(x)=P(X=x), \qquad x \in X.
+\]
+
+A entropia relativa ou distância de Kullback--Leibler entre duas
+funções de massa de probabilidade $p(x)$ e $q(x)$ é definida por \cite{cover2006elements}
+\begin{equation}
+D(p\|q)
+=
+\sum_{x \in \mathcal{X}} p(x)
+\log \frac{p(x)}{q(x)}
+\label{eq:kl_discreta}
+\end{equation}
+
+
+Na definição acima, utilizamos a convenção de que
+$$
+0 \log \frac{0}{0} = 0, \ \ \ \ 0 \log \frac{0}{q} = 0 \ \  \text{e} \ \ \ p \log \frac{p}{0} = \infty.
+$$
+ 
+ 
+Assim, se existir algum símbolo $x \in  X $ tal que
+$p(x) > 0$ e $q(x)=0$, então
+\[
+D(p\|q)=\infty.
+\]
+%%%%%%%%%%%%%%%%%%%%%% 
+  Para o caso contínuo, a entropia
+relativa ou divergência de Kullback--Leibler entre duas funções densidades de
+probabilidade $p(x)$ e $q(x)$ é definida por
+\begin{equation}
+D(p\|q)
+=
+\int p(x)\log\frac{p(x)}{q(x)}\,dx.
+\label{eq:kl_continua}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+A entropia relativa é sempre não negativa e é igual a zero se, e somente se,
+$p=q$. ela  não é simétrica e não satisfaz a desigualdade triangular. Ainda assim,
+é frequentemente útil interpretar a entropia relativa como uma medida de
+``distância'' entre distribuições \cite{cover2006elements}.
+
