@@ -20,9 +20,8 @@ def main():
         run_command(".\\venv\\Scripts\\pip.exe install -r requirements.txt")
         
     elif os_name == "Linux":
-        run_command("python3 -m venv venv")
-        run_command("source venv/bin/activate")
-        run_command("pip install -r requirements.txt")
+        run_command("python -m venv venv")
+        run_command("venv/bin/python -m pip install -r requirements.txt")
     
     else:
         print(f"OS not supported: {os_name}")

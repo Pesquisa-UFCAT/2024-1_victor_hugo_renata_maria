@@ -1,7 +1,28 @@
+# ------------------------------
+# Python virtual environments
+# ------------------------------
 env/
-models/
+venv/
 myenv/
+
+# ------------------------------
+# Python cache and bytecode
+# ------------------------------
 __pycache__/
 *.pyc
+
+# ------------------------------
+# Jupyter local checkpoints
+# ------------------------------
+.ipynb_checkpoints/
+
+# ------------------------------
+# Local project artifacts
+# ------------------------------
+models/
 *.txt
+
+# ------------------------------
+# Files that must stay versioned
+# ------------------------------
 !requirements.txt
