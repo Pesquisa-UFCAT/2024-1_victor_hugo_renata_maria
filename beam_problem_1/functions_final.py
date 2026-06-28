@@ -282,6 +282,8 @@ def g_emulator_at_limit_time(bds, t_limit, g_col="g_emulator"):
 
 # Beam class
 class Beam():
+    """_summary_
+    """
     def __init__(self, geo: dict, mat: dict, load: dict, expo: dict):  
         """Initializes a Beam object with geometric, material, load, and exposure properties.
         
@@ -304,11 +306,11 @@ class Beam():
         :return: Arrays of sampled relative humidity, concrete compressive strength, and concrete cover.
         """
 
-        cov_mean      = 1.0
-        cov_cov       = 0.05
-        sigma_cov     = np.sqrt(np.log(1 + cov_cov**2))
-        mu_cov        = np.log(cov_mean) - sigma_cov**2 / 2
-        cov_latent    = np.random.lognormal(mean=mu_cov, sigma=sigma_cov, size=n_latent_samples)
+        cov_mean   = 1.0
+        cov_cov    = 0.05
+        sigma_cov  = np.sqrt(np.log(1 + cov_cov**2))
+        mu_cov     = np.log(cov_mean) - sigma_cov**2 / 2
+        cov_latent = np.random.lognormal(mean=mu_cov, sigma=sigma_cov, size=n_latent_samples)
 
         rh_mean = 1.0
         rh_cov  = 0.05
@@ -317,7 +319,7 @@ class Beam():
         rh_latent = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
 
         fck_mean   = 1.0
-        fck_cov    = 0.10
+        fck_cov    = 0.05
         fck_latent = np.random.normal(loc=fck_mean, scale=fck_cov*fck_mean, size=n_latent_samples)
         
         return [rh_latent, fck_latent, cov_latent]
@@ -459,7 +461,7 @@ def emulator_function_time_durability(
                                         ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections. 
     """
-    
+
     dfs = []
     predictor = CO2Predictor()  # Create predictor instance (sem beam ainda)
 
@@ -487,11 +489,11 @@ def emulator_function_time_durability(
         base_rh       = expo['Relative humidity [%]']
         base_cov      = geo['cover[mm]']
         beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
-        res        = beam_instance.latent_variable_generator(n_latent_samples)
-        rh_latent  = np.array(res[0]).flatten()
-        fck_latent = np.array(res[1]).flatten()
-        cov_latent = np.array(res[2]).flatten()
-        
+        res           = beam_instance.latent_variable_generator(n_latent_samples)
+        rh_latent     = np.array(res[0]).flatten()
+        fck_latent    = np.array(res[1]).flatten()
+        cov_latent    = np.array(res[2]).flatten()
+
         # =========================
         # 3. Carbonation analysis for each latent humidity, fck and cover sample
         # =========================
@@ -499,7 +501,7 @@ def emulator_function_time_durability(
         g_vals = np.zeros(n_latent_samples)
         start_year = installation_year
         year_query = start_year + time_step
-        
+
         for j in range(n_latent_samples):
             # Apply latent variable to humidity
             expo_with_rh = expo.copy()
