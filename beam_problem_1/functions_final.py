@@ -307,19 +307,19 @@ class Beam():
         """
 
         cov_mean   = 1.0
-        cov_cov    = 0.05
+        cov_cov    = 0.02
         sigma_cov  = np.sqrt(np.log(1 + cov_cov**2))
         mu_cov     = np.log(cov_mean) - sigma_cov**2 / 2
         cov_latent = np.random.lognormal(mean=mu_cov, sigma=sigma_cov, size=n_latent_samples)
 
         rh_mean = 1.0
-        rh_cov  = 0.05
+        rh_cov  = 0.02
         sigma   = np.sqrt(np.log(1 + rh_cov**2))
         mu      = np.log(rh_mean) - sigma**2 / 2
         rh_latent = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
 
         fck_mean   = 1.0
-        fck_cov    = 0.05
+        fck_cov    = 0.02
         fck_latent = np.random.normal(loc=fck_mean, scale=fck_cov*fck_mean, size=n_latent_samples)
         
         return [rh_latent, fck_latent, cov_latent]
