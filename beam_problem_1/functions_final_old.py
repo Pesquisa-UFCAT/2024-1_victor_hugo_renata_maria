@@ -454,51 +454,16 @@ class CO2Predictor:
         return float(np.interp(t_query, t, depth))
 
 
-def _interp_profile_at(calendar_years: np.ndarray, depths: np.ndarray, year_query: float) -> np.ndarray:
-    """Linear interpolation (with linear extrapolation outside the range) of a batch of
-    cumulative-max carbonation profiles at a single query year, vectorized across rows.
-
-    :param calendar_years: Grid of calendar years shared by every row, sorted ascending
-    :param depths: Carbonation depth profile per row, shape (n_rows, n_grid)
-    :param year_query: Calendar year at which to evaluate every row
-
-    :return: Interpolated carbonation depth for each row
-    """
-
-    n_grid = len(calendar_years)
-    if n_grid == 1:
-        return depths[:, 0].copy()
-
-    k = int(np.clip(np.searchsorted(calendar_years, year_query, side='right') - 1, 0, n_grid - 2))
-    t0, t1 = calendar_years[k], calendar_years[k + 1]
-    frac = 0.0 if t1 == t0 else (year_query - t0) / (t1 - t0)
-
-    return depths[:, k] + frac * (depths[:, k + 1] - depths[:, k])
-
-
 def emulator_function_time_durability(
                                             x: np.ndarray, names_x_variables: list, carb_model: Any,
                                             cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2,
                                             time_step: float = 0.0, n_latent_samples: int = 1000, verbose: bool = False
                                         ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections.
+    """Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections. 
     """
 
     dfs = []
-    predictor  = CO2Predictor()  # Create predictor instance (sem beam ainda)
-    start_year = installation_year
-    year_query = start_year + time_step
-
-    # =========================
-    # 0. Time grid and CO2(%) profile
-    # =========================
-    lifetime_full  = 150
-    grid_step      = 10
-    grid_max       = min(lifetime_full, grid_step * (int(np.ceil(max(time_step, 0) / grid_step)) + 1))
-    years          = np.arange(0, grid_max + 1, grid_step)
-    calendar_years = start_year + years
-    co2_values     = np.array([predictor.co2_percentage_year(y) for y in calendar_years])
-    n_grid         = len(years)
+    predictor = CO2Predictor()  # Create predictor instance (sem beam ainda)
 
     for i in range(x.shape[0]):
         # =========================
@@ -516,6 +481,7 @@ def emulator_function_time_durability(
         geo = {'cover[mm]':float(x[i][2])}
         load = {}
 
+
         # =========================
         # 2. Generate latent variables (humidity uncertainty)
         # =========================
@@ -529,39 +495,58 @@ def emulator_function_time_durability(
         cov_latent    = np.array(res[2]).flatten()
 
         # =========================
-        # 3. Carbonation analysis for each latent humidity, fck and cover sample.
+        # 3. Carbonation analysis for each latent humidity, fck and cover sample
         # =========================
-        new_rh_raw  = base_rh * rh_latent
-        new_fck_raw = base_fck * fck_latent
-        new_cov_raw = base_cov * cov_latent
+        carbonation_depths = np.zeros(n_latent_samples)
+        g_vals = np.zeros(n_latent_samples)
+        start_year = installation_year
+        year_query = start_year + time_step
 
-        # Ensure physical limits
-        new_rh  = np.clip(new_rh_raw, 0.0, 100.0)
-        new_fck = np.clip(new_fck_raw, 0.0, None)
-        new_cov = np.clip(new_cov_raw, 0.0, None)
+        for j in range(n_latent_samples):
+            # Apply latent variable to humidity
+            expo_with_rh = expo.copy()
+            mat_with_fck = mat.copy()
+            geo_with_cov = geo.copy()
+            new_rh       = expo['Relative humidity [%]'] * rh_latent[j]
+            new_fck      = mat['f_ck [MPa]'] * fck_latent[j]
+            new_cov      = geo['cover[mm]'] * cov_latent[j]
 
-        n_total  = n_latent_samples * n_grid
-        batch_df = pd.DataFrame({
-                                    't (years)':            np.tile(years, n_latent_samples),
-                                    'CO2 (%)':              np.tile(co2_values, n_latent_samples),
-                                    'fc (MPa)':             np.repeat(new_fck, n_grid),
-                                    'RH (%)':               np.repeat(new_rh, n_grid),
-                                    'Type of cement':       np.full(n_total, cement_type),
-                                    'Exposure conditions':  np.full(n_total, exposure_conditions),
-                                 })
-        batch_df = batch_df[carb_model.feature_names_in_]
+            # Ensure humidity is within physical limits
+            if new_rh > 100:
+                new_rh = 100
+            elif new_rh < 0:
+                new_rh = 0
 
-        depths = np.asarray(carb_model.predict(batch_df), dtype=float).reshape(n_latent_samples, n_grid)
-        depths = np.maximum.accumulate(depths, axis=1)  # same effect as the per-sample cummax profile
+            if new_fck < 0:
+                new_fck = 0
 
-        carbonation_depths = _interp_profile_at(calendar_years, depths, year_query)
-        carbonation_depths = np.clip(carbonation_depths, 0.0, None)
+            if new_cov < 0:
+                new_cov = 0
 
-        # =========================
-        # 3.1. Emulator of state limit function g = cover - carbonation depth
-        # =========================
-        g_vals = new_cov - carbonation_depths  # g = cover - carbonation depth (failure if g < 0)
+            expo_with_rh['Relative humidity [%]'] = new_rh
+            mat_with_fck['f_ck [MPa]']            = new_fck
+            geo_with_cov['cover[mm]']             = new_cov
 
+            # Create beam with updated humidity
+            beam_with_rh = Beam(geo=geo_with_cov, mat=mat_with_fck, load=load, expo=expo_with_rh)
+
+            # Generate carbonation profile
+            predictor.set_beam(beam_with_rh)
+            profile = predictor.carbonation_profile(model_=carb_model, lifetime=150)
+
+            # Calculate carbonation depth
+            carb_depth_mm = predictor.carbonation_depth_at_time(profile, year_query)
+
+            if carb_depth_mm < 0:
+                carb_depth_mm = 0.0
+
+            carbonation_depths[j] = carb_depth_mm
+
+            # =========================
+            # 3.1. Emulator of state limit function g = cover - carbonation depth
+            # =========================
+            g_vals[j] = new_cov - carb_depth_mm  # g = cover - carbonation depth (failure if g < 0)
+            
         # =========================
         # 4. Create DataFrame
         # =========================
@@ -570,11 +555,11 @@ def emulator_function_time_durability(
                             names_x_variables[1]: [x[i, 1]] * n_latent_samples,
                             names_x_variables[2]: [x[i, 2]] * n_latent_samples,
                             'RH_latent': rh_latent,
-                            'RH_effective': new_rh_raw,
+                            'RH_effective': [base_rh * r for r in rh_latent],
                             'FCK_latent': fck_latent,
-                            'FCK_effective': new_fck_raw,
+                            'FCK_effective': [base_fck * f for f in fck_latent],
                             'cov_latent': cov_latent,
-                            'cov_effective': new_cov_raw,
+                            'cov_effective': [base_cov * c for c in cov_latent],
                             'Carbonation_depth_mm': carbonation_depths,
                             'Time (years)': time_step,
                             'g': g_vals
@@ -610,11 +595,10 @@ def emulator_function_time_durability(
             print(f"    P(g < 0) = {np.mean(g_vals < 0):.4f}")
             print(f"    Mean carbonation depth = {np.mean(carbonation_depths):.2f} mm")
 
-    df_full    = pd.concat(dfs, ignore_index=True)
-    id_columns = list(names_x_variables[:3])
-    df_unique  = (
-                    df_full[id_columns + ['lambda 1', 'lambda 2', 'lambda 3', 'lambda 4']].drop_duplicates(subset=id_columns).reset_index(drop=True)
-                 )
+    df_full   = pd.concat(dfs, ignore_index=True)
+    df_unique = (
+                    df_full[['fck', 'rh', 'cov', 'lambda 1', 'lambda 2', 'lambda 3', 'lambda 4']].drop_duplicates(subset=['fck', 'rh', 'cov']).reset_index(drop=True)
+                )
 
     return df_full, df_unique
 
