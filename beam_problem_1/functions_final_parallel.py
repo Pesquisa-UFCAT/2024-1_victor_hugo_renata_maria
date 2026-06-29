@@ -630,6 +630,15 @@ def emulator_function_time_durability(
 
     if n_processes is None:
         n_processes = cpu_count()
+        
+    # Each worker process already lets BLAS use a few internal threads for
+    # carb_model.predict(). Combined with n_processes worker processes, that
+    # oversubscribes the CPU and was observed to crash with spurious
+    # out-of-memory errors at full scale. Capping BLAS to 1 thread per
+    # worker keeps total thread usage bounded by n_processes.
+    os.environ.setdefault('OMP_NUM_THREADS', '1')
+    os.environ.setdefault('OPENBLAS_NUM_THREADS', '1')
+    os.environ.setdefault('MKL_NUM_THREADS', '1')
 
     args_list = [
                     (
