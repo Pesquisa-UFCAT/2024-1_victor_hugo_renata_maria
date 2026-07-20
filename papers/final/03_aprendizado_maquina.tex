@@ -1,0 +1,40 @@
+\section{Aprendizado de m\'aquina}\label{sec:ml}
+
+% SECAO NOVA (escrita pelo professor). Fundamentos de ML como camada
+% temporal do emulador + subsecao de Redes Neurais. Os pontos marcados
+% com \falta devem ser preenchidos com o que foi EFETIVAMENTE usado
+% (arquitetura, hiperparametros, biblioteca) e com referencias canonicas.
+
+O emulador estocástico da Seção~\ref{sec:emuladores} fornece, para cada ponto do plano de experimentos e para cada instante simulado, um vetor de parâmetros $\boldsymbol{\lambda}$ que caracteriza a distribuição condicional da margem de segurança. Para que esse emulador opere de forma \textit{contínua} no tempo --- e não apenas nos instantes efetivamente simulados ---, é necessária uma camada de regressão capaz de aprender o mapeamento entre as variáveis de entrada, o tempo e os parâmetros da distribuição. Esta seção apresenta os fundamentos de aprendizado de máquina (\textit{Machine Learning} --- ML) empregados nessa camada, com ênfase nas redes neurais artificiais, adotadas como interpolador temporal no arcabouço proposto.
+
+\subsection{Regress\~ao supervisionada como camada do emulador}
+\label{subsec:ml_fundamentos}
+
+Formalmente, a camada de ML resolve um problema de \textit{regressão supervisionada de múltiplas saídas}: dado um conjunto de treinamento $\mathcal{D} = \{(\mathbf{z}^{(k)}, \boldsymbol{\lambda}^{(k)})\}_{k=1}^{K}$, em que o vetor de atributos $\mathbf{z} = (\mathbf{x}, t)$ reúne as variáveis físicas e o tempo, busca-se uma função $\mathcal{M}_{ML}(\cdot\,;\mathbf{w})$, parametrizada por $\mathbf{w}$, que minimize um funcional de perda $\mathcal{L}$ entre os parâmetros preditos e os parâmetros de referência ajustados pela GLD:
+
+\begin{equation}
+\mathbf{w}^{*} = \argmin_{\mathbf{w}} \; \frac{1}{K}\sum_{k=1}^{K} \mathcal{L}\!\left(\boldsymbol{\lambda}^{(k)},\, \mathcal{M}_{ML}(\mathbf{z}^{(k)};\mathbf{w})\right) + \Omega(\mathbf{w}),
+\label{eq:ml_treinamento}
+\end{equation}
+
+\noindent em que $\Omega(\mathbf{w})$ é um termo de regularização que penaliza a complexidade do modelo e mitiga o sobreajuste. Diferentemente da regressão determinística usual, aqui a variável-alvo não é a resposta física em si, mas os \textit{parâmetros de uma distribuição de probabilidade}; a acurácia da camada de ML traduz-se, portanto, diretamente na qualidade da distribuição emulada e, consequentemente, na estimativa de probabilidade de falha e de RUL.
+
+Diversos regressores são candidatos naturais a essa tarefa, entre eles as florestas aleatórias (\textit{Random Forests}), a regressão por vetores de suporte (\textit{Support Vector Regression} --- SVR) e as redes neurais artificiais (RNA). Em trabalho anterior do grupo \parencite{couto2025}, um estudo comparativo de sete modelos de ML para a predição da profundidade de carbonatação demonstrou a superioridade dos modelos não lineares --- em particular redes neurais do tipo perceptron de múltiplas camadas e métodos de \textit{gradient boosting} --- sobre formulações lineares, motivando a escolha de regressores não lineares também para a camada temporal do emulador. \falta{incluir refer\^encias can\^onicas de ML e reconhecimento de padr\~oes, ex.: Hastie et al. (2009); Bishop (2006); Goodfellow et al. (2016), e acrescent\'a-las ao \texttt{references.bib}}
+
+\subsection{Redes neurais artificiais}
+\label{subsec:redes_neurais}
+
+As redes neurais artificiais são aproximadores universais de funções, capazes de representar mapeamentos não lineares arbitrariamente complexos desde que dotadas de capacidade suficiente. Uma rede do tipo perceptron de múltiplas camadas (\textit{Multilayer Perceptron} --- MLP) organiza-se em uma camada de entrada, uma ou mais camadas ocultas e uma camada de saída. Cada neurônio de uma camada $\ell$ computa uma combinação afim das ativações da camada anterior, seguida da aplicação de uma função de ativação não linear $\phi(\cdot)$:
+
+\begin{equation}
+\mathbf{a}^{(\ell)} = \phi\!\left(\mathbf{W}^{(\ell)} \mathbf{a}^{(\ell-1)} + \mathbf{b}^{(\ell)}\right), \qquad \mathbf{a}^{(0)} = \mathbf{z},
+\label{eq:mlp_forward}
+\end{equation}
+
+\noindent em que $\mathbf{W}^{(\ell)}$ e $\mathbf{b}^{(\ell)}$ são, respectivamente, a matriz de pesos e o vetor de vieses da camada $\ell$, agrupados no conjunto de parâmetros $\mathbf{w} = \{\mathbf{W}^{(\ell)}, \mathbf{b}^{(\ell)}\}_\ell$. Funções de ativação usuais nas camadas ocultas incluem a unidade linear retificada (ReLU), $\phi(s) = \max(0,s)$, e a tangente hiperbólica, $\phi(s) = \tanh(s)$; a camada de saída, no caso de regressão, emprega tipicamente ativação linear. A saída da rede, $\mathbf{a}^{(L)}$, fornece a estimativa dos parâmetros $\hat{\boldsymbol{\lambda}}$.
+
+O treinamento consiste na minimização da perda da Equação~\eqref{eq:ml_treinamento}, tipicamente o erro quadrático médio, por meio de \textit{retropropagação} do gradiente combinada a um otimizador de gradiente estocástico (e.g., Adam). Para evitar o sobreajuste, empregam-se estratégias de regularização como parada antecipada (\textit{early stopping}), penalização $\ell_2$ dos pesos e, quando pertinente, \textit{dropout}. A partição dos dados em subconjuntos de treinamento, validação e teste, aliada a validação cruzada, sustenta a estimativa honesta do erro de generalização.
+
+Uma particularidade do presente problema é a necessidade de garantir a validade estatística da distribuição emulada: o parâmetro de escala da GLD deve satisfazer $\lambda_2 > 0$. Essa restrição é incorporada à saída da rede por meio de \falta{descrever o mecanismo efetivamente adotado: predi\c{c}\~ao de $\log\lambda_2$ com posterior exponencia\c{c}\~ao, ativa\c{c}\~ao \textit{softplus} na sa\'ida correspondente, ou truncamento}, assegurando que toda predição corresponda a uma GLD bem definida. Além disso, parâmetros que exibam baixa sensibilidade às entradas podem ser fixados em seu valor médio, reduzindo a dimensionalidade da saída e melhorando a robustez do ajuste, conforme a análise exploratória apresentada na Seção~\ref{subsec:exemplo1}.
+
+No arcabouço proposto, a RNA recebe como entrada o vetor $\mathbf{z} = (\mathbf{x}, t)$ e prediz os parâmetros $\hat{\boldsymbol{\lambda}}(\mathbf{x},t)$ da GLD em qualquer instante do horizonte de análise, atuando como interpolador contínuo entre os anos efetivamente simulados. A arquitetura específica adotada --- número de camadas ocultas, número de neurônios por camada, função de ativação, otimizador e hiperparâmetros --- e a biblioteca de implementação são reportadas na Seção~\ref{subsec:exemplo1}. \falta{especificar a arquitetura final (ex.: 2--3 camadas ocultas, $n$ neur\^onios, ativa\c{c}\~ao ReLU/tanh, otimizador Adam, taxa de aprendizado, \textit{early stopping}) e a biblioteca (ex.: \texttt{scikit-learn}/\texttt{TensorFlow})}

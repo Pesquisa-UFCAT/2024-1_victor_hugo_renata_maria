@@ -1,0 +1,113 @@
+\section{Emuladores estoc\'asticos}\label{sec:emuladores}
+
+% Teoria do emulador (portada da Section_4 do grupo): simulador
+% estocastico, GLD, metodo dos momentos e acoplamento com PCE. O
+% procedimento CONCRETO de construcao (DoE, replicas, camada temporal)
+% foi levado para a Metodologia (Secao~\ref{sec:metodologia}).
+
+O elevado custo computacional de modelos de alta fidelidade frequentemente inviabiliza simulações diretas de Monte Carlo, exigindo o uso de metamodelos, também chamados de emuladores. Embora Processos Gaussianos (GP) \parencite{rasmussen2006} e Expansões em Caos Polinomial (PCE) \parencite{xiu2002} sejam padrão para sistemas determinísticos, eles não podem ser aplicados diretamente a simuladores estocásticos, nos quais uma única avaliação é insuficiente para caracterizar a distribuição da resposta.
+
+\subsection{Simuladores estoc\'asticos}
+\label{subsec:simulador}
+
+Matematicamente, um simulador estocástico $\mathcal{M}_S$ pode ser visto como um mapeamento que incorpora variáveis determinísticas e aleatoriedade intrínseca. Para um dado vetor de parâmetros de entrada $\mathbf{x}$ no domínio $\mathcal{D}_X$, a resposta não é um valor determinístico único, mas uma variável aleatória $Y_{\mathbf{x}}$. Essa relação é formalmente expressa como:
+
+\begin{equation}
+\mathcal{M}_S : \mathcal{D}_X \times \Omega \rightarrow \mathbb{R}, \qquad (\mathbf{x}, \omega) \mapsto \mathcal{M}_S(\mathbf{x}, \omega),
+\label{eq:simulador_estocastico}
+\end{equation}
+
+\noindent em que $\mathbf{x}$ representa o conjunto de parâmetros de entrada controlados (e.g., geometria, propriedades dos materiais) e $\omega$ denota um evento aleatório do espaço de probabilidade $\Omega$. Essa variável latente $\omega$ introduz a estocasticidade no sistema. Consequentemente, para uma entrada fixa $\mathbf{x}$, o simulador produz uma distribuição de resultados possíveis, e não uma solução única. No problema em estudo, $\mathcal{M}_S(\mathbf{x}, \omega) = g(\mathbf{x}, t; \omega)$ é a função de estado limite definida na Equação~\eqref{eq:funcao_g}, e as variáveis latentes correspondem às incertezas de modelo e às flutuações não explicitamente parametrizadas.
+
+\subsection{Distribui\c{c}\~ao Lambda Generalizada}
+\label{subsec:gld}
+
+No contexto da avaliação de durabilidade do concreto armado, o processo de carbonatação é influenciado por diversas fontes de incerteza, que vão da heterogeneidade do material às flutuações ambientais. Para capturar esses comportamentos probabilísticos complexos sem o custo computacional de simulações exaustivas, este estudo emprega a Distribuição Lambda Generalizada (GLD) como núcleo do emulador estocástico. A GLD é uma família de distribuições de quatro parâmetros, altamente flexível, projetada para aproximar uma ampla gama de distribuições paramétricas \parencite{KarianDudewicz2000, ZhuSudret2021}.
+
+A GLD é definida por sua \textit{função quantílica} $Q(u)$, que é a inversa da função de distribuição acumulada (CDF), i.e., $Q(u) = F^{-1}(u)$. Essa abordagem é particularmente vantajosa para a emulação estocástica, pois facilita o método de amostragem por transformada inversa. Neste estudo, considera-se a família Freimer--Kollia--Mudholkar--Lin (FKML) \parencite{Freimer1988}, definida como:
+
+\begin{equation}
+Q(u) = \lambda_1 + \frac{1}{\lambda_2} \left( \frac{u^{\lambda_3} - 1}{\lambda_3} - \frac{(1 - u)^{\lambda_4} - 1}{\lambda_4} \right)
+\label{eq:GLD_quantile}
+\end{equation}
+
+\noindent em que $u \in [0, 1]$ representa a probabilidade acumulada. A distribuição é governada por quatro parâmetros: $\lambda_1$ é o parâmetro de \textit{locação}, $\lambda_2$ é o parâmetro de \textit{escala} (com a exigência $\lambda_2 > 0$) e $\lambda_3, \lambda_4$ são os parâmetros de \textit{forma}.
+
+\subsection{Estima\c{c}\~ao de par\^ametros via m\'etodo dos momentos}
+\label{subsec:mom}
+
+Para calibrar o emulador GLD, os quatro parâmetros $\boldsymbol{\lambda} = \{\lambda_1, \dots, \lambda_4\}$ devem ser estimados a partir de um conjunto de avaliações do modelo \parencite{karian2010handbook, corlu2016}. Neste estudo, emprega-se o \textit{Método dos Momentos} (MoM) \parencite{lakhany2000}, que consiste em igualar os momentos teóricos da GLD aos momentos empíricos calculados do conjunto amostral $\mathcal{Y} = \{y^{(1)}, \dots, y^{(N)}\}$. Os quatro primeiros momentos centrais --- média $\mu$, variância $\sigma^2$, assimetria $\delta$ e curtose $\kappa$ --- relacionam-se analiticamente aos parâmetros $\lambda$ da seguinte forma:
+
+\begin{align}
+\mu &= \lambda_1 - \frac{1}{\lambda_2} \left( \frac{1}{\lambda_3 + 1} - \frac{1}{\lambda_4 + 1} \right) \label{eq:mean} \\
+\sigma^2 &= \frac{v_2 - v_1^2}{\lambda_2^2} \label{eq:var} \\
+\delta &= \frac{v_3 - 3v_1v_2 + 2v_1^3}{(v_2 - v_1^2)^{3/2}} \label{eq:skew} \\
+\kappa &= \frac{v_4 - 4v_1v_3 + 6v_1^2v_2 - 3v_1^4}{(v_2 - v_1^2)^2} \label{eq:kurt}
+\end{align}
+
+Nessas expressões, $v_k$ denota uma função não linear que depende apenas de $\lambda_3$ e $\lambda_4$, dada pela Equação~\eqref{eq:vk}, em que $B(\cdot, \cdot)$ representa a função Beta:
+
+\begin{equation}
+v_k = \sum_{j=0}^{k} \frac{(-1)^j}{\lambda_3^{k-j} \lambda_4^j} \binom{k}{j} B\!\left(\lambda_3(k-j) + 1,\; \lambda_4 j + 1\right) \label{eq:vk}
+\end{equation}
+
+A calibração dos parâmetros da GLD é formulada como um problema inverso, cujo objetivo é minimizar a discrepância entre os momentos analíticos (Equações~\ref{eq:mean}--\ref{eq:kurt}) e os momentos empíricos derivados do simulador estocástico. Para resolver esse sistema não linear, emprega-se o algoritmo de otimização Broyden--Fletcher--Goldfarb--Shanno (BFGS) \parencite{nocedal2006}, um método quase-Newton particularmente adequado a esse tipo de estimação devido ao tratamento eficiente de gradientes e às boas propriedades de convergência em espaços multidimensionais. O procedimento numérico foi implementado no PyGLAM, biblioteca Python desenvolvida pelos autores especificamente para a emulação de simuladores estocásticos com Distribuições Lambda Generalizadas.
+
+Cabe registrar que o arcabouço GLaM original \parencite{ZhuSudret2021} emprega máxima verossimilhança condicional combinada a mínimos quadrados generalizados para a estimação dos parâmetros, dispensando réplicas no plano de experimentos. A opção pelo MoM com réplicas adotada neste trabalho justifica-se (i) pela robustez e simplicidade de implementação, (ii) pelo baixo custo de cada avaliação dos modelos mecânicos aqui considerados, que torna as réplicas viáveis, e (iii) pelo controle direto da qualidade do ajuste local em cada ponto do plano de experimentos, requisito importante para a camada temporal descrita na Seção~\ref{subsec:construcao_emulador}.
+
+A Figura~\ref{fig:pyglam_fits} apresenta exemplos de ajuste da GLD a distribuições tradicionais --- Normal, Gumbel e Uniforme --- obtidos com o PyGLAM, e a Tabela~\ref{tab:pyglam_metricas} quantifica a qualidade desses ajustes. \falta{preencher a tabela com distância de Wasserstein, estatística KS e erro relativo nos quantis P5/P50/P95 para cada distribuição-alvo, variando o tamanho amostral (ex.: $N$ = 50, 200, 1000)}
+
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.32\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{z_kde_histogram_compare.png}
+         \caption{Distribuição Normal}
+         \label{fig:fit_normal}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.32\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{z_fig_gumbel.png}
+         \caption{Distribuição de Gumbel}
+         \label{fig:fit_gumbel}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.32\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{z_fig_uniform.png}
+         \caption{Distribuição Uniforme}
+         \label{fig:fit_uniform}
+     \end{subfigure}
+     \caption{Validação da capacidade de ajuste do PyGLAM para diferentes distribuições-alvo utilizando emuladores GLD.}
+     \label{fig:pyglam_fits}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Métricas quantitativas do ajuste GLD às distribuições-alvo. \falta{preencher}}
+\label{tab:pyglam_metricas}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Distribuição} & \textbf{$N$} & \textbf{Wasserstein} & \textbf{KS} & \textbf{Erro quantis P5/P50/P95 (\%)} \\
+\midrule
+Normal   & \faltanum & \faltanum & \faltanum & \faltanum \\
+Gumbel   & \faltanum & \faltanum & \faltanum & \faltanum \\
+Uniforme & \faltanum & \faltanum & \faltanum & \faltanum \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Acoplamento com a Expans\~ao em Caos Polinomial}
+\label{subsec:pce}
+
+Seguindo a metodologia proposta por \textcite{ZhuSudret2021} e desenvolvimentos posteriores em metamodelagem estocástica, a GLD é acoplada à Expansão em Caos Polinomial (PCE) para a construção de um emulador global. Nesse arcabouço, a resposta estocástica do simulador para qualquer entrada $\mathbf{X}$ é modelada por uma GLD cujos parâmetros $\boldsymbol{\lambda}$ são, eles próprios, funções das variáveis de entrada.
+
+Dado um conjunto de parâmetros de entrada $\mathbf{X}$ governado por uma função densidade de probabilidade conjunta $f_{\mathbf{X}}(\mathbf{x})$, cada componente do vetor de parâmetros $\lambda_i$ é aproximada por uma PCE truncada:
+
+\begin{equation}
+\lambda_i(\mathbf{X}) \approx \sum_{\boldsymbol{\alpha} \in \mathcal{A}} a_{i, \boldsymbol{\alpha}} \Psi_{\boldsymbol{\alpha}}(\mathbf{X}), \quad i = \{1, 2, 3, 4\}
+\label{eq:pce_lambda}
+\end{equation}
+
+\noindent em que $\Psi_{\boldsymbol{\alpha}}(\mathbf{X})$ são polinômios ortonormais multivariados específicos das distribuições de entrada \parencite{xiu2002}, $a_{i, \boldsymbol{\alpha}}$ são os coeficientes a determinar e $\mathcal{A}$ é o conjunto de multi-índices que define o esquema de truncamento (e.g., base de grau total) \parencite{blatman2011}. Uma vez estimados os coeficientes, o emulador PCE--GLD fornece instantaneamente a distribuição de probabilidade completa (via parâmetros $\lambda$) para qualquer nova entrada $\mathbf{X}^*$, sem exigir novas execuções do simulador estocástico original. O procedimento concreto de construção do emulador --- plano de experimentos, réplicas estocásticas e extensão temporal --- é detalhado na Seção~\ref{subsec:construcao_emulador}.

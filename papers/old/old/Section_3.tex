@@ -1,0 +1,100 @@
+Nesta seção serão apresentados os modelos para previsão da resistência resudial de vigas de concreto armado sujeitas a carga distribuída. Este trabalho tomou como base a o trablho de Murilo [x]. Portanto esta seção será dividida em duas partes a primeira parte trata da resistência de vigas de concreto sem efeito da corrosão. A seção subsequente trata do modelo para previsão da resistência residual conforme descrito em Murilo[x] and Al-Ghoi [x].
+
+O efeito corosão por carbonatação
+
+As seções subsequentes tratam destas avaliações
+
+
+\subsection{Computing Residual Flexure Strength}
+
+O problema de concreto será tomado como a resitência a flexão pura conforme a maioria dos codigos de projeto tratam. Para isso toma-se a equação de equilibrio para forças normais para peças com armadura simples, dada pela equação tal.
+
+xxxxxxxxxx
+
+Para solução deste equação pretende-se dteemrinar qual o valor da ratio beta. Essa proposta é resolvida através do método da bi-seção e então determina-se o valor da posiçãop linha neutra e consequentemente o valor do momento resistente conforme equação tal.
+
+\subsection{Computing Residual Flexure Strength with corrosion}
+
+Primeiro explica o efeito da corosão na área de aço. Quanto reduz?
+
+Explica a correção do MRd*.
+
+
+
+Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+
+\subsection{Carbonation-induced corrosion phenomena}
+
+\subsection{Carbonation-induced corrosion phenomena}
+
+\subsection{Computing Residual Flexure Strength}
+
+The model proposed by \cite{possan2010} offers a parametric approach to predict the carbonation depth ($y(t)$) in reinforced concrete structures, integrating material and environmental variables. The mathematical formulation, expressed in Equation \eqref{eq:y}, estimates the advance of the carbonation front over time, considering the influence of compressive strength ($f_c$), cement type, mineral admixtures, $CO_2$ concentration, and relative humidity ($RH$).
+
+\begin{equation}\label{eq:y}
+y(t) = k_c \cdot \left( \frac{20}{f_c} \right)^{k_{fc}} \cdot \left( \frac{t}{20} \right)^{\frac{1}{2}} \cdot \exp \left[ \frac{k_{ad} \cdot ad^{\frac{3}{2}}}{40 + f_c} + \frac{k_{CO_2} \cdot CO_2^{\frac{1}{2}}}{60 + f_c} - \frac{k_{RH} \cdot (RH - 0.58^2)}{100 + f_c} \right] \cdot k_{ce}
+\end{equation}
+
+Corrosion subsequent to carbonation is treated as an electrochemical phenomenon dependent on the presence of an electrolyte (pore water) and oxygen. The pH reduction induced by carbonation depassivates the reinforcement, allowing the formation of galvanic cells. Consequently, the corrosion rate is governed by the concrete's electrical resistivity and moisture availability. These factors are typically mitigated in design codes (e.g., ABNT NBR 6118) through the control of the water/cement ratio and cover thickness based on the environmental aggressiveness class.
+
+\subsubsection{Calculation of Concrete Beams without Carbonation Corrosion}
+
+The calculation of reinforced concrete beams without carbonation-induced corrosion ($t=0$) follows the guidelines of NBR 6118 \cite{associacao_brasileira_de_normas_tecnicas_nbr_2023}. The resisting bending moment ($M_{Rd}$) is determined by the equilibrium of forces in the cross-section, considering the non-linear behavior of the materials and the simplified rectangular stress block for the compressed concrete.
+
+The design compressive strength of concrete, $f_{cd}$, and the design yield strength of steel, $f_{yd}$, are obtained by applying the respective partial safety factors ($\gamma_c$ and $\gamma_s$). The geometric parameters of the stress block ($\lambda_c$, $\alpha_c$, and $\eta_c$) are defined as a function of the characteristic strength $f_{ck}$, adjusting the stress distribution according to the concrete class, as expressed in the standard equations.
+
+The neutral axis depth ($x$) is the governing variable of the problem and is determined through the equilibrium between the normal compressive force in the concrete and the tensile force in the reinforcement. Due to physical and geometric non-linearities, the solution for $x$ is obtained via an iterative numerical bisection method, which seeks the root of the equilibrium function $f_\alpha(\beta) = 0$ within a predefined interval. Once the value of $x$ converges, the resisting moment is calculated by Equation \eqref{eq:mrd_lim_resumida}:
+
+\begin{equation}\label{eq:mrd_lim_resumida}
+M_{Rd} = \sigma_{cd} \cdot (\lambda_c \cdot x \cdot b_w) \cdot (d - 0.5 \cdot \lambda_c \cdot x)
+\end{equation}
+
+Where $b_w$ is the section width, $d$ is the effective depth, and the term in parentheses represents the internal lever arm. This value establishes the performance baseline of the structure before the onset of degradation due to corrosion.
+
+\subsection{Action of $CO_2$ on Concrete Structures}
+
+In the context of the durability of concrete structures, atmospheric carbon dioxide ($CO_2$) acts as one of the main aggressive agents, and its interaction with the cementitious matrix triggers the carbonation process.
+
+The $CO_2$ present in the air diffuses through the pore and capillary network of the concrete cover. In the presence of moisture, the gas reacts chemically with the hydrated compounds of the cement paste, primarily calcium hydroxide, converting it into calcium carbonate and water.
+
+The structurally critical effect of $CO_2$ is consolidated when the carbonation front advances in depth and reaches the reinforcement level. The subsequent drop in pH thermodynamically destabilizes the passivating film, which is destroyed, leaving the steel unprotected. This phenomenon is known as depassivation.
+
+From this point on, the corrosion propagation phase begins, which tends to be generalized and uniform along the affected steel bar. This process generates corrosion products (iron oxides and hydroxides) whose specific volume is significantly greater (often three to six times) than that of the original consumed steel. This volumetric expansion generates internal tensile stresses in the concrete that exceed the tensile strength of the material, causing cracking and cover spalling.
+
+Finally, the ongoing action of $CO_2$ results in a continuous loss of the reinforcement's effective cross-sectional area and the degradation of the bond between steel and concrete, severely compromising the load-bearing capacity of the structure.
+
+\subsubsection{Carbonation-Induced Corrosion}
+
+In reinforced concrete structures, the concrete cover acts as a physical barrier and provides chemical protection through the high alkalinity of the pore solution, which maintains a passive oxide layer on the steel surface. The corrosion process is typically divided into two phases: initiation, where the reinforcement remains passive, and propagation, where the protective layer is destroyed, and active corrosion begins \cite{cavaco_reliabilitybased_2017}.
+
+Unlike chloride-induced corrosion, which causes localized pitting, carbonation results in generalized corrosion distributed along the reinforcement. Atmospheric carbon dioxide ($CO_2$) diffuses into the concrete pores and reacts with calcium hydroxide ($Ca(OH)_2$), reducing the pH from its original values (12.5--13.5) to levels below 9. This reaction is described by Equation \eqref{eq:carbonation}:
+
+\begin{equation}\label{eq:carbonation}
+\mathrm{Ca(OH)_2 + CO_2 \rightarrow CaCO_3 + H_2O}
+\end{equation}
+
+The pH reduction leads to the depassivation of the steel. The subsequent formation of iron oxides, which have a larger volume than the original metal, generates internal expansive stresses. These stresses cause cracking and spalling of the concrete cover, accelerating the ingress of aggressive agents. Ultimately, structural safety is compromised by the reduction of the reinforcement cross-sectional area and the degradation of the steel-concrete bond \cite{tuutti_corrosion_1982, soltani_state---art_2019}.
+
+\subsubsection{Residual Strength of Beams Subjected to Corrosion}
+
+The analysis of the residual load-bearing capacity of reinforced concrete beams under corrosion effects considers multiple degradation stages, primarily the loss of reinforcement cross-sectional area and the deterioration of the bond between steel and concrete \cite{possan_co2_2016, Azad2010}. The calculation of the residual resisting moment ($M_{res}$) is performed in two steps: first, the strength of the section with corroded reinforcement ($M_{res,cor}$) is determined, and then a correction factor ($C_f$) is applied to account for bond loss, as shown in Equations \eqref{eq:m_res} and \eqref{eq:c_f}:
+
+\begin{equation}\label{eq:m_res}
+M_{res} = C_f \cdot \left[ A_{s,cor} \cdot f_y \cdot \left( d - \frac{\lambda}{2} x \right) \right]
+\end{equation}
+
+\begin{equation}\label{eq:c_f}
+C_f = \frac{5.0}{d_{s0}^{0.54} \cdot (i_{cor,u} \cdot t_y)^{0.19}} \leq 1.0
+\end{equation}
+
+The reduced cross-sectional area ($A_{s,cor}$) is derived from the residual bar diameter ($d_{cor}$), which decreases linearly as a function of the corrosion rate ($i_{cor,u}$) and the exposure time after depassivation ($t_c$), according to the model by \textcite{pellizzer_time-dependent_2020}:
+
+\begin{equation}\label{eq:d_cor}
+d_{cor} = d_{s0} - 0.0232 \cdot i_{cor,u} \cdot t_c
+\end{equation}
+
+For a more accurate estimation, the corrosion rate ($i_{cor,u}$) is not considered constant. Instead, it is adjusted based on temperature variations ($T(t)$) and the environmental exposure class, as proposed by \textcite{peng_climate_2016}:
+
+\begin{equation}\label{eq:i_cor_t}
+i_{cor,u} = i_{cor,20} \cdot \left[ 1 + K \cdot (T(t) - 20) \right]
+\end{equation}

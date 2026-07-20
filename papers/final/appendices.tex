@@ -1,0 +1,89 @@
+% Numeracao de eq./fig./tab. por secao do apendice (do modelo)
+\renewcommand\theequation{\Alph{section}\arabic{equation}}
+\counterwithin*{equation}{section}
+\renewcommand\thefigure{\Alph{section}\arabic{figure}}
+\counterwithin*{figure}{section}
+\renewcommand\thetable{\Alph{section}\arabic{table}}
+\counterwithin*{table}{section}
+
+\begin{appendices}
+
+% Formatacao dos apendices (do modelo)
+\renewcommand{\thesection}{Ap\^endice \Alph{section}}
+\renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
+
+%--- Apendice A ---%
+\section{Exemplo de verifica\c{c}\~ao para um passo de tempo}
+\label{app:exemplo_passo}
+
+% Material DIDATICO preservado do grupo (antiga Section_5). Detalhado
+% demais para o corpo de um artigo Q1, mas excelente para a disserta\c{c}\~ao.
+% Mantido em portugues e com os numeros originais dos alunos.
+
+Este apêndice detalha, para um único passo de tempo e uma única simulação, o procedimento de cálculo da margem de segurança $g(t)$ descrito na Seção~\ref{subsec:resistencia_residual}, a fim de tornar transparente a sequência de operações do simulador. A viga considerada segue os parâmetros da Seção~\ref{subsec:exemplo2}, com cobrimento nominal $c_{\mathrm{nom}} = 25$~mm, diâmetro nominal das barras $d_{s0} = 12{,}5$~mm e coeficiente de carbonatação $k = 6$~mm/$\sqrt{\text{ano}}$.
+
+Considere o passo de tempo $t = 40$ anos, com temperatura ambiente $T = 23{,}56\,^\circ$C, taxa de corrosão a 20\,$^\circ$C igual a $i_{\mathrm{corr},20} = 0{,}431\,\mu$A/cm$^2$ e início da corrosão em $t_{\mathrm{ini}} = 25$ anos.
+
+\subsection{Verifica\c{c}\~ao da carbonata\c{c}\~ao}
+
+\begin{equation}
+y_{\mathrm{carb}}(40) = 6\sqrt{40} = 37{,}95~\text{mm}.
+\end{equation}
+
+Como $y_{\mathrm{carb}}(40) > c_{\mathrm{nom}} = 25$~mm, considera-se que já ocorreu o início da corrosão.
+
+\subsection{Taxa de corros\~ao ajustada}
+
+Pela Equação~\eqref{eq:i_cor_t}, com $T > 20\,^\circ$C ($K = 0{,}073$):
+
+\begin{equation}
+i_{\mathrm{corr}}(23{,}56) = 0{,}431\,\left[\,1 + 0{,}073\,(23{,}56 - 20)\,\right] = 0{,}542~\mu\text{A/cm}^2.
+\end{equation}
+
+\subsection{Perda de di\^ametro e \'area efetiva}
+
+Com $t_{\mathrm{corr}} = 40 - 25 = 15$ anos, a Equação~\eqref{eq:d_cor} fornece
+
+\begin{equation}
+d_{s}(40) = 12{,}5 - 0{,}0232 \times 0{,}542 \times 15 = 12{,}3114~\text{mm},
+\end{equation}
+
+de modo que a área da barra corroída, pela Equação~\eqref{eq:as_t} (por barra), é
+
+\begin{equation}
+\frac{\pi}{4}\,d_s(40)^2 = \frac{\pi}{4}\,(12{,}3114)^2 = 119{,}06~\text{mm}^2,
+\end{equation}
+
+ante $A_{s,0} = 122{,}72$~mm$^2$ da barra íntegra ($d_{s0} = 12{,}5$~mm), uma redução de $3{,}66$~mm$^2$ por barra.
+
+\subsection{Momento resistente degradado e coeficiente de ader\^encia}
+
+Recompondo o equilíbrio seccional (Equação~\ref{eq:equilibrio}) com a área corroída, obtém-se $M_{Rd}(40) = 34{,}82$~kN$\cdot$m. O coeficiente redutor de aderência, pela Equação~\eqref{eq:c_f}, é
+
+\begin{equation}
+C_f = \frac{5{,}0}{\,12{,}5^{0{,}54}\left[(0{,}542/1000)\cdot 15 \cdot 365\right]^{0{,}19}} = 0{,}873,
+\end{equation}
+
+resultando, pela Equação~\eqref{eq:m_res}, em
+
+\begin{equation}
+M_{Rd,\mathrm{cor}}(40) = C_f \cdot M_{Rd}(40) = 0{,}873 \times 34{,}82 = 30{,}39~\text{kN}\cdot\text{m}.
+\end{equation}
+
+\subsection{Margem de seguran\c{c}a}
+
+Com os momentos solicitantes $M_{Gk} = 12{,}0$~kN$\cdot$m e $M_{Qk} = 8{,}0$~kN$\cdot$m, o momento solicitante total é $M_S = 20{,}0$~kN$\cdot$m, e a margem de segurança (Equação~\ref{eq:funcao_g}) torna-se
+
+\begin{equation}
+g(40) = M_{Rd,\mathrm{cor}}(40) - M_S = 30{,}39 - 20{,}0 = 10{,}39~\text{kN}\cdot\text{m}.
+\end{equation}
+
+O resultado positivo indica que, aos 40 anos, mesmo considerando a corrosão, a seção ainda possui capacidade resistente superior às solicitações atuantes. Este cálculo é repetido para todos os instantes da simulação e para todas as amostras estocásticas, constituindo o simulador cujo custo o emulador da Seção~\ref{sec:emuladores} busca contornar.
+
+%--- Apendice B (opcional) ---%
+\section{Material suplementar}
+\label{app:suplementar}
+
+\falta{candidatos a material suplementar/apêndice: (i) tabela completa de desempenho dos 7 modelos de ML do trabalho anterior \parencite{couto2025}; (ii) tabela de validação da PCE com os 11 passos de tempo (vers\~ao completa da Tabela~\ref{tab:validation_results}); (iii) equações dos três trechos da regressão por partes do CO$_2$; (iv) hiperparâmetros finais da RNA}
+
+\end{appendices}

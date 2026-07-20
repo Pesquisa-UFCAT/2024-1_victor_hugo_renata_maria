@@ -1,0 +1,86 @@
+% =====================================================================
+% SECTION 5 - DA DISTRIBUICAO EMULADA A VIDA UTIL REMANESCENTE
+% Secao NOVA (identificada como lacuna no planejamento): formaliza a
+% ponte g(t) -> p_f(t) -> tempo ate a falha -> RUL -> VaR/CVaR e o
+% modelo de intervencao de manutencao usado no Exemplo 3.
+% =====================================================================
+
+Esta seção estabelece a ponte entre a distribuição condicional de $g(\mathbf{X},t)$ fornecida pelo emulador e as grandezas de interesse para a gestão de ativos: a probabilidade de falha dependente do tempo, a distribuição do tempo até a falha, a vida útil remanescente probabilística e suas métricas de risco, além do modelo de intervenção de manutenção.
+
+\subsection{Probabilidade de falha e função de confiabilidade}
+\label{subsec:pf}
+
+Dado que o emulador fornece, para qualquer instante $t$, os parâmetros $\hat{\boldsymbol{\lambda}}(\mathbf{X},t)$ da GLD que aproxima a distribuição de $g$, a probabilidade de falha instantânea é obtida diretamente da função quantílica, sem necessidade de amostragem:
+
+\begin{equation}
+p_f(t) = \mathbb{P}\left[\, g(\mathbf{X}, t) \leq 0 \,\right] = F_{g(t)}(0) = Q^{-1}_{t}(0),
+\label{eq:pf_t}
+\end{equation}
+
+\noindent em que $F_{g(t)}$ é a CDF da margem de segurança no instante $t$ e $Q_t$ a correspondente função quantílica emulada. O índice de confiabilidade generalizado associado é $\beta(t) = -\Phi^{-1}\!\left[p_f(t)\right]$, em que $\Phi$ é a CDF normal padrão \citep{melchers2018}. A função de confiabilidade da estrutura, entendida como a probabilidade de sobrevivência até $t$, é denotada $R(t)$; para processos de degradação monotônica, como a perda de seção por corrosão, a aproximação $R(t) \approx 1 - p_f(t)$ é adequada, uma vez que trajetórias de $g$ que cruzam o zero não retornam ao domínio seguro. \falta{se forem consideradas ações variáveis com flutuação no tempo (problema de primeira passagem não monotônico), discutir aqui a correção via taxa de ultrapassagem (outcrossing rate) ou deixar explícita a hipótese de monotonicidade}
+
+\subsection{Tempo até a falha e vida útil remanescente}
+\label{subsec:ttf_rul}
+
+Para cada realização $\mathbf{x}$ das variáveis de entrada, o tempo até a falha é definido como o primeiro instante em que a margem de segurança se anula:
+
+\begin{equation}
+T(\mathbf{x}) = \inf\left\{\, t \geq 0 \,:\, g(\mathbf{x}, t) \leq 0 \,\right\}.
+\label{eq:ttf}
+\end{equation}
+
+A distribuição de $T$ é obtida de forma extremamente eficiente a partir do emulador: amostram-se realizações de $\mathbf{X}$, avalia-se a trajetória contínua $\hat{g}(\mathbf{x}, t)$ por meio da GLD interpolada no tempo e identifica-se a raiz da Equação~\eqref{eq:ttf} para cada amostra. Dado um instante de inspeção $t_{\mathrm{insp}}$, no qual se constata a sobrevivência da estrutura, a vida útil remanescente é a variável aleatória condicionada
+
+\begin{equation}
+\mathrm{RUL}(t_{\mathrm{insp}}) = \left(\, T - t_{\mathrm{insp}} \,\middle|\, T > t_{\mathrm{insp}} \right),
+\label{eq:rul}
+\end{equation}
+
+\noindent cuja distribuição completa --- e não apenas seu valor esperado --- constitui o produto central deste trabalho \citep{si2011}. Dela extraem-se o valor esperado $\mathbb{E}[\mathrm{RUL}]$, a mediana e quantis inferiores (e.g., $P_5$), estes últimos de particular interesse para decisões conservadoras.
+
+\subsection{Métricas de risco: VaR e CVaR}
+\label{subsec:var_cvar}
+
+Para apoiar a tomada de decisão sob incerteza, métricas de risco baseadas em cauda são derivadas da distribuição de RUL, a saber, o \textit{Value-at-Risk} (VaR) e o \textit{Conditional Value-at-Risk} (CVaR) \citep{rockafellar2000}. Enquanto a caracterização probabilística completa da RUL fornece a visão abrangente do comportamento do sistema, essas métricas escalares oferecem indicadores conservadores focados em cenários adversos, particularmente relevantes para o planejamento de manutenção.
+
+O VaR ao nível de confiança $\alpha$ representa o quantil inferior da distribuição de RUL,
+
+\begin{equation}
+\mathrm{VaR}_\alpha = \inf\left\{\, r \,:\, F_{\mathrm{RUL}}(r) \geq \alpha \,\right\},
+\label{eq:var}
+\end{equation}
+
+\noindent indicando a vida remanescente mínima esperada com confiança $(1-\alpha)$. O CVaR, por sua vez, corresponde ao valor esperado da RUL condicionado aos valores abaixo do limiar do VaR,
+
+\begin{equation}
+\mathrm{CVaR}_\alpha = \mathbb{E}\left[\, \mathrm{RUL} \,\middle|\, \mathrm{RUL} \leq \mathrm{VaR}_\alpha \,\right],
+\label{eq:cvar}
+\end{equation}
+
+\noindent contabilizando explicitamente o comportamento da cauda e fornecendo uma medida de risco mais conservadora.
+
+\subsection{Modelagem de intervenções de manutenção}
+\label{subsec:manutencao}
+
+O emulador proposto habilita a avaliação rápida de cenários de manutenção, uma vez que cada cenário exige apenas reavaliações da GLD interpolada, e não novas execuções do simulador original. Considera-se uma intervenção no instante $t_{\mathrm{man}}$ --- por exemplo, a remoção do concreto carbonatado, limpeza das armaduras e recomposição do cobrimento com argamassa de reparo realcalinizante --- cujo efeito sobre a função de estado limite é modelado por dois mecanismos \citep{frangopol2011, vannoortwijk2009}:
+
+\begin{enumerate}
+    \item \textbf{Recuperação da margem de segurança:} o momento resistente é restaurado a uma fração $\rho \in (0, 1]$ de seu valor íntegro, $M_{Rd,\mathrm{cor}}(t_{\mathrm{man}}^{+}) = \rho \cdot M_{Rd,0}$, em que $\rho$ reflete a eficácia do reparo ($\rho = 1$ corresponde à recuperação total; valores típicos \falta{indicar faixa adotada e justificar com referência});
+    \item \textbf{Reinício do relógio de iniciação:} a recomposição do cobrimento realcaliniza a vizinhança da armadura, de modo que um novo período de iniciação se desenvolve no material de reparo, $t_{\mathrm{ini}}^{\mathrm{novo}} = t_{\mathrm{man}} + \Delta t_{\mathrm{ini}}$, com $\Delta t_{\mathrm{ini}}$ governado pelo coeficiente de carbonatação do material de reparo $k_{\mathrm{rep}}$ \falta{definir distribuição de $k_{\mathrm{rep}}$; na ausência de dados, adotar $k_{\mathrm{rep}} = k$ como hipótese conservadora}.
+\end{enumerate}
+
+A trajetória resultante da margem de segurança assume o típico formato ``dente de serra'' das estruturas mantidas, e a Equação~\eqref{eq:ttf} é avaliada sobre a trajetória composta. A comparação entre as distribuições de RUL com e sem intervenção quantifica o \textit{ganho probabilístico de vida útil} proporcionado pela manutenção:
+
+\begin{equation}
+\Delta \mathrm{RUL} = \mathrm{RUL}_{\mathrm{com\;man.}}(t_{\mathrm{insp}}) - \mathrm{RUL}_{\mathrm{sem\;man.}}(t_{\mathrm{insp}}).
+\label{eq:delta_rul}
+\end{equation}
+
+Adicionalmente, o emulador permite determinar de forma praticamente instantânea o \textit{instante normativo de intervenção}, definido como o primeiro tempo em que a probabilidade de falha atinge um alvo de norma,
+
+\begin{equation}
+t_{\mathrm{man}}^{*} = \inf\left\{\, t \,:\, \beta(t) \leq \beta_{\mathrm{alvo}} \,\right\},
+\label{eq:t_man_otimo}
+\end{equation}
+
+\noindent adotando-se, por exemplo, $\beta_{\mathrm{alvo}} = 1{,}5$ para estados limites de serviço/durabilidade, em consonância com as recomendações do \citet{fib2006} e do \citet{jcss2001}. Ressalta-se que este trabalho emprega a política de limiar da Equação~\eqref{eq:t_man_otimo} como demonstração da utilidade do emulador para decisões de manutenção; a otimização completa de custo de ciclo de vida, envolvendo custos de inspeção, reparo e falha, constitui extensão natural e é apontada como trabalho futuro.

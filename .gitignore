@@ -21,6 +21,8 @@ __pycache__/
 # Local project artifacts
 # ------------------------------
 models/
+.agents/
+.claude/
 *.txt
 
 # ------------------------------

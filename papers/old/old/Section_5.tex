@@ -1,0 +1,312 @@
+\subsection{Modelagem Computacional da Evolução da Capacidade Resistente de Vigas de Concreto Armado sob Corrosão}
+
+Este trabalho implementa um modelo numérico para avaliar, ao longo do tempo, a degradação da capacidade resistente à flexão de vigas de concreto armado submetidas à corrosão das armaduras. A formulação combina (i) os modelos normativos de cálculo da resistência à flexão conforme a NBR 6118:2023 e (ii) a modelagem físico-química dos efeitos da corrosão, com base em Azad e Al-Gohi (2008) e Peng e Stewart (2016). 
+
+Apesar de o algoritmo completo realizar múltiplas simulações estocásticas em diversos passos de tempo, apresenta-se aqui apenas um passo de tempo e uma única simulação, a fim de descrever de forma clara o procedimento computacional.
+
+\subsection{Parâmetros iniciais e propriedades mecânicas}
+
+A viga analisada apresenta os seguintes parâmetros geométricos e mecânicos:
+
+\begin{itemize}
+    \item largura da seção: $b_w$;
+    \item altura total: $h$;
+    \item profundidade útil: $d = \alpha h$, com $\alpha = 0{,}90$;
+    \item cobrimento nominal: $c_{\mathrm{nom}} = 25\,\text{mm}$;
+    \item resistência característica do concreto: $f_{ck}$;
+    \item resistência característica do aço: $f_{yk} = 500\,\text{MPa}$;
+    \item módulo de elasticidade do aço: $E_s = 200\,\text{GPa}$;
+    \item momento característico das ações permanentes: $M_{Gk} = 6{,}32\,\text{kN·m}$;
+    \item momento característico das ações variáveis: $M_{Qk} = 1{,}381\,\text{kN·m}$.
+\end{itemize}
+
+A área inicial de armadura tracionada é
+
+\[
+A_{s,0} = 1{,}6 \times 10^{-4}\,\text{m}^2.
+\]
+
+Considerando um diâmetro nominal das barras igual a $d_b = 12{,}5\,\text{mm}$, obtém-se o número de barras:
+
+\[
+n_b = \frac{A_{s,0}}{\dfrac{\pi d_b^2}{4}}.
+\]
+
+A progressão da frente de carbonatação é modelada por:
+
+\[
+y_{\mathrm{carb}}(t) = k_c \sqrt{t}, 
+\qquad
+k_c = 6\,\text{mm}/\sqrt{\text{ano}}.
+\]
+
+\subsection{Modelo mecânico segundo a NBR 6118}
+
+\subsubsection{Equilíbrio de forças na seção}
+
+No cálculo da resistência última à flexão utiliza-se o equilíbrio entre as forças resistentes de compressão no concreto e de tração no aço:
+
+\[
+R_c(\beta) - R_s(\beta) = 0,
+\]
+
+em que $\beta = x/d$ representa a profundidade relativa da linha neutra. A força de compressão no concreto é expressa como
+
+\[
+R_c = \sigma_{cd}\, \lambda_c x b_w,
+\]
+
+onde $\sigma_{cd}$ é a tensão de cálculo do concreto comprimido. A força resistente no aço é dada por
+
+\[
+R_s = \sigma_s A_s,
+\]
+
+onde $\sigma_s$ é a tensão no aço obtida a partir do diagrama elasto-plástico definido pela norma.
+
+A profundidade da linha neutra $x$ resulta da solução numérica da equação de equilíbrio:
+
+\[
+f(\beta) = R_c(\beta) - R_s(\beta) = 0.
+\]
+
+\subsubsection{Momento resistente sem corrosão}
+
+Uma vez determinada a profundidade da linha neutra, o momento resistente inicial é:
+
+\[
+M_{Rd,0} = R_c \left( d - \frac{1}{2}\lambda_c x \right).
+\]
+
+\subsection{Modelagem da corrosão}
+
+Após o início da corrosão, considerado no tempo $t_{\mathrm{ini}}$, o modelo incorpora efeitos de (i) perda de seção das barras e (ii) redução da aderência aço-concreto.
+
+\subsubsection{Índice de corrosão ajustado pela temperatura}
+
+Segundo Peng e Stewart (2016), o índice de corrosão ajustado à temperatura ambiente é:
+
+\[
+i_{\mathrm{corr}}(T) = i_{\mathrm{corr},20} \left[ 1 + k(T - 20) \right],
+\]
+
+com
+
+\[
+k =
+\begin{cases}
+0{,}073, & T > 20^\circ\text{C}, \\
+0{,}025, & T < 20^\circ\text{C}, \\
+0, & T = 20^\circ\text{C}.
+\end{cases}
+\]
+
+\subsubsection{Perda de diâmetro da barra}
+
+Definindo o período de corrosão como
+
+\[
+t_{\mathrm{corr}} = t - t_{\mathrm{ini}},
+\]
+
+a redução do diâmetro original $d_0$ (em mm) é dada por (Azad \& Al-Gohi, 2008):
+
+\[
+\Delta d = 0{,}0232 \, i_{\mathrm{corr}} \, t_{\mathrm{corr}}.
+\]
+
+O diâmetro residual da barra torna-se:
+
+\[
+d(t) = d_0 - \Delta d.
+\]
+
+A área efetiva da armadura é então:
+
+\[
+A_s(t) = n_b \, \frac{\pi d(t)^2}{4}.
+\]
+
+\subsubsection{Redução da aderência no aço}
+
+O coeficiente de perda de aderência utilizado no modelo é:
+
+\[
+c_f =
+\min\left[
+1,\,
+\dfrac{5}{\, d_0^{0{,}54} \left( i_{\mathrm{corr}}^\ast \, t_{\mathrm{corr}} \, 365 \right)^{0{,}19}}
+\right],
+\]
+
+onde $i_{\mathrm{corr}}^\ast = i_{\mathrm{corr}}/1000$ é expresso em A/mm\(^2\).
+
+\subsubsection{Momento resistente com corrosão}
+
+A resistência à flexão degradada é calculada como:
+
+\[
+M_{Rd,\mathrm{cor}}(t) = c_f \, M_{Rd}(A_s(t)).
+\]
+
+\subsubsection{Cálculo da margem de segurança}
+
+Uma vez obtido o momento resistente degradado $M_{Rd,\mathrm{cor}}(t)$, avalia-se o estado limite último de flexão mediante a comparação entre resistência e ações solicitantes. O momento solicitante total é definido como
+
+\[
+M_S = M_{Gk} + M_{Qk},
+\]
+
+onde $M_{Gk}$ e $M_{Qk}$ são, respectivamente, os momentos característicos das ações permanentes e variáveis.
+
+A margem de segurança no instante $t$ é dada por
+
+\[
+G(t) = M_{Rd,\mathrm{cor}}(t) - M_S.
+\]
+
+Trata-se de uma função estado, amplamente utilizada em análises de confiabilidade estrutural. A interpretação física é direta:
+
+\[
+\begin{cases}
+G(t) \ge 0, & \text{estrutura segura (estado não violado)}, \\[4pt]
+G(t) < 0,  & \text{ocorrência do estado limite último}.
+\end{cases}
+\]
+
+Assim, o valor de $G(t)$ indica a distância, em termos de momento fletor resistente, entre a capacidade residual da seção corroída e a demanda estrutural. A progressiva redução de $G(t)$ ao longo do tempo reflete a deterioração da barra longitudinal, tanto pela perda de seção quanto pela redução da aderência aço–concreto.
+
+Este procedimento é repetido para todos os tempos da simulação e para todas as amostras estocásticas, permitindo a determinação de curvas de confiabilidade e da probabilidade de falha em cada ano de vida útil.
+
+\subsection{Exemplo numérico para um único passo de tempo}
+
+Considere o passo de tempo $t = 40$ anos, com temperatura ambiente $T = 23{,}56^\circ$C, índice de corrosão a 20°C igual a $i_{\mathrm{corr},20} = 0{,}431\,\mu\text{A/cm}^2$, diâmetro original $d_0 = 12{,}5\,\text{mm}$ e início da corrosão em $t_{\mathrm{ini}} = 25$ anos.
+
+\subsubsection{Verificação da carbonatação}
+
+\[
+y_{\mathrm{carb}}(40) = 6\sqrt{40} = 37{,}95\,\text{mm}.
+\]
+
+Como $y_{\mathrm{carb}}(40) > c_{\mathrm{nom}} = 25\,\text{mm}$, considera-se que já ocorreu o início da corrosão.
+
+\subsubsection{Índice de corrosão ajustado}
+
+\[
+i_{\mathrm{corr}}(23{,}56)
+= 0{,}431 \, \left[ 1 + 0{,}073 (23{,}56 - 20) \right]
+= 0{,}542\,\mu\text{A/cm}^2.
+\]
+
+\subsubsection{Perda de diâmetro}
+
+\[
+t_{\mathrm{corr}} = 40 - 25 = 15\,\text{anos},
+\]
+
+\[
+\Delta d = 0{,}0232 \times 0{,}542 \times 15 = 0{,}1886\,\text{mm},
+\]
+
+\[
+d(40) = 12{,}5 - 0{,}1886 = 12{,}3114\,\text{mm}.
+\]
+
+\subsubsection{Cálculo da área efetiva de aço}
+
+A área da barra corroída é:
+
+\[
+A_s(40)
+= \frac{\pi}{4}\,d(40)^2
+= \frac{\pi}{4}(12{,}3114^2)
+= 119{,}06\,\text{mm}^2.
+\]
+
+A barra original ($d_0 = 12{,}5$ mm) possuía:
+
+\[
+A_{s,0} = 122{,}72\,\text{mm}^2.
+\]
+
+Logo, há uma redução de:
+
+\[
+\Delta A_s = A_{s,0} - A_s(40) = 3{,}66\,\text{mm}^2.
+\]
+
+\subsubsection{Cálculo do momento resistente}
+
+Com a perda de área, o momento resistente reduzido é obtido pelo equilíbrio seccional:
+
+\[
+M_{Rd}(40)
+= 0{,}85\, f_{cd} \, b_w \, x \left( d - \frac{x}{2} \right),
+\]
+
+com reposicionamento neutro recalculado usando $A_s(40)$.
+
+Considerando os parâmetros usados no código (que retornam o valor numérico):
+
+\[
+M_{Rd}(40) = 34{,}82\,\text{kN·m}.
+\]
+
+\subsubsection{Coeficiente de aderência}
+
+O coeficiente redutor é:
+
+\[
+c_f = 
+\dfrac{5}
+{ d_0^{0{,}54}
+\left[
+(i_{\mathrm{corr}}/1000)\, t_{\mathrm{corr}}\, 365
+\right]^{0{,}19}}
+=
+\dfrac{5}
+{ 12{,}5^{0{,}54}
+\left[
+(0{,}542/1000)\cdot 15 \cdot 365
+\right]^{0{,}19}}
+= 0{,}873.
+\]
+
+Assim:
+
+\[
+M_{Rd,\mathrm{cor}}(40)
+= c_f \, M_{Rd}(40)
+= 0{,}873 \times 34{,}82
+= 30{,}39\,\text{kN·m}.
+\]
+
+\subsection{Margem de segurança}
+
+Os momentos solicitantes adotados no exemplo (conforme o código) são:
+
+\[
+M_{Gk} = 12{,}0\,\text{kN·m}, \qquad
+M_{Qk} = 8{,}0\,\text{kN·m}.
+\]
+
+Logo:
+
+\[
+M_{Gk} + M_{Qk} = 20{,}0\,\text{kN·m}.
+\]
+
+A margem de segurança é então:
+
+\[
+G(40)
+= M_{Rd,\mathrm{cor}}(40) - \bigl( M_{Gk} + M_{Qk} \bigr)
+= 30{,}39 - 20{,}0
+= 10{,}39\,\text{kN·m}.
+\]
+
+\[
+\boxed{G(40) = 10{,}39\,\text{kN·m}}
+\]
+
+Esse resultado indica que, aos 40 anos, mesmo considerando corrosão, a seção ainda possui capacidade resistente superior às solicitações atuantes.

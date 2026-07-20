@@ -1,0 +1,69 @@
+\section*{Nomenclatura}
+\addcontentsline{toc}{section}{Nomenclatura}
+
+% Nomenclatura construida a partir dos simbolos usados no texto.
+% Revisar/complementar conforme as secoes forem finalizadas.
+
+\noindent\textbf{Modelos f\'isicos --- carbonata\c{c}\~ao e corros\~ao}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$y(t)$        \> Profundidade da frente de carbonata\c{c}\~ao no instante $t$ (mm) \\
+$k$           \> Coeficiente de carbonata\c{c}\~ao (mm/$\sqrt{\text{ano}}$) \\
+$c_{\mathrm{nom}}$ \> Cobrimento nominal da armadura (mm) \\
+$t_{\mathrm{ini}}$ \> Instante de inicia\c{c}\~ao da corros\~ao (anos) \\
+$t_{\mathrm{corr}}$ \> Per\'iodo de propaga\c{c}\~ao, $t_{\mathrm{corr}} = t - t_{\mathrm{ini}}$ (anos) \\
+$f_c$         \> Resist\^encia \`a compress\~ao do concreto (MPa) \\
+$UR$          \> Umidade relativa do ar (\%) \\
+$i_{\mathrm{corr}}$ \> Densidade de corrente de corros\~ao ($\mu$A/cm$^2$) \\
+$d_{s0},\,d_s(t)$ \> Di\^ametro inicial e residual das barras (mm) \\
+$A_s(t)$      \> \'Area efetiva de armadura no instante $t$ (mm$^2$) \\
+$C_f$         \> Coeficiente redutor de ader\^encia a\c{c}o--concreto
+\end{tabbing}
+
+\noindent\textbf{Resist\^encia e estado limite}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$M_{Rd,0}$    \> Momento resistente da se\c{c}\~ao \'integra (kN$\cdot$m) \\
+$M_{Rd,\mathrm{cor}}(t)$ \> Momento resistente degradado no instante $t$ (kN$\cdot$m) \\
+$M_S$         \> Momento solicitante caracter\'istico total (kN$\cdot$m) \\
+$g(\mathbf{X},t)$ \> Fun\c{c}\~ao de estado limite (margem de seguran\c{c}a) \\
+$\mathbf{X}$  \> Vetor de vari\'aveis aleat\'orias de entrada \\
+$T(\mathbf{x})$ \> Tempo at\'e a falha (anos)
+\end{tabbing}
+
+\noindent\textbf{Emulador estoc\'astico}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$\mathcal{M}_S$ \> Simulador estoc\'astico \\
+$Q(u)$        \> Fun\c{c}\~ao quant\'ilica da Distribui\c{c}\~ao Lambda Generalizada \\
+$\boldsymbol{\lambda}=\{\lambda_1,\dots,\lambda_4\}$ \> Par\^ametros da GLD (loca\c{c}\~ao, escala, forma) \\
+$\Psi_{\boldsymbol{\alpha}}$ \> Polin\^omios ortonormais multivariados da PCE \\
+$a_{i,\boldsymbol{\alpha}}$ \> Coeficientes da PCE \\
+$\mathcal{M}_{ML}$ \> Regressor de aprendizado de m\'aquina (camada temporal) \\
+$M,\,N,\,N_t$ \> N\'umero de pontos do DoE, r\'eplicas e passos de tempo
+\end{tabbing}
+
+\noindent\textbf{Confiabilidade, RUL e risco}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$p_f(t)$      \> Probabilidade de falha dependente do tempo \\
+$\beta(t)$    \> \'Indice de confiabilidade generalizado \\
+$R(t)$        \> Fun\c{c}\~ao de confiabilidade (probabilidade de sobreviv\^encia) \\
+$\mathrm{RUL}(t_{\mathrm{insp}})$ \> Vida \'util remanescente condicionada \`a inspe\c{c}\~ao \\
+$\mathrm{VaR}_\alpha$ \> \textit{Value-at-Risk} ao n\'ivel $\alpha$ \\
+$\mathrm{CVaR}_\alpha$ \> \textit{Conditional Value-at-Risk} ao n\'ivel $\alpha$
+\end{tabbing}
+
+\noindent\textbf{Siglas}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+RUL \> \textit{Remaining Useful Life} (vida \'util remanescente) \\
+GLD \> Distribui\c{c}\~ao Lambda Generalizada \\
+GLaM \> \textit{Generalized Lambda Model} \\
+PCE \> Expans\~ao em Caos Polinomial \\
+ML \> Aprendizado de M\'aquina (\textit{Machine Learning}) \\
+RNA \> Rede Neural Artificial \\
+MoM \> M\'etodo dos Momentos \\
+LHS \> Amostragem por Hipercubo Latino \\
+KS / AD \> Testes de Kolmogorov--Smirnov / Anderson--Darling
+\end{tabbing}
