@@ -26,6 +26,29 @@ models/
 *.txt
 
 # ------------------------------
+# LaTeX compilation artifacts
+# ------------------------------
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.xdv
+*.loa
+main.pdf
+
+# ------------------------------
 # Files that must stay versioned
 # ------------------------------
 !requirements.txt
