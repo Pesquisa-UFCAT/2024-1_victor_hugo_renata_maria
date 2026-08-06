@@ -1,0 +1,33 @@
+% ----------------------------------------------------------
+\chapter{Considerações Parciais} \label{cap:consideracoes}
+% ----------------------------------------------------------
+
+Este capítulo consolida as considerações que podem ser extraídas do estágio atual da pesquisa e delimita o que permanece em aberto para a etapa final.
+
+\section{Sobre a Abordagem por Regressão Supervisionada}
+
+A primeira frente do trabalho apresentou uma abordagem baseada em simulação probabilística e aprendizado de máquina para a predição da vida útil de seções de vigas de concreto armado submetidas à corrosão induzida por carbonatação, utilizando um conjunto de dados sintético gerado por meio de simulações de Monte Carlo. A análise considerou variáveis geométricas, propriedades dos materiais e cargas aplicadas como aleatórias, permitindo a avaliação do desempenho estrutural ao longo do tempo por meio do índice de confiabilidade ($\beta$).
+
+A modelagem da vida útil com base em $\beta$ mostrou-se eficaz na representação da avaliação da vida útil para uma função de estado limite baseada em flexão pura. Além disso, a incorporação de métricas de incerteza, como o intervalo de predição de 95\% (PEI95) e a largura da faixa de incerteza (WUB), reforçou a robustez dos modelos, permitindo interpretações confiáveis mesmo em cenários com alta variabilidade nas variáveis de entrada.
+
+Diferentes algoritmos de regressão --- \textit{Elastic Net}, \textit{k-Nearest Neighbors} (KNN), \textit{Light Gradient Boosting Machine} (LGBM) e \textit{Random Forest} (RF) --- foram avaliados por meio do ajuste de hiperparâmetros. Após análise comparativa, os métodos baseados em árvores destacaram-se como os mais adequados para a tarefa, alcançando o melhor desempenho nas métricas RMSE, $R^2$, MAPE e A10, além de demonstrarem estabilidade e alta capacidade preditiva em múltiplas execuções independentes.
+
+\section{Sobre a Abordagem por Emulação Estocástica}
+
+A análise crítica dos resultados da primeira frente evidenciou, contudo, uma limitação conceitual relevante: o regressor supervisionado prediz um \textit{valor} de tempo de vida útil, e não a \textit{distribuição} desse tempo. As métricas de incerteza do regressor descrevem o erro de predição do próprio modelo, e não a variabilidade intrínseca do fenômeno de degradação --- grandezas de natureza distinta que não devem ser confundidas na tomada de decisão de manutenção.
+
+A incorporação do arcabouço de emuladores estocásticos responde diretamente a essa limitação. Os resultados de verificação obtidos até o momento sustentam três considerações parciais:
+
+\begin{alineas}
+    \item \textbf{Acurácia da emulação distribucional.} No problema de referência, o emulador reproduziu a distribuição da margem de segurança com erro relativo inferior a 0,5\% até o percentil 99, com discrepâncias confinadas à cauda extrema (cerca de 1,3\% no quantil 99,9\%), conforme atestado pelo teste de Kolmogorov--Smirnov e pela comparação de quantis;
+    \item \textbf{Generalização temporal.} A camada de aprendizado de máquina sobre os parâmetros da Distribuição Lambda Generalizada atuou como interpolador contínuo da distribuição entre os instantes simulados, com $R^2$ superior a 0,98 para os parâmetros sensíveis, sustentando a viabilidade da emulação dependente do tempo;
+    \item \textbf{Eficiência computacional.} O emulador reduziu o custo da análise em quase duas ordens de grandeza no problema de referência (48,75~s contra 0,66~s), viabilizando a varredura de cenários de inspeção e manutenção em tempo quase real.
+\end{alineas}
+
+\section{Limitações Reconhecidas e Etapas Seguintes}
+
+Entre as limitações já identificadas, destacam-se: a hipótese de unimodalidade da resposta, inerente à Distribuição Lambda Generalizada; a validade da interpolação temporal restrita ao horizonte de treinamento, sem garantia de extrapolação; a adoção de um único mecanismo de degradação, sem interação com cloretos ou fadiga; e a hipótese de monotonicidade da degradação assumida na relação entre a probabilidade de falha instantânea e a função de confiabilidade.
+
+O teste conclusivo da emulação temporal --- a predição da distribuição em instantes deliberadamente omitidos do treinamento --- e a aplicação integral do arcabouço ao problema da viga sob carbonatação constituem as etapas centrais da fase final da pesquisa, conforme detalhado na \autoref{sec:res_emulador_viga} e no cronograma revisado.
+
+Em síntese, a integração de modelos de confiabilidade, simulação estocástica e algoritmos de aprendizado de máquina mostrou-se uma ferramenta promissora para o planejamento de inspeções, manutenção preventiva e reabilitação de estruturas expostas a ambientes agressivos. A metodologia proposta reduz tempo e custo em análises complexas, contribuindo para práticas de projeto mais seguras e duráveis frente à deterioração acelerada da infraestrutura. Estudos futuros podem expandir essa abordagem incorporando outros mecanismos de degradação, como a penetração de cloretos, a atualização bayesiana do emulador com dados de inspeção em serviço e a incorporação de variabilidade espacial por campos aleatórios.
