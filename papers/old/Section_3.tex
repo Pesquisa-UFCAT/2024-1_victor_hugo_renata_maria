@@ -1,0 +1,118 @@
+% =====================================================================
+% SECTION 3 - RESISTENCIA RESIDUAL A FLEXAO E FUNCAO DE ESTADO LIMITE
+% Unifica e organiza o conteudo das antigas Section_3 (modelos de
+% corrosao) e Section_5 (formulacao mecanica da viga). O exemplo
+% numerico passo a passo da antiga Section_5 foi movido para um
+% apendice opcional (ver comentario ao final).
+% =====================================================================
+
+Nesta seção apresentam-se os modelos para a previsão da capacidade resistente residual de vigas de concreto armado sujeitas à corrosão induzida por carbonatação. A formulação combina (i) o cálculo normativo da resistência à flexão conforme a \citet{nbr6118} e (ii) a modelagem físico-química dos efeitos da corrosão sobre a área de aço e sobre a aderência aço--concreto, com base em \citet{azad2010}, \citet{val1997} e \citet{peng2016}. Ao final, define-se a função de estado limite dependente do tempo que constitui a resposta do simulador estocástico a ser emulado.
+
+\subsection{Momento resistente da seção íntegra}
+\label{subsec:mrd0}
+
+O cálculo de vigas de concreto armado sem corrosão ($t \leq t_{\mathrm{ini}}$) segue as diretrizes da \citet{nbr6118}. O momento fletor resistente de cálculo ($M_{Rd}$) é determinado pelo equilíbrio de forças na seção transversal, considerando o comportamento não linear dos materiais e o diagrama retangular simplificado de tensões no concreto comprimido. As resistências de cálculo do concreto, $f_{cd}$, e do aço, $f_{yd}$, são obtidas pela aplicação dos respectivos coeficientes de ponderação ($\gamma_c$ e $\gamma_s$), e os parâmetros geométricos do bloco de tensões ($\lambda_c$, $\alpha_c$) são definidos em função da resistência característica $f_{ck}$.
+
+Para seções retangulares com armadura simples, o equilíbrio entre a força normal de compressão no concreto e a força de tração na armadura escreve-se como
+
+\begin{equation}\label{eq:equilibrio}
+f_\alpha(\beta) = R_c(\beta) - R_s(\beta) = \sigma_{cd}\, \lambda_c\, (\beta d)\, b_w \;-\; \sigma_s(\beta)\, A_s = 0,
+\end{equation}
+
+\noindent em que $\beta = x/d$ é a profundidade relativa da linha neutra, $x$ é a profundidade da linha neutra, $b_w$ é a largura da seção, $d$ é a altura útil, $A_s$ é a área de armadura tracionada, $\sigma_{cd}$ é a tensão de cálculo no concreto comprimido e $\sigma_s$ é a tensão na armadura, obtida do diagrama elastoplástico definido pela norma. Devido às não linearidades física e geométrica, a raiz de $f_\alpha(\beta) = 0$ é obtida numericamente pelo método da bisseção em um intervalo predefinido. Convergido o valor de $x$, o momento resistente é calculado pela Equação~\eqref{eq:mrd_lim_resumida}:
+
+\begin{equation}\label{eq:mrd_lim_resumida}
+M_{Rd} = \sigma_{cd} \cdot (\lambda_c \cdot x \cdot b_w) \cdot \left(d - \tfrac{1}{2} \lambda_c x\right),
+\end{equation}
+
+\noindent em que o termo entre parênteses representa o braço de alavanca interno. Esse valor estabelece a linha de base de desempenho da estrutura antes do início da degradação por corrosão, denotada $M_{Rd,0}$.
+
+\subsection{Propagação da corrosão e resistência residual}
+\label{subsec:residual}
+
+Após o início da corrosão, considerado no instante $t_{\mathrm{ini}}$ definido na Seção~\ref{subsec:modelo_possan}, o modelo incorpora dois efeitos de degradação: (i) a perda de seção transversal das barras e (ii) a redução da aderência aço--concreto.
+
+\subsubsection{Taxa de corrosão ajustada pela temperatura}
+
+A taxa de corrosão não é considerada constante. Seguindo \citet{peng2016}, a taxa é ajustada em função da temperatura ambiente $T(t)$ e da classe de exposição:
+
+\begin{equation}\label{eq:i_cor_t}
+i_{\mathrm{corr}}(T) = i_{\mathrm{corr},20} \left[ 1 + K \cdot (T - 20) \right],
+\qquad
+K =
+\begin{cases}
+0{,}073, & T > 20\,^\circ\mathrm{C}, \\
+0{,}025, & T < 20\,^\circ\mathrm{C}, \\
+0, & T = 20\,^\circ\mathrm{C},
+\end{cases}
+\end{equation}
+
+\noindent em que $i_{\mathrm{corr},20}$ ($\mu$A/cm$^2$) é a taxa de corrosão de referência a 20\,$^\circ$C.
+
+\subsubsection{Perda de diâmetro e área efetiva}
+
+Definindo o período de propagação como $t_{\mathrm{corr}} = t - t_{\mathrm{ini}}$, a redução do diâmetro original $d_{s0}$ (mm) decorre da lei de Faraday e é dada por \citep{val1997, azad2010}:
+
+\begin{equation}\label{eq:d_cor}
+d_{s}(t) = d_{s0} - 0{,}0232 \cdot i_{\mathrm{corr}} \cdot t_{\mathrm{corr}},
+\end{equation}
+
+\noindent de modo que a área efetiva da armadura com $n_b$ barras torna-se
+
+\begin{equation}\label{eq:as_t}
+A_{s}(t) = n_b\, \frac{\pi\, d_{s}(t)^2}{4}.
+\end{equation}
+
+\subsubsection{Redução da aderência}
+
+A perda de aderência entre o aço corroído e o concreto é representada por um coeficiente redutor $C_f$ \citep{azad2010}:
+
+\begin{equation}\label{eq:c_f}
+C_f = \min\!\left[\,1,\; \frac{5{,}0}{\, d_{s0}^{0{,}54} \left( i^{*}_{\mathrm{corr}} \cdot t_{\mathrm{corr}} \cdot 365 \right)^{0{,}19}}\right],
+\end{equation}
+
+\noindent em que $i^{*}_{\mathrm{corr}} = i_{\mathrm{corr}}/1000$ é expresso em A/mm$^2$ e $t_{\mathrm{corr}}$ em anos.
+
+\subsubsection{Momento resistente degradado}
+
+A resistência à flexão degradada é então calculada recompondo o equilíbrio seccional da Equação~\eqref{eq:equilibrio} com a área corroída $A_s(t)$ e aplicando o coeficiente de aderência:
+
+\begin{equation}\label{eq:m_res}
+M_{Rd,\mathrm{cor}}(t) = C_f \cdot M_{Rd}\!\left(A_{s}(t)\right).
+\end{equation}
+
+\subsection{Função de estado limite dependente do tempo}
+\label{subsec:funcao_g}
+
+Obtido o momento resistente degradado, avalia-se o estado limite último de flexão pela comparação entre resistência e solicitação. O momento solicitante característico total é
+
+\begin{equation}\label{eq:ms}
+M_S = M_{Gk} + M_{Qk},
+\end{equation}
+
+\noindent em que $M_{Gk}$ e $M_{Qk}$ são, respectivamente, os momentos característicos das ações permanentes e variáveis. A margem de segurança no instante $t$ --- a função de estado limite do problema --- é definida como
+
+\begin{equation}\label{eq:funcao_g}
+g(\mathbf{X}, t) = M_{Rd,\mathrm{cor}}(\mathbf{X}, t) - M_S(\mathbf{X}),
+\end{equation}
+
+\noindent em que $\mathbf{X}$ reúne todas as variáveis aleatórias do problema (propriedades de material, geometria, ambiente e ações). A interpretação física é direta:
+
+\begin{equation}\label{eq:dominio_falha}
+\begin{cases}
+g(\mathbf{X}, t) \geq 0, & \text{estrutura segura (estado limite não violado)}, \\[4pt]
+g(\mathbf{X}, t) < 0,  & \text{ocorrência do estado limite último}.
+\end{cases}
+\end{equation}
+
+O valor de $g$ indica a distância, em termos de momento fletor, entre a capacidade residual da seção corroída e a demanda estrutural. A redução progressiva de $g$ ao longo do tempo reflete a deterioração da armadura longitudinal, tanto pela perda de seção quanto pela redução da aderência. Note-se que, em razão das variáveis latentes do problema (heterogeneidade do material, flutuações ambientais, incerteza de modelo), $g(\mathbf{X}, t)$ é, para cada par $(\mathbf{x}, t)$, uma \textit{variável aleatória}, e não um valor determinístico --- precisamente a estrutura de um simulador estocástico, formalizada na Seção~\ref{sec:emulador}. Este procedimento, repetido para todos os instantes da simulação e para todas as amostras estocásticas, permitiria em princípio a determinação de curvas de confiabilidade e da probabilidade de falha por simulação direta de Monte Carlo; o custo proibitivo dessa estratégia para análises de ciclo de vida é justamente o que motiva o emulador proposto.
+
+% ---------------------------------------------------------------------
+% NOTA PARA O ALUNO: o exemplo numerico passo a passo para t = 40 anos
+% (verificacao da carbonatacao, ajuste de i_corr, perda de diametro,
+% area efetiva, M_Rd, C_f e G(40) = 10,39 kN.m) que estava na antiga
+% Section_5 e excelente material DIDATICO para a dissertacao, mas e
+% detalhado demais para um artigo Q1. Sugestao: move-lo para um
+% Apendice A do artigo ("Exemplo de verificacao para um passo de
+% tempo") ou mante-lo apenas na dissertacao.
+% ---------------------------------------------------------------------

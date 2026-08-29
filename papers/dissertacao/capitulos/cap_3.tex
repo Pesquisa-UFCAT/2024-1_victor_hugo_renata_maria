@@ -1,0 +1,333 @@
+\chapter{Metodologia} \label{met}
+
+Este capítulo apresenta o procedimento adotado para a obtenção dos resultados da presente dissertação, cujo objetivo consiste em aplicar uma análise do tempo de vida útil remanescente de uma estrutura de concreto armado sujeita à carbonatação. O método proposto foi desenvolvido de forma a integrar modelagem computacional, simulação estocástica e aprendizado de máquina, com o propósito de avaliar o desempenho estrutural de maneira probabilística ao longo do tempo.
+
+A metodologia está organizada em duas frentes complementares. A primeira, já implementada e cujos resultados são apresentados no \autoref{cap:resultados}, compreende a construção do banco de dados sintético por simulação de Monte Carlo com Hipercubo Latino e o treinamento de modelos de regressão supervisionada para a predição direta do tempo de vida útil. A segunda frente, em desenvolvimento, substitui a predição pontual do tempo de vida útil pela emulação da \textit{distribuição condicional completa} da função de estado limite ao longo do tempo, por meio do emulador estocástico PCE--GLD acoplado a uma camada temporal de aprendizado de máquina. Essa segunda frente é o que permite derivar, além do tempo médio de falha, a distribuição probabilística da vida útil remanescente e as métricas de risco associadas.
+
+\section{Desenvolvimento do Banco de Dados}
+
+Por meio de programação em Python, será elaborado um banco de dados abrangente contendo diversos modelos de vigas de concreto armado tradicionalmente empregadas em edificações. A metodologia adota um delineamento fatorial completo para considerar todas as combinações das variáveis de interesse. Os parâmetros utilizados para criação desse banco de dados são: (\textit{i}) largura da seção transversal ($b_w$) entre 14 e 30 cm; (\textit{ii}) altura da seção ($h$) entre 30 e 70 cm; (\textit{iii}) resistência característica do concreto ($f_{ck}$) entre 20 e 50 MPa; e (\textit{iv}) taxa de armadura ($A_s$) entre 0,15\% e 1,50\%, intervalo que permite apenas vigas com armadura simples, ou seja, sem armadura dupla. Esse delineamento fatorial completo resultará em cerca de 3600 vigas de concreto armado.
+
+Para a determinação do momento solicitante, inicialmente será calculado o momento resistente limite, com o objetivo de avaliar a capacidade máxima de resistência das vigas-modelo, conforme apresentado na Equação \eqref{eq:mrd_lim}. Em seguida, o momento total será decomposto em momento permanente ($M_{gk}$) e momento variável ($M_{qk}$), de acordo com os modelos de participação do carregamento descritos nas Equações \eqref{eq:mgk} e \eqref{eq:mqk}. Os fatores parciais de segurança adotados serão $\gamma_g = 1.30$ para as ações permanentes e $\gamma_q = 1.40$ para as ações variáveis. 
+
+\begin{equation}
+M_{gk} = \frac{M_{Rd,lim}}{\gamma_g + \gamma_q \cdot \frac{\chi}{(1 - \chi)}}
+\label{eq:mgk}
+\end{equation}
+
+\vspace{6pt}
+
+\begin{equation}
+M_{qk} = \frac{M_{Rd,lim}}{\gamma_g \cdot \frac{(1 - \chi)}{\chi} + \gamma_q}
+\label{eq:mqk}
+\end{equation}
+
+O cálculo da área de aço ($A_s$) de cada viga será realizado por meio da Equação \eqref{eq:a_s}. Em seguida, será determinada a taxa de armadura ($\rho_s$), conforme a Equação \eqref{eq:rho_s}.
+
+\begin{equation}\label{eq:a_s}
+A_s = \frac{M_{Sd}}{z \cdot f_{yd}}
+\end{equation}
+
+\begin{equation}
+z = d - 0{,}5\,\lambda 
+\bigg(
+    \frac{d - \sqrt{d^{2} - 2
+    \left(
+        \dfrac{M_{sd}}{b_w\,\alpha_c\,\dfrac{f_{ck}}{\gamma_c}}
+    \right)
+    }}{\lambda}
+\bigg)
+\label{eq:braco_z}
+\end{equation}
+
+\begin{equation}\label{eq:rho_s}
+\rho_s = \frac{A_s}{A_c} \cdot 100
+\end{equation}
+
+% \begin{table}[hptb!]
+% \centering
+% \caption{Estatísticas descritivas das variáveis do conjunto de dados}
+% \label{tab:dados_banco}
+% \begin{tabular}{l p{6cm} c c c c}
+% \toprule
+% \textbf{Variável} & \textbf{Descrição} & \textbf{Média} & \textbf{Desv. Padrão} & \textbf{Mínimo} & \textbf{Máximo} \\ 
+% \midrule
+% $b_w$ (m)       & Largura útil da seção transversal & 0,2450 & 0,0743 & 0,1400 & 0,3500 \\
+% $h$ (m)         & Altura da seção transversal & 0,5000 & 0,1414 & 0,3000 & 0,7000 \\
+% $f_{ck}$ (MPa)  & Resistência característica do concreto à compressão & 35\,000 & 10\,608,30 & 20\,000 & 50\,000 \\
+% $M_{gk}$ (kN·m) & Momento fletor devido às ações permanentes & 111,38 & 107,03 & 2,81 & 890,01 \\
+% $M_{qk}$ (kN·m) & Momento fletor devido às ações variáveis & 59,97 & 66,99 & 0,70 & 593,34 \\
+% $A_s$ (m²)      & Área de armadura de tração & 0,0012 & 0,0009 & 0,0001 & 0,0055 \\
+% \bottomrule
+% \end{tabular}
+% \fonte{Autor (2025).}
+% \end{table}
+
+% As médias dos parâmetros geométricos $b_w$ (largura da seção) e $h$ (altura da seção) serão, respectivamente, de 0,24 m e 0,50 m. A resistência à compressão do concreto ($f_{ck}$) apresentará média de 35.000 kPa, com valores variando entre 20.000 e 50.000 kPa. As variáveis relacionadas às ações apresentarão maior variabilidade. O momento característico das cargas permanentes ($M_{gk}$) variará entre 2,81 e 890,02 kN·m, com média de 111,38 kN·m e intervalo interquartil (IQR) de 108,90 kN·m. De forma análoga, o momento característico das cargas variáveis ($M_{qk}$) variará entre 0,70 e 593,34 kN·m, apresentando média de 59,97 kN·m e IQR de 61,30 kN·m.
+
+\section{Aplicação de Técnicas de Amostragem }
+
+Após a construção do banco de dados, será realizada uma simulação estocástica da viga, com o objetivo de representar o comportamento temporal da função de estado limite, expressa pela Equação \eqref{eq:estado_limite}. As variáveis aleatórias consideradas, bem como suas respectivas fontes bibliográficas, serão apresentadas na Tabela \ref{tab:estatisticas_vars}. 
+
+\begin{equation}\label{eq:estado_limite}
+g = 
+\begin{cases}
+E_r \cdot M_{rd} - E_s \cdot M_{sd}, & \text{se } y(t) < \text{cobrimento} \\
+E_r \cdot M_{rd,cor} - E_s \cdot M_{sd}, & \text{se } y(t) \geq \text{cobrimento}
+\end{cases}
+\end{equation}
+
+A equação \eqref{eq:estado_limite} define a função de estado limite empregada na verificação da confiabilidade estrutural. Essa função expressa a diferença entre a resistência estrutural disponível e a solicitação atuante, sendo a condição de falha caracterizada quando o valor de $g$ torna-se negativo ($g < 0$). A formulação contempla duas situações distintas: a primeira, correspondente à fase em que o processo de corrosão por carbonatação ainda não atingiu a armadura; e a segunda, referente ao estágio em que a frente de carbonatação alcança o cobrimento e inicia a deterioração da armadura. Dessa forma, o modelo incorpora a influência do tempo e o consequente decréscimo da resistência, representado pela profundidade de carbonatação $y(t)$.
+
+As variáveis que compõem a equação \eqref{eq:estado_limite} são definidas da seguinte forma:
+$g$ representa a função de estado limite, cuja condição de falha ocorre quando $g < 0$;
+$E_r$ corresponde ao erro de modelo referente à resistência do sistema estrutural;
+$E_s$ refere-se ao erro de modelo referente às solicitações aplicadas;
+$M_{rd}$ indica o momento resistente da seção transversal não degradada;
+$M_{rd,cor}$ representa o momento resistente da seção degradada pela corrosão;
+$M_{sd}$ é o momento solicitante de cálculo;
+$y(t)$ expressa a profundidade de carbonatação em função do tempo;
+e o \textit{cobrimento} corresponde à espessura da camada de concreto que protege a armadura.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Parâmetros estatísticos das variáveis básicas}
+\label{tab:estatisticas_vars}
+\begin{tabularx}{\textwidth}{
+    p{2.2cm}   % 1ª coluna (Descrição)
+    p{1.5cm}     % 2ª coluna (Notação)
+    c          % 3ª (Distribuição)
+    p{1.5cm}          % 4ª (Média)
+    p{2.0cm}     % 5ª (C.O.V.)
+    X          % 6ª (Referência, ajusta automaticamente)
+}
+\toprule
+\textbf{Descrição} & \textbf{Notação} & \textbf{Distribuição} & \textbf{Média} & \textbf{C.O.V.} & \textbf{Referência} \\ 
+\midrule
+Carga permanente & $M_{gk}$ (kN·m) & Normal & $1{,}06 \, M_{gk}$ & 0,12 & \cite{pereira_junior_reliability_2023,costa_probabilistic_2023} \\ 
+Carga variável & $M_{qk}$ (kN·m) & Gumbel & $0{,}21 \, M_{qk}$ & 0,76 & \cite{costa_probabilistic_2023} \\ 
+Resistência do concreto & $f_{ck}$ (MPa) & Normal & $1{,}22 \, f_c$ & 0,15 & \cite{pereira_junior_reliability_2023,costa_probabilistic_2023} \\ 
+Resistência do aço & $f_{yk}$ (MPa) & Normal & $1{,}22 \, f_y$ & 0,04 & \cite{pereira_junior_reliability_2023,costa_probabilistic_2023} \\ 
+Humidade & $u_r$ (\%) & Lognormal & 57,25 & 0,26 (a=2,94,b=2,21) & Trabalho presente \\ 
+Temperatura & $T$ (°C) & Lognormal & 21,10 & 0,03 & Trabalho presente \\ 
+Perda de seção por corrosão & $i_{cor 20}$ ($\mu$A/cm²) & Lognormal & 0,431 & 0,259 & \cite{peng_climate_2016} \\ 
+Erro de modelo da resistência & $E_r$ & Lognormal & 1,00 & 0,05 & \cite{santos_reliability_2014} \\ 
+Erro de modelo da solicitação & $E_s$ & Lognormal & 1,00 & 0,05 & \cite{santos_reliability_2014} \\ 
+\bottomrule
+\end{tabularx}
+\fonte{Autor (2025).}
+\end{table}
+
+A Tabela \ref{tab:estatisticas_vars} apresenta os parâmetros estatísticos adotados para as variáveis básicas utilizadas na análise de confiabilidade. As variáveis consideradas incluem ações permanentes e variáveis, propriedades mecânicas dos materiais (concreto e aço), além de fatores ambientais e de incerteza. As distribuições probabilísticas foram definidas com base em estudos anteriores, e recomendações da literatura indicadas, de modo a representar adequadamente a variabilidade de cada parâmetro. Observa-se que as resistências do concreto e do aço seguem distribuições normais, enquanto as variáveis associadas ao ambiente e aos erros de modelo são descritas por distribuições lognormais. Os coeficientes de variação (C.O.V.) indicam o grau de dispersão de cada variável em relação à sua média, sendo que valores mais elevados, como o da carga variável, refletem maior incerteza.
+
+
+\section{Determinação da Vida Útil Remanescente Com Aplicação do Aprendizado de Máquina}
+
+Por fim, para a estimativa do tempo de vida útil remanescente, será desenvolvido um modelo de aprendizado de máquina voltado à análise de séries temporais. Serão empregados métodos baseados em regressão, conforme descrito na \autoref{AM}. Na aplicação do modelo temporal à previsão da equação de estado limite, será incorporado o conceito de \textit{lag}, o qual se fundamenta na premissa de que o valor no pseudo-tempo $t$ é influenciado pelos estados anteriores, em especial por $t-1$. Nesta pesquisa, a série temporal será delimitada a um horizonte de 100 anos, representando o ciclo de vida estrutural considerado para as análises.
+
+As métricas de avaliação de desempenho dos modelos de aprendizado de máquina são fundamentais para quantificar a precisão das previsões e a capacidade de generalização do modelo. No presente trabalho, serão utilizadas quatro métricas amplamente reconhecidas na literatura para problemas de regressão: a raiz do erro quadrático médio (RMSE), o coeficiente de determinação ($R^2$), o erro percentual médio absoluto (MAPE) e o índice de acurácia dentro de 10\% (A10). Cada uma dessas métricas permite avaliar o desempenho sob diferentes perspectivas, considerando tanto a dispersão dos erros quanto a capacidade do modelo de reproduzir os valores observados.
+
+A métrica RMSE (\textit{Root Mean Squared Error}) medirá a magnitude média dos erros entre os valores previstos e os observados, penalizando de forma mais intensa os erros de maior amplitude. Sua formulação é dada pela Equação \eqref{eq:rmse}:
+
+\begin{equation}
+\mathrm{RMSE} = \sqrt{ \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2 }
+\label{eq:rmse}
+\end{equation}
+
+em que $N$ representa o número total de observações (adimensional), $y_i$ é o valor observado da variável dependente e $\hat{y}_i$ é o valor previsto pelo modelo, ambos expressos na mesma unidade de medida. O RMSE é expresso nas mesmas unidades da variável predita e reflete a dispersão média dos resíduos em torno da linha de regressão. Valores menores de RMSE indicam melhor desempenho preditivo \cite{montgomery_design_2020, nguyen_prediction_2022}.
+
+O coeficiente de determinação ($R^2$) expressará a proporção da variância total dos dados explicada pelo modelo, sendo uma medida global de ajuste. Sua definição é dada pela Equação \eqref{eq:r2}:
+
+\begin{equation}
+R^2 = 1 - \frac{ \sum_{i=1}^{N} (y_i - \hat y_i)^2 }{ \sum_{i=1}^{N} (y_i - \overline{y})^2 }
+\label{eq:r2}
+\end{equation}
+
+em que $\overline{y}$ representa a média dos valores observados ($\overline{y} = \frac{1}{N}\sum_{i=1}^{N} y_i$). Valores de $R^2$ próximos de 1 indicam elevada capacidade explicativa do modelo, enquanto valores próximos de 0 indicam baixo poder de previsão. Em modelos não lineares ou com ajustes forçados, é possível obter valores negativos de $R^2$ \cite{montgomery_design_2020, nguyen_prediction_2022}.
+
+O erro percentual médio absoluto (MAPE, \textit{Mean Absolute Percentage Error}) medirá o erro médio relativo entre as previsões e os valores reais, sendo amplamente utilizado por permitir comparação entre variáveis de diferentes escalas \cite{nguyen_prediction_2022}. É definido pela Equação \eqref{eq:mape}:
+
+\begin{equation}
+\mathrm{MAPE} = \frac{100}{N} \sum_{i=1}^{N} \left| \frac{y_i - \hat{y}_i}{y_i} \right|
+\label{eq:mape}
+\end{equation}
+
+em que $N$, $y_i$ e $\hat{y}_i$ mantêm as definições anteriores. O resultado é expresso em percentual e valores menores de MAPE indicam maior precisão do modelo. Segundo \textcite{de_myttenaere_mean_2016}, valores de MAPE inferiores a 10\% geralmente indicam excelente desempenho preditivo.
+
+O índice de acurácia de 10\% (A10) quantificará a proporção de previsões cujo erro relativo é inferior a 10\% em relação ao valor real, fornecendo uma interpretação intuitiva da precisão do modelo. A métrica é definida pela Equação \eqref{eq:a10}:
+
+\begin{equation}
+\mathrm{A10} = \frac{1}{N} \sum_{i=1}^{N} \mathbb{I}\left( \left| \frac{y_i - \hat{y}_i}{y_i} \right| \le 0{,}10 \right)
+\label{eq:a10}
+\end{equation}
+
+em que $\mathbb{I}(\cdot)$ é a função indicadora, que assume valor 1 se a condição for verdadeira e 0 caso contrário. O índice A10 varia de 0 a 1, representando, respectivamente, ausência total e acurácia perfeita. Essa métrica tem sido recomendada para a análise de previsões contínuas por permitir interpretação direta da proporção de acertos \cite{nguyen_prediction_2022}.
+
+O modelo de análise que será desenvolvido adota uma base de dados anual, de modo que os valores da função de estado limite serão anualizados para representar adequadamente a evolução do desempenho estrutural ao longo do tempo. Para o conjunto de treinamento do modelo, será utilizada a divisão padrão de 70\% dos dados para treino e 30\% para teste da série temporal, assegurando a validação da capacidade preditiva do algoritmo. 
+
+Ao final, com o modelo de predição devidamente treinado e validado, será possível definir um tempo de inspeção ($t_{insp}$) arbitrário e, a partir dessa informação, estimar a vida útil remanescente da estrutura correspondente à condição de degradação observada.
+
+Como diversas amostras da curva serão realizadas o valor médio será utilizado para previsão com o modelo de IA. A partir desse modelo os tempos de inspeção poderão ser indicados e então o tempo de vida útil remanescente poderá ser estimado.
+
+As principais técnicas de aprendizado de máquina abordadas neste trabalho baseiam-se, direta ou indiretamente, na lógica de árvores de regressão. Dessa forma, apresenta-se a seguir uma breve descrição desse mecanismo. Conforme \textcite{Cruvinel2024ConcreteAI}, uma árvore de decisão para regressão realiza particionamentos sucessivos no conjunto de dados, com o objetivo de reduzir a variabilidade interna de cada região resultante. Em cada nó $m$, seleciona-se o atributo $j$ e o limiar $t_m$ que melhor dividem o conjunto $(x, y)$ em dois subconjuntos distintos:
+
+\[
+Q_m^{left}(j,t_m) = \{ (x, y) \mid x_j \le t_m \}
+\]
+
+\[
+Q_m^{right}(j,t_m) = \{ (x, y) \mid x_j > t_m \}
+\]
+
+A função de custo a ser minimizada para a melhor divisão $\theta$ é:
+
+\[
+Loss(Q_m, \theta) =
+\frac{n_m^{left}}{n_m} H(Q_m^{left}) +
+\frac{n_m^{right}}{n_m} H(Q_m^{right})
+\]
+
+onde:
+
+\[
+H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
+\]
+
+e a previsão no nó é dada pela média dos valores alvo:
+
+\[
+\bar{y}_m = \frac{1}{n_m} \sum_{y \in Q_m} y
+\]
+
+Assim, o modelo procura reduzir a variância dentro de cada região a
+cada divisão do conjunto de dados. A árvore prossegue particionando os
+dados até atingir um critério de parada, como profundidade máxima ou
+número mínimo de amostras.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Construção do Emulador Estocástico Dependente do Tempo}
+\label{sec:construcao_emulador}
+
+Definidos o simulador estocástico, representado pela função de estado limite da Equação \eqref{eq:estado_limite}, e o núcleo estatístico do emulador, apresentado na \autoref{EMU}, descreve-se nesta seção o procedimento de construção do emulador PCE--GLD e sua extensão ao domínio temporal.
+
+\subsection{Plano de Experimentos e Ajuste Local}
+
+O treinamento do emulador PCE--GLD segue as etapas descritas a seguir:
+
+\begin{alineas}
+    \item \textbf{Plano de experimentos:} um conjunto de $M$ pontos amostrais $\{\mathbf{x}^{(1)}, \dots, \mathbf{x}^{(M)}\}$ é gerado por Amostragem por Hipercubo Latino, conforme o procedimento já descrito no \autoref{cap:referencial} \cite{mckay_comparison_1979};
+    \item \textbf{Avaliações estocásticas:} para cada ponto $\mathbf{x}^{(j)}$, o simulador estocástico original é executado $N$ vezes, gerando um conjunto amostral local da resposta, $\mathcal{Y}^{(j)}$;
+    \item \textbf{Ajuste local da GLD:} o Método dos Momentos, implementado no PyGLAM com o otimizador BFGS, é utilizado para estimar os parâmetros locais ótimos $\hat{\boldsymbol{\lambda}}^{(j)}$ para cada conjunto $\mathcal{Y}^{(j)}$;
+    \item \textbf{Estimação dos coeficientes da PCE:} a partir dos pares $\{\mathbf{x}^{(j)}, \hat{\boldsymbol{\lambda}}^{(j)}\}_{j=1}^{M}$, os coeficientes $a_{i, \boldsymbol{\alpha}}$ da Equação \eqref{eq:pce_lambda} são calculados para cada parâmetro $\lambda_i$.
+\end{alineas}
+
+\subsection{Emulação Dependente do Tempo}
+
+A base de treinamento do emulador temporal é construída avaliando-se o simulador estocástico em $N_t$ passos de tempo discretos $\{t_1, t_2, \dots, t_{N_t}\}$. Para cada passo $t_m$, um conjunto de $M$ amostras do vetor de entrada $\mathbf{x}^{(j)}$ é avaliado, produzindo os parâmetros locais correspondentes $\hat{\boldsymbol{\lambda}}^{(j, m)}$ via PyGLAM. A base de dados resultante $\mathcal{D}$ é definida pela Equação \eqref{eq:dataset_temporal}:
+
+\begin{equation}\label{eq:dataset_temporal}
+\mathcal{D} = \left\{ \left( \mathbf{x}^{(j)}, t_m \right), \hat{\boldsymbol{\lambda}}^{(j, m)} \right\}, \quad j=1,\dots,M \;\text{ e }\; m=1,\dots,N_t
+\end{equation}
+
+Para prever os parâmetros da GLD em um instante arbitrário $t^{*}$, emprega-se o modelo de aprendizado de máquina de múltiplas saídas descrito na \autoref{RNA}, que aprende o mapeamento não linear $f: (\mathbf{X}, t) \to \mathbb{R}^4$, conforme a Equação \eqref{eq:ml_temporal}:
+
+\begin{equation}\label{eq:ml_temporal}
+\hat{\boldsymbol{\lambda}}(\mathbf{X}, t) \approx \mathcal{M}_{ML}(\mathbf{X}, t; \mathbf{w})
+\end{equation}
+
+Ao incluir o passo de tempo como entrada explícita, o emulador interpola os valores de $\{\lambda_1, \dots, \lambda_4\}$ entre os anos simulados, fornecendo uma evolução contínua da distribuição da margem de segurança ao longo de todo o período de análise. Duas salvaguardas são adotadas na implementação. A primeira consiste em impor a restrição de validade $\lambda_2 > 0$ na saída do regressor, o que assegura que toda predição corresponda a uma GLD bem definida; adota-se, para tanto, a predição do logaritmo do parâmetro de escala, com posterior exponenciação. A segunda consiste em permitir que parâmetros que exibam baixa sensibilidade às entradas sejam excluídos do treinamento e representados por seu valor médio, decisão tomada caso a caso a partir de análise exploratória, conforme discutido no \autoref{cap:resultados}.
+
+\subsection{Métricas de Validação do Emulador}
+\label{sec:metricas_emulador}
+
+A similaridade estatística entre os dados de referência, obtidos por simulação direta de Monte Carlo, e as amostras geradas pelo emulador é avaliada por um conjunto complementar de métricas, todas aplicadas em pontos e instantes \textit{não utilizados no treinamento}. Cabe observar que essas métricas são de natureza distinta daquelas apresentadas na seção anterior: enquanto RMSE, $R^2$, MAPE e A10 medem a acurácia de uma predição pontual, as métricas descritas a seguir medem a aderência entre \textit{distribuições}.
+
+\subsubsection{Testes de aderência}
+
+O teste de Kolmogorov--Smirnov \cite{massey1951} quantifica a máxima distância entre as funções de distribuição acumuladas empíricas, sendo sensível a discrepâncias globais. O teste de Anderson--Darling \cite{anderson1952, scholz1987}, por sua vez, pondera fortemente as caudas, sendo adequado para detectar desvios nas regiões extremas, justamente as mais relevantes para a análise de confiabilidade.
+
+\subsubsection{Comparação de quantis}
+
+Os erros relativos nos quantis $\{0{,}001;\, 0{,}01;\, 0{,}5;\, 0{,}99;\, 0{,}999\}$ localizam a origem de eventuais discrepâncias e quantificam diretamente a qualidade da aproximação na cauda inferior, região que governa a probabilidade de falha. Trata-se da métrica mais informativa para o presente problema, pois um emulador pode apresentar excelente ajuste global e, ainda assim, falhar precisamente na região que determina $p_f$.
+
+\subsubsection{Divergência de Kullback--Leibler}
+
+Para duas densidades $p(x)$, de referência, e $q(x)$, do emulador, a entropia relativa \cite{kullback1951, cover2006} é definida pela Equação \eqref{eq:kl_continua}:
+
+\begin{equation}\label{eq:kl_continua}
+D(p \,\|\, q) = \int p(x)\, \log \frac{p(x)}{q(x)}\, dx
+\end{equation}
+
+Essa medida é não negativa e anula-se se, e somente se, $p = q$. Embora não seja simétrica nem satisfaça a desigualdade triangular, é frequentemente útil interpretá-la como uma medida de ``distância'' entre distribuições, fornecendo um escalar global de qualidade do emulador.
+
+\section{Da Distribuição Emulada à Vida Útil Remanescente}
+\label{sec:emulador_rul}
+
+Esta seção estabelece a ponte entre a distribuição condicional de $g(\mathbf{X},t)$ fornecida pelo emulador e as grandezas de interesse para a gestão de ativos: a probabilidade de falha dependente do tempo, a distribuição do tempo até a falha, a vida útil remanescente probabilística e suas métricas de risco.
+
+\subsection{Probabilidade de Falha e Função de Confiabilidade}
+
+Dado que o emulador fornece, para qualquer instante $t$, os parâmetros $\hat{\boldsymbol{\lambda}}(\mathbf{X},t)$ da GLD que aproxima a distribuição de $g$, a probabilidade de falha instantânea é obtida diretamente da função quantílica, sem necessidade de amostragem, conforme a Equação \eqref{eq:pf_t}:
+
+\begin{equation}\label{eq:pf_t}
+p_f(t) = P\left[\, g(\mathbf{X}, t) \leq 0 \,\right] = F_{g(t)}(0) = Q^{-1}_{t}(0)
+\end{equation}
+
+em que $F_{g(t)}$ é a função de distribuição acumulada da margem de segurança no instante $t$ e $Q_t$ a correspondente função quantílica emulada. O índice de confiabilidade generalizado associado é obtido pela Equação \eqref{eq:beta}, já apresentada. A função de confiabilidade da estrutura, entendida como a probabilidade de sobrevivência até $t$, é denotada $R(t)$; para processos de degradação monotônica, como a perda de seção por corrosão, a aproximação $R(t) \approx 1 - p_f(t)$ é adequada, uma vez que trajetórias de $g$ que cruzam o zero não retornam ao domínio seguro. Adota-se, portanto, a hipótese de monotonicidade da degradação, cuja verificação em presença de ações variáveis com flutuação temporal fica registrada como refinamento previsto para a etapa final da pesquisa.
+
+\subsection{Tempo até a Falha e Vida Útil Remanescente}
+
+Para cada realização $\mathbf{x}$ das variáveis de entrada, o tempo até a falha é definido como o primeiro instante em que a margem de segurança se anula, conforme a Equação \eqref{eq:ttf}:
+
+\begin{equation}\label{eq:ttf}
+T(\mathbf{x}) = \inf\left\{\, t \geq 0 \,:\, g(\mathbf{x}, t) \leq 0 \,\right\}
+\end{equation}
+
+A distribuição de $T$ é obtida de forma eficiente a partir do emulador: amostram-se realizações de $\mathbf{X}$, avalia-se a trajetória contínua $\hat{g}(\mathbf{x}, t)$ por meio da GLD interpolada no tempo e identifica-se a raiz da Equação \eqref{eq:ttf} para cada amostra. Dado um instante de inspeção $t_{insp}$, no qual se constata a sobrevivência da estrutura, a vida útil remanescente é a variável aleatória condicionada definida pela Equação \eqref{eq:rul}:
+
+\begin{equation}\label{eq:rul}
+\mathrm{VUR}(t_{insp}) = \left(\, T - t_{insp} \,\middle|\, T > t_{insp} \right)
+\end{equation}
+
+cuja distribuição completa --- e não apenas seu valor esperado --- constitui o produto central deste trabalho \cite{si2011}. Dela extraem-se o valor esperado, a mediana e quantis inferiores, estes últimos de particular interesse para decisões conservadoras de manutenção.
+
+\subsection{Métricas de Risco: VaR e CVaR}
+
+Para apoiar a tomada de decisão sob incerteza, métricas de risco baseadas em cauda são derivadas da distribuição de VUR, a saber, o \textit{Value-at-Risk} (VaR) e o \textit{Conditional Value-at-Risk} (CVaR) \cite{rockafellar2000}. Enquanto a caracterização probabilística completa da VUR fornece a visão abrangente do comportamento do sistema, essas métricas escalares oferecem indicadores conservadores focados em cenários adversos, particularmente relevantes para o planejamento de manutenção.
+
+O VaR ao nível de confiança $\alpha$ representa o quantil inferior da distribuição de VUR, conforme a Equação \eqref{eq:var_metrica}:
+
+\begin{equation}\label{eq:var_metrica}
+\mathrm{VaR}_\alpha = \inf\left\{\, r \,:\, F_{\mathrm{VUR}}(r) \geq \alpha \,\right\}
+\end{equation}
+
+indicando a vida remanescente mínima esperada com confiança $(1-\alpha)$. O CVaR, por sua vez, corresponde ao valor esperado da VUR condicionado aos valores abaixo do limiar do VaR, conforme a Equação \eqref{eq:cvar_metrica}:
+
+\begin{equation}\label{eq:cvar_metrica}
+\mathrm{CVaR}_\alpha = E\left[\, \mathrm{VUR} \,\middle|\, \mathrm{VUR} \leq \mathrm{VaR}_\alpha \,\right]
+\end{equation}
+
+contabilizando explicitamente o comportamento da cauda e fornecendo uma medida de risco mais conservadora do que o VaR isoladamente.
+
+\subsection{Instante Normativo de Intervenção}
+
+Por fim, o emulador permite determinar de forma praticamente instantânea o \textit{instante normativo de intervenção}, definido como o primeiro tempo em que o índice de confiabilidade atinge um alvo de norma, conforme a Equação \eqref{eq:t_man_otimo}:
+
+\begin{equation}\label{eq:t_man_otimo}
+t_{man}^{*} = \inf\left\{\, t \,:\, \beta(t) \leq \beta_{alvo} \,\right\}
+\end{equation}
+
+Ressalta-se que este trabalho emprega a política de limiar da Equação \eqref{eq:t_man_otimo} como demonstração da utilidade do emulador para decisões de manutenção. A otimização completa de custo de ciclo de vida, envolvendo custos de inspeção, reparo e falha, constitui extensão natural do método e é apontada como trabalho futuro.

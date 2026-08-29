@@ -1,0 +1,19 @@
+% =====================================================================
+% SECTION 7 - CONCLUSOES
+% =====================================================================
+
+Este trabalho propôs um emulador estocástico dependente do tempo para a previsão probabilística da vida útil remanescente de estruturas de concreto armado sujeitas à corrosão induzida por carbonatação. O arcabouço aproxima a distribuição condicional completa da função de estado limite $g(\mathbf{X},t)$ por meio da Distribuição Lambda Generalizada, cujos parâmetros são representados por Expansões em Caos Polinomial das variáveis de entrada e interpolados continuamente no tempo por um modelo de aprendizado de máquina. As principais conclusões são as seguintes:
+
+\begin{enumerate}
+    \item \textbf{Acurácia da emulação distribucional.} No problema de referência, o emulador reproduziu a distribuição da margem de segurança com erro relativo inferior a 0,5\% até o percentil 99, com discrepâncias confinadas à cauda extrema (cerca de 1,3\% no quantil 99,9\%), conforme atestado pelos testes de Kolmogorov--Smirnov e pela comparação de quantis. No problema da viga sob carbonatação, \falta{resumir as métricas obtidas no Exemplo 2, em particular o erro em $p_f$ e nos instantes não vistos};
+
+    \item \textbf{Generalização temporal.} A camada de aprendizado de máquina sobre os parâmetros da GLD atuou como interpolador contínuo da distribuição entre os instantes simulados, com $R^2$ superior a 0,98 para os parâmetros sensíveis e \falta{reportar o desempenho nos anos omitidos do treinamento (teste de generalização temporal)}, sustentando a alegação de emulação dependente do tempo;
+
+    \item \textbf{Eficiência computacional.} O emulador reduziu o custo da análise em quase duas ordens de grandeza no problema de referência (48,75~s vs.\ 0,66~s) e em \falta{valor} no problema da viga, viabilizando a varredura de cenários de inspeção e manutenção em tempo quase real;
+
+    \item \textbf{RUL probabilística e suporte à decisão.} A leitura direta da distribuição emulada em termos de tempo até a falha forneceu a distribuição completa da RUL e suas métricas de risco (VaR e CVaR), e o cenário com intervenção de manutenção demonstrou a capacidade do arcabouço de quantificar o ganho probabilístico de vida útil ($\Delta\mathrm{RUL} = \falta{valor}$ anos para intervenção no instante normativo $\beta_{\mathrm{alvo}} = 1{,}5$) a custo de pós-processamento desprezível.
+\end{enumerate}
+
+Entre as limitações do estudo, destacam-se: a hipótese de unimodalidade da resposta inerente à GLD; a validade da interpolação temporal restrita ao horizonte de treinamento, sem garantia de extrapolação; a dependência dos resultados do Exemplo~3 em relação às hipóteses de eficácia do reparo ($\rho$) e de desempenho do material de recomposição ($k_{\mathrm{rep}}$); e a adoção de um único mecanismo de degradação, sem interação com cloretos ou fadiga.
+
+Como trabalhos futuros, vislumbram-se: (i) a atualização bayesiana do emulador com dados de inspeção em serviço, permitindo o refinamento da RUL ao longo da vida da estrutura; (ii) a incorporação de variabilidade espacial por campos aleatórios; (iii) a comparação sistemática com emuladores estocásticos alternativos, como as expansões em caos polinomial estocásticas (SPCE) e processos gaussianos heteroscedásticos; (iv) a extensão para otimização completa de manutenção sob critério de custo de ciclo de vida, com custos de inspeção, reparo e falha; e (v) a aplicação do arcabouço a estruturas reais monitoradas, integrando-o a sistemas de gestão de obras de arte especiais.

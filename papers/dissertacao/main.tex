@@ -1,0 +1,373 @@
+% ------------------------------------------------------------------------
+% ------------------------------------------------------------------------
+% Modelo de TCC do curso de Engenharia de Controle e Automação - UFSC/Campus Blumenau
+% Autor: Ciro André Pitz
+% Revisão: Brenda Teresa Porto de Matos
+% O presente modelo foi obtido a partir do modelo desenvolvido por Alisson Lopes Furlani disponível na BU/UFSC.
+% ------------------------------------------------------------------------
+% ------------------------------------------------------------------------
+
+\documentclass[
+12pt,				% tamanho da fonte
+%openright,			% capítulos começam em pág ímpar (insere página vazia caso preciso)
+oneside,			% para impressão no anverso. Oposto a twoside
+a4paper,			% tamanho do papel. 
+chapter=TITLE,		% títulos de capítulos convertidos em letras maiúsculas
+section=TITLE,		% títulos de seções convertidos em letras maiúsculas
+%subsection=TITLE,	% títulos de subseções convertidos em letras maiúsculas
+%subsubsection=TITLE,% títulos de subsubseções convertidos em letras maiúsculas
+% -- opções do pacote babel --
+english,			% idioma adicional para hifenização
+brazil				% o último idioma é o principal do documento
+]{abntex2}
+
+\PassOptionsToPackage{nopatch=eqnum}{microtype}
+\usepackage{configs/eca_ufsc_bnu} % personalização da ABNTEX2 
+% \usepackage{setspace}
+
+% --- Deixa autores em maiúsculo apenas nas citações entre parênteses (\cite)
+\AtBeginDocument{%
+  % Coloca sobrenomes e nomes em maiúsculas nas citações (não na lista de referências)
+  \renewcommand*{\mkbibnamefamily}[1]{\MakeUppercase{#1}}
+  \renewcommand*{\mkbibnamegiven}[1]{\MakeUppercase{#1}}
+  \renewcommand*{\mkbibnameprefix}[1]{\MakeUppercase{#1}}
+  \renewcommand*{\mkbibnamesuffix}[1]{\MakeUppercase{#1}}
+}
+
+
+\addbibresource{pos_textual/referencias.bib} % Seus arquivos de referências
+\emergencystretch=2em
+
+
+% --- Hyperref-safe: títulos em MAIÚSCULAS no Sumário sem redefinir \contentsline
+\AtBeginDocument{%
+  % garante o nome usado por \autoref ao referenciar capítulos
+  \providecommand{\chapterautorefname}{}%
+  \renewcommand{\chapterautorefname}{Capítulo}%
+  \renewcommand{\cftsectionfont}{\ABNTEXsectionfont\MakeTextUppercase}%
+  \renewcommand{\cftsectionpagefont}{\cftsectionfont}%
+  % Se quiser também SUBSEÇÕES/OUTROS níveis, descomente:
+  % \renewcommand{\cftsubsectionfont}{\ABNTEXsubsectionfont\MakeTextUppercase}%
+  % \renewcommand{\cftsubsectionpagefont}{\cftsubsectionfont}%
+}
+
+%---------------------------------------------------------------------------------------------
+%--------- DADOS BÁSICOS DO TCC (Preencher todos) -------------------------------------
+%---------------------------------------------------------------------------------------------
+%Substituir 'Nome completo do autor' pelo seu nome.
+\autor{Victor Hugo Moreira do Couto Souza}
+% FIXME Substituir 'Título do trabalho' pelo título da trabalho.
+%BAYESIAN NETWORK FOR RELIABILITY ASSESSMENT
+% OF RC STRUCTURES SUBJECTED TO CARBONATION-INDUCED
+% CORROSION**
+\titulo{Previsão da Vida Útil Remanescente de Estruturas de Concreto Armado Afetadas pela Carbonatação: Um Modelo Probabilístico Baseado em Técnicas de Amostragem}
+% Substituir 'Subtítulo (se houver)' pelo subtítulo da trabalho. 
+% Se não houver subtítulo, basta deletar o texto.
+\subtitulo{}
+
+\orientador{Prof. Dr. Wanderlei Malaquias Pereira Junior}
+% Se for orientado por uma mulher, comente a linha acima e descomente a linha a seguir.
+% \orientador[Orientadora]{Profa. Nome, Dra.}
+
+% Caso não tenha coorientador, comente a linha a seguir.
+\coorientador{Prof. Dr. Ketson Roberto Maximiano dos Santos, Prof. Dr. Rafael Holdorf Lopez}
+% Se for coorientado por uma mulher, comente a linha acima e descomente a linha a seguir.
+% \coorientador[Coorientadora]{Profa. Nome, Dra.}
+
+\dia{dia}
+\mes{Outubro}
+\ano{2025}
+\local{Catalão}
+\formacao{}
+% Se for mulher, comente a linha acima e descomente a linha a seguir.
+%\formacao{Engenheira de Controle e Automação}
+
+\bancanomea{Pr.} %Primeiro membro da banca (normalmente o orientador). Altere as abreviações para o feminino (exemplo: Profa., Dra.) quando for o caso.
+\bancainsta{Universidade Federal de } %Nome da instituição (UFSC, por exemplo) ou empresa do primeiro membro da banca
+
+\bancanomeb{Prof. Nome, Dr.} %Segundo membro da banca. Altere as abreviações para o feminino (exemplo: Profa., Dra.) quando for o caso.
+\bancainstb{Nome da instituição ou empresa} %Nome da instituição (UFSC, por exemplo) ou empresa do segundo membro da banca
+
+\bancanomec{Prof. Nome, Dr.} %Terceiro membro da banca. Altere as abreviações para o feminino (exemplo: Profa., Dra.) quando for o caso.
+\bancainstc{Nome da instituição ou empresa} %Nome da instituição (UFSC, por exemplo) ou empresa do terceiro membro da banca
+
+%Resumo e palavras-chave do trabalho
+\resumotcc{As estruturas de concreto armado (CA) são elementos fundamentais na engenharia civil, contudo, sua durabilidade é frequentemente comprometida pela corrosão das armaduras induzida pela carbonatação. Este trabalho propõe o desenvolvimento de um modelo probabilístico para estimar a vida útil remanescente (VUR) de vigas de CA sujeitas a esse processo de degradação. A metodologia adotada baseia-se em uma abordagem híbrida, estruturada em duas etapas complementares. Na primeira, gera-se um banco de dados sintético abrangente por meio de simulações de Monte Carlo com amostragem por Hipercubo Latino, incorporando as incertezas associadas aos parâmetros materiais, geométricos e ambientais em modelos físico-matemáticos consagrados de carbonatação e corrosão; os resultados dessas simulações são então empregados no treinamento e na validação de modelos de aprendizado de máquina supervisionado, capazes de aprender a relação entre as características da viga, as condições de exposição e o correspondente tempo de vida útil. Na segunda etapa, atualmente em desenvolvimento, propõe-se um emulador estocástico dependente do tempo, no qual a distribuição condicional completa da função de estado limite é aproximada pela Distribuição Lambda Generalizada, com parâmetros representados por Expansão em Caos Polinomial das variáveis de entrada e interpolados continuamente no tempo por uma rede neural artificial. Essa formulação fornece, a custo computacional desprezível, a probabilidade de falha ao longo do tempo, a distribuição do tempo até a falha, a VUR probabilística e métricas de risco de cauda. Os resultados parciais indicam que os modelos de aprendizado supervisionado baseados em árvores reproduzem o tempo de vida útil com coeficiente de determinação superior a 0,98, e que o emulador estocástico, verificado em um problema de referência com solução de Monte Carlo direta, reproduz a distribuição da margem de segurança com erro relativo inferior a 0,5\% até o percentil 99, com redução do custo computacional de quase duas ordens de grandeza. Espera-se, ao final, disponibilizar uma ferramenta computacional robusta e adaptável, apta a fornecer estimativas rápidas e fundamentadas em dados, contribuindo para a manutenção preventiva e a gestão eficiente de estruturas de concreto em processo de deterioração.}
+\palavraschave{concreto armado; confiabilidade estrutural; corrosão por carbonatação; emulador estocástico; vida útil remanescente; aprendizado de máquina supervisionado.}
+
+%Abstract e keywords do trabalho
+\abstracttcc{Reinforced concrete (RC) structures are fundamental elements in civil engineering, however, their durability is often compromised by reinforcement corrosion induced by carbonation. This study proposes the development of a probabilistic model to estimate the remaining useful life (RUL) of RC beams subjected to this degradation process. The adopted methodology follows a hybrid approach organised in two complementary stages. In the first stage, a comprehensive synthetic database is generated through Monte Carlo simulations with Latin Hypercube sampling, incorporating the uncertainties associated with material, geometric and environmental parameters into well-established physico-mathematical models of carbonation and corrosion; the results of these simulations are then used to train and validate supervised machine learning models capable of learning the relationship between the beam characteristics, the exposure conditions, and the corresponding service life. In the second stage, currently under development, a time-dependent stochastic emulator is proposed, in which the full conditional distribution of the limit state function is approximated by the Generalized Lambda Distribution, whose parameters are represented by a Polynomial Chaos Expansion of the input variables and continuously interpolated in time by an artificial neural network. This formulation provides, at negligible computational cost, the time-dependent probability of failure, the time-to-failure distribution, the probabilistic RUL and tail risk metrics. Partial results indicate that tree-based supervised learning models reproduce the service life with a coefficient of determination above 0.98, and that the stochastic emulator, verified on a benchmark problem with a direct Monte Carlo solution, reproduces the safety margin distribution with relative errors below 0.5\% up to the 99th percentile, while reducing the computational cost by almost two orders of magnitude. Ultimately, a robust and adaptable computational tool is expected to be delivered, able to provide fast, data-driven estimations to support the preventive maintenance and efficient management of deteriorating reinforced concrete structures.}
+\keywords{reinforced concrete; structural reliability; carbonation-induced corrosion; stochastic emulator; remaining useful life; supervised machine learning.}
+
+%Agradecimentos (opcional). Caso não queira inserir, deixe em branco (\agradecimentostcc{} )
+\agradecimentostcc{Agradeço primeiramente a Deus, que me sustentou em todos os momentos desta caminhada, à Virgem Maria, mãe e intercessora fiel, e à minha família, pelo apoio e incentivo constantes.
+
+Registro minha profunda gratidão ao meu professor orientador, pelo acompanhamento, paciência e valiosas contribuições ao longo do desenvolvimento deste trabalho.
+
+Estendo meus agradecimentos à Universidade, pelo ambiente de formação acadêmica e humana, e à CAPES, pelo apoio institucional e incentivo à pesquisa.}
+
+%Epígrafe (opcional). Caso não queira inserir, deixe em branco (\epigrafetcc{} )
+\epigrafetcc{Texto da Epígrafe. Citação relativa ao tema do trabalho. É opcional. A epígrafe pode também aparecer na abertura de cada seção ou capítulo. Deve ser elaborada de acordo com a NBR 10520. (SOBRENOME do autor da epígrafe, ano)}
+
+%Decatória (opcional). Caso não queira inserir, deixe em branco (\dedicatoriatcc{} )
+\dedicatoriatcc{}
+
+%Lista de quadros
+%Além de figuras e tabelas, o TCC contém quadros? Caso afirmativo digite sim ou deixe em branco para não (\contemquadros{}).
+\contemquadros{}
+
+%Lista de siglas (opcional).
+%Deseja incluir lista de abreviaturas e siglas? Caso afirmativo digite sim ou deixe em branco para não (\contemsiglas{}).
+\contemsiglas{}
+
+%Lista de símbolos (opcional).
+%Deseja incluir lista de símbolos? Caso afirmativo digite sim ou deixe em branco para não (\contemsimbolos{}).
+\contemsimbolos{}
+
+% %Agradecimentos (opcional). Caso não queira inserir, deixe em branco (\agradecimentostcc{} )
+% \publicacoestcc{Inserir os agradecimentos aos colaboradores à execução do trabalho.}
+
+%-------------------------FIM DOS DADOS BÁSICOS DO TCC--------------------------------------------
+
+
+% ajusta espaçamento das listas itemize e enumerate
+\setitemize{topsep=0pt,itemsep=0pt,leftmargin=\parindent+\labelwidth-\labelsep}
+\setenumerate{topsep=0pt,itemsep=0pt,leftmargin=\parindent+\labelwidth-\labelsep}
+
+% define a macro \Autoref to allow multiple references to be passed to \autoref
+\makeatletter
+\newcommand\Autoref[1]{\@first@ref#1,@}
+\def\@throw@dot#1.#2@{#1}% discard everything after the dot
+\def\@set@refname#1{%    % set \@refname to autoefname+s using \getrefbykeydefault
+	\edef\@tmp{\getrefbykeydefault{#1}{anchor}{}}%
+	\xdef\@tmp{\expandafter\@throw@dot\@tmp.@}%
+	\ltx@IfUndefined{\@tmp autorefnameplural}%
+	{\def\@refname{\@nameuse{\@tmp autorefname}s}}%
+	{\def\@refname{\@nameuse{\@tmp autorefnameplural}}}%
+}
+\def\@first@ref#1,#2{%
+	\ifx#2@\autoref{#1}\let\@nextref\@gobble% only one ref, revert to normal \autoref
+	\else%
+	\@set@refname{#1}%  set \@refname to autoref name
+	\@refname~\ref{#1}% add autoefname and first reference
+	\let\@nextref\@next@ref% push processing to \@next@ref
+	\fi%
+	\@nextref#2%
+}
+\def\@next@ref#1,#2{%
+	\ifx#2@ e~\ref{#1}\let\@nextref\@gobble% at end: print e+\ref and stop
+	\else, \ref{#1}% print  ,+\ref and continue
+	\fi%
+	\@nextref#2%
+}
+\makeatother
+
+% Cria comando para referenciar Anexo automaticamente \refanexo
+\newcommand{\refanexo}[1]{\hyperref[#1]{Anexo~\ref{#1}}}
+
+% Define comandos para tabelas que permite ajustar o tamanho da coluna e manter alinhamento C, R ou L
+%\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcolumntype{C}[1]{>{\centering\let\arraybackslash}m{#1}}
+\newcolumntype{R}[1]{>{\RaggedLeft\let\arraybackslash}m{#1}}
+\newcolumntype{L}[1]{>{\RaggedRight\let\arraybackslash}m{#1}}
+
+
+% ---
+% Filtering and Mapping Bibliographies
+% ---
+\DeclareSourcemap{
+	\maps[datatype=bibtex]{
+		% remove fields that are always useless
+		\map{
+			\step[fieldset=abstract, null]
+			\step[fieldset=pagetotal, null]
+			\step[fieldset=doi, null]
+		}
+		% remove URLs for types that are primarily printed
+		\map{
+			\pernottype{software}
+			\pernottype{online}
+			\pernottype{report}
+			\pernottype{techreport}
+			\pernottype{standard}
+			\pernottype{manual}
+			\pernottype{misc}
+			\step[fieldset=url, null]
+			\step[fieldset=urldate, null]
+		}
+		\map{
+			\pertype{inproceedings}
+			% remove mostly redundant conference information
+			%\step[fieldset=venue, null]
+			%\step[fieldset=eventdate, null]
+			%\step[fieldset=eventtitle, null]
+			% do not show ISBN for proceedings
+			\step[fieldset=isbn, null]
+			% Citavi bug
+			%\step[fieldset=volume, null]
+		}
+	}
+}
+% ---
+
+\preambulo
+{%
+	Dissertação apresentada ao Programa de Pós-Graduação em Engenharia Civil da Universidade Federal de Catalão, como requisito parcial para a obtenção do título de Mestre em Engenharia Civil.
+}
+% ---
+
+% ---
+% Configurações de aparência do PDF final
+% ---
+% alterando o aspecto da cor azul
+\definecolor{blue}{RGB}{41,5,195}
+% informações do PDF
+\makeatletter
+\hypersetup{
+	%pagebackref=true,
+	pdftitle={\@title}, 
+	pdfauthor={\@author},
+	pdfsubject={\imprimirpreambulo},
+	pdfcreator={LaTeX with abnTeX2},
+	pdfkeywords={ufsc, latex, abntex2}, 
+	colorlinks=true,       		% false: boxed links; true: colored links
+	linkcolor=black,%blue,          	% color of internal links
+	citecolor=black,%blue,        		% color of links to bibliography
+	filecolor=black,%magenta,      		% color of file links
+	urlcolor=blue,
+	bookmarksdepth=4
+}
+\makeatother
+% ---
+
+% Definição das siglas e símbolos
+\input{pre_textual/siglas_simbolos}
+% compila a lista de abreviaturas e siglas e a lista de símbolos
+\makenoidxglossaries 
+
+% compila o indice
+\makeindex
+
+\Urlmuskip=0mu plus 2mu
+
+% Garanta que biblatex use os .lbx do pacote ABNT
+\DeclareLanguageMapping{brazilian}{brazilian-abnt}
+\DeclareLanguageMapping{brazil}{brazilian-abnt}
+\DeclareLanguageMapping{english}{english-abnt}
+
+\usepackage{booktabs} % para \toprule, \midrule, \bottomrule
+\usepackage{float}    % para usar [H]
+% Pacotes necessários para gráficos
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{makecell}
+\renewcommand{\arraystretch}{1.4}
+\setlength{\extrarowheight}{2pt}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{multirow}
+\usepackage{hyperref}
+\pgfplotsset{compat=1.18} % compatibilidade da versão, ajuste se necessário
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Procura as figuras tanto na pasta local quanto no caminho antigo do template
+\graphicspath{{figuras/}{template_eca_ufsc_abnt/figuras/}}
+
+% Operadores matemáticos usados no texto
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+% ---------------------------------------------------------------------
+% Marcação de itens ainda em desenvolvimento (documento parcial).
+% Mantida em texto normal (sem destaque em vermelho), pois esta versão
+% é entregue como demonstração do estágio atual da pesquisa.
+%   \falta{...}  -> nota sobre o que ainda será elaborado
+%   \faltanum    -> marcador de um valor ainda não calculado
+% ---------------------------------------------------------------------
+\newcommand{\falta}[1]{\textit{[em elaboração: #1]}}
+\newcommand{\faltanum}{--}
+
+
+
+
+
+% ------------------------------------------------------------------------------------------------
+% --------------------------INÍCIO DO DOCUMENTO---------------------------------------------
+% ------------------------------------------------------------------------------------------------
+\begin{document}
+	
+	% Seleciona o idioma do documento (conforme pacotes do babel)
+	%\selectlanguage{english}
+	\selectlanguage{brazil}
+	
+	% Retira espaço extra obsoleto entre as frases.
+	\frenchspacing 
+	
+	% Espaçamento 1.5 entre linhas
+	\OnehalfSpacing
+	
+	% Corrige justificação
+	%\sloppy
+	
+
+	%Elementos pré-textuais
+	% \pretextual %a macro \pretextual é acionado automaticamente no início de \begin{document}
+	% Capa, folha de rosto, ficha bibliografica, errata, folha de aprovação
+	% Dedicatória, agradecimentos, epígrafe (opcional), resumos, listas
+	\input{pre_textual/pretextual}
+
+	% Elementos textuais
+	\textual
+	
+	% 1 - Introdução
+	\include{capitulos/cap_1}
+	
+	% 2 - Referencial Teórico
+	\include{capitulos/cap_2}
+	
+	% 3 - Metodologia
+	\include{capitulos/cap_3}
+	
+	% 4 - Resultados Parciais
+	\include{capitulos/cap_4}
+
+	% 5 - Considerações Parciais
+	\include{capitulos/cap_5}
+	
+	% Elementos pós-textuais
+	\postextual
+		
+	% Referências bibliográficas
+	\begingroup
+	    \printbibliography[title=REFERÊNCIAS]
+	\endgroup
+	
+	
+	
+	% %Reconfiguração do título para apêndices e anexos
+	%  \renewcommand{\ABNTEXchapterupperifneeded}[1]{#1} 
+	% \makeatletter
+	% \settocpreprocessor{chapter}{%
+ %      \let\tempf@rtoc\f@rtoc%
+ %      \def\f@rtoc{%
+ %      \texorpdfstring{{\tempf@rtoc}}{\tempf@rtoc}}%
+ %      }
+ %    \makeatother
+	
+	
+	% % Apêndices
+ %    \begin{apendicesenv}
+ %    	%\partapendices* 
+ %    	\input{pos_textual/apendice_a}
+ %    \end{apendicesenv}
+
+ %    % Anexos
+ %    \begin{anexosenv}
+ %    	%\partanexos*
+ %    	\input{pos_textual/anexo_a}
+ %    \end{anexosenv}
+
+\end{document}

@@ -1,0 +1,306 @@
+\section{Simuladores Estocásticos}
+
+Um simulador estocástico \( \mathcal{M}_S \) pode ser formalmente definido pelo seguinte mapeamento:
+\begin{equation}
+\mathcal{M}_S : \mathcal{D}_X \times \Omega \rightarrow \mathbb{R}, \qquad
+(\mathbf{x}, \omega) \mapsto \mathcal{M}_S(\mathbf{x}, \omega),
+\end{equation}
+em que \( \mathbf{x} \in \mathcal{D}_X \subset \mathbb{R}^{M_X} \) é o vetor \( M_X \)-dimensional de parâmetros de entrada, e \( \omega \) é um evento aleatório em um espaço de probabilidade \( (\Omega, \mathcal{F}, \mathbb{P}) \), o qual representa a estocasticidade inerente do sistema.  
+
+%Na prática, esta última decorre de variáveis aleatórias latentes \( \mathbf{Z}(\omega) \) (definidas sobre o mesmo espaço de probabilidade, com suporte \( \mathcal{D}_Z \subset \mathbb{R}^{M_Z} \)), que são parâmetros internos do simulador não explicitamente considerados como variáveis de entrada.  
+
+Em outras palavras, um simulador estocástico é construído a partir de um modelo determinístico \( \mathcal{M} \) da seguinte forma:
+\begin{equation}
+\mathcal{M}_S(\mathbf{x}, \omega) = \mathcal{M}(\mathbf{x}, \mathbf{Z}(\omega)).
+\label{eq3}
+\end{equation}
+
+Para um dado vetor de entrada \( \mathbf{x}_0 \), cada execução do simulador corresponde a uma realização diferente das variáveis latentes \( \mathbf{Z} \), digamos \( \mathbf{z}_0 \equiv \mathbf{Z}(\omega_0) \), e fornece uma realização particular da variável aleatória de saída \( Y_{\mathbf{x}_0} \equiv \mathcal{M}_S(\mathbf{x}_0, \cdot) \).  
+Para caracterizar a distribuição desta variável de saída, devem ser geradas repetições, isto é, múltiplas execuções de \( \mathcal{M}_S \) com o mesmo vetor de entrada \( \mathbf{x}_0 \) e diferentes realizações \(\{\mathbf{z}_1, \ldots, \mathbf{z}_R\}\) das variáveis latentes.  Referir-nos-emos à função densidade de probabilidade de \( Y_{\mathbf{x}_0} \) como a \textit{distribuição condicional da resposta} dado \( \mathbf{x}_0 \).
+
+ 
+\subsection{Análise de confiabilidade em simuladores estocásticos}
+
+Seguindo o formalismo de \cite{Choe2015}, a probabilidade de falha associada a uma 
+função limite estocástica \(g_s\) é definida como:
+\begin{equation}
+P_f = P \bigl( g_s(X, \omega) \le 0 \bigr) .
+\end{equation}
+
+Introduzindo a função determinística subjacente \(g\) e as variáveis latentes \(Z\), temos:
+\begin{equation}
+P_f = P \bigl( g(X, Z) \le 0 \bigr).
+\label{eq5}
+\end{equation}
+
+Assumindo que \(X\) e \(Z\) são independentes e que o domínio de falha é definido no 
+espaço conjunto \((X,Z)\),
+\[
+D_f = \{(x, z) : g(x, z) \le 0 \},
+\]
+podemos expandir a equação como:
+\begin{equation}
+P_f =
+\int_{\mathbb{R}^{M_X}} \int_{\mathbb{R}^{M_Z}} \mathbf{1}_{D_f}(x, z) f_X(x) f_Z(z) \, dz \, dx ,
+\label{eq6}
+\end{equation}
+
+%onde \(\mathbf{1}_{D_f}(x, z)\) é a função indicadora do domínio de falha, igual a 1 se 
+%\(g(x, z) \le 0\) e 0 caso contrário. 
+
+Esta definição integra a incerteza proveniente tanto dos parâmetros de entrada quanto das variáveis latentes.
+
+Além disso, ao manipular a Eq. (\ref{eq6}), podemos derivar definições equivalentes de $P_f$ com base em duas perspectivas.  Para um dado \(\mathbf{x}_0\), a probabilidade condicional de falha é definida como:
+\begin{equation}
+P_Z \bigl( g(X, Z) \le 0 \mid X = \mathbf{x}_0 \bigr) =
+\int_{\mathbb{R}^{M_Z}} \mathbf{1}_{D_f}(\mathbf{x}_0, z) f_Z(z) \, dz .
+\end{equation}
+
+ Para diferentes valores de \( x \), obtemos então uma \textit{função determinística de probabilidade condicional de falha}, que denotamos por \( s(x) \).
+
+\begin{equation}
+s(\mathbf{x}) = P_Z \bigl( g(X, Z) \le 0 \mid X = \mathbf{x} \bigr) ,
+\label{eq8}
+\end{equation}
+
+Esta função reflete a probabilidade de falha devido à estocasticidade interna da própria função de estado limite.
+
+Reformulando a Eq.(\ref{eq6}), podemos expressar \( P_f \) como uma função de \( s(x) \):
+
+\begin{equation}
+\begin{aligned}
+P_f &= \int_{\mathbb{R}^{M_X}} \left( \int_{\mathbb{R}^{M_Z}} \mathbf{1}_{D_f}(x,z) f_Z(z) \, dz \right) f_X(x) \, dx \\
+    &= \int_{\mathbb{R}^{M_X}} s(x) f_X(x) \, dx \\
+    &\equiv \mathbb{E}_X \left[ s(X) \right] .
+\end{aligned}
+\label{eq9}
+\end{equation}
+%%%%%%%%%%%%%%
+Isso nos permite decompor a estimação da probabilidade de falha em um processo de duas etapas, a saber: a caracterização da função \( s \) (por meio de equações semianalíticas) e o cálculo de seu valor esperado (ver detalhes na Seção~4).
+
+Alternativamente, quando a estocasticidade latente é fixa, podemos expressar \( P_f \) como:
+\begin{equation}
+    P_f = \mathbb{E}_{\mathbf{Z}}\left[\mathbb{P}_{\mathbf{X}}\left(g(\mathbf{X},\mathbf{Z}) \leq 0 \mid \mathbf{Z} = z \right)\right].
+    \label{eq10}
+\end{equation}
+
+O termo interno na Eq.~\eqref{eq10} representa a probabilidade de falha devido à incerteza no parâmetro de entrada para uma realização fixa da estocasticidade. Em outras palavras, \( P_f \) pode ser calculado como o valor esperado (sobre várias sementes aleatórias) das probabilidades de falha associadas a cada trajetória resultante.
+
+
+
+\subsection{Expansão Estocástica em Caos Polinomial (SPCE)}
+%\cite{Zhu2023_SPCE}}
+A \emph{Stochastic Polynomial Chaos Expansion} (SPCE), introduzida por Zhu e Sudret \cite{Zhu2023_SPCE}, 
+é  um emulador estocástico que permite modelar a distribuição de saída de $Y_x$.  
+Nessa abordagem, uma variável latente artificial $Z$ é introduzida para representar a 
+estocasticidade do simulador dentro do arcabouço das expansões em caos polinomial (PCE).
+
+Essa formulação se baseia na \emph{transformada integral de probabilidade} (PIT), 
+uma técnica estatística que permite transformar uma variável aleatória contínua em outra, 
+possibilitando mapear uma variável conhecida $Z$ para a distribuição de saída desejada. 
+Tipicamente, $Z$ é escolhida como uma variável com distribuição uniforme padrão ou normal padrão.
+
+Seja $F_{Y|X}(y\,|\,x)$ a função de distribuição acumulada (CDF) associada a $Y_x$.  
+A PIT permite expressar a relação entre $Y_x$ e a variável latente $Z$ como:
+\begin{equation}
+  Y_x \stackrel{d}{=} F_{Y|X}^{-1}\!\left(F_Z(Z)\,|\,x\right),
+  \label{eq17}
+\end{equation}
+ 
+onde $F_Z$ é a CDF da variável latente $Z$, e o símbolo $\stackrel{d}{=}$ indica igualdade em distribuição.
+
+A Eq. (\ref{eq17}) implica que $Y_x$ pode ser representada como uma função determinística tanto da entrada $x$ 
+quanto da variável latente $Z$. Essa relação determinística é então modelada por uma expansão em caos 
+polinomial no espaço $(X, Z)$:
+\begin{equation}
+  F_{Y|X}^{-1}\!\left(F_Z(Z)\,|\,X = x\right)
+\stackrel{d}{=}
+\sum_{\boldsymbol{\alpha} \in \mathbb{N}^{M_X + 1}} 
+c_{\boldsymbol{\alpha}} \, \psi_{\boldsymbol{\alpha}}(x, Z).
+\label{eq18}
+\end{equation}
+ 
+Para um dado $x$, a expansão acima é uma função da variável latente $Z$, tornando a resposta $Y_x$ 
+uma variável aleatória. Considerando um esquema de truncamento $\mathcal{A}$, obtém-se:
+\begin{equation}
+  Y_x \stackrel{d}{\approx} 
+\tilde{Y}_x = 
+\sum_{\boldsymbol{\alpha} \in \mathcal{A}} 
+c_{\boldsymbol{\alpha}} \, \psi_{\boldsymbol{\alpha}}(x, Z).
+\label{eq19}
+\end{equation}
+ 
+A SPCE, portanto, fornece uma estrutura unificada para representar simuladores estocásticos, 
+permitindo capturar tanto a variabilidade quanto a dependência funcional das saídas em relação às entradas. 
+Mais detalhes teóricos e exemplos de aplicação podem ser encontrados em Zhu e Sudret~\cite{Zhu2023_SPCE}.
+
+%\subsection{Regularização e formulação completa da SPCE \cite{Zhu2023_SPCE}}
+
+O uso direto da Eq.~(\ref{eq19}) pode levar a problemas como singularidades nas funções densidade de probabilidade (PDFs).  
+Para contornar essa limitação, Zhu e Sudret~\cite{Zhu2023_SPCE} introduziram um componente aditivo de ruído
+\(\varepsilon \sim \mathcal{N}(0, \sigma^2)\), que atua, na prática, como um termo de regularização.  
+O emulador SPCE resultante é então expresso como:
+\begin{equation}
+Y_x \stackrel{d}{\approx} 
+\tilde{Y}_x =
+\sum_{\boldsymbol{\alpha} \in \mathcal{A}}
+c_{\boldsymbol{\alpha}} \, \psi_{\boldsymbol{\alpha}}(x, Z)
++ \varepsilon.
+\label{eq:spce_noise}
+\end{equation}
+
+A PDF de \(\tilde{Y}_x\) resulta da convolução entre a PDF da expansão PCE e a PDF gaussiana do ruído.  
+Assumindo que a variância do ruído \(\sigma^2\) é conhecida, a PDF correspondente pode ser escrita como:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%Detalhamento da covolução
+Seja o termo determinístico-estocástico da PCE definido por
+\[
+X \equiv 
+\sum_{\boldsymbol{\alpha} \in \mathcal{A}}
+c_{\boldsymbol{\alpha}} \, 
+\psi_{\boldsymbol{\alpha}}(x, Z),
+\]
+e o ruído aditivo
+\[
+Y \equiv \varepsilon \sim \mathcal{N}(0,\sigma^{2}).
+\]
+Como \(X\) e \(Y\) são independentes, a densidade da soma
+\(\tilde{Y}_x = X + Y\) é dada pela convolução das respectivas PDFs:
+\[
+f_{\tilde{Y}_x}(y)
+=
+\int_{-\infty}^{\infty}
+f_X(t)\, f_Y(y - t)\, dt.
+\]
+
+No caso particular em que \(Y\) é gaussiana, sua PDF é
+\[
+f_Y(y) = \frac{1}{\sigma}\,\phi\!\left(\frac{y}{\sigma}\right),
+\]
+em que \(\phi(\cdot)\) é a densidade da normal padrão. Substituindo esta
+expressão na convolução, obtém-se
+\[
+f_{\tilde{Y}_x}(y)
+=
+\int_{-\infty}^{\infty}
+f_X(t)\,
+\frac{1}{\sigma}
+\phi\!\left(
+\frac{y - t}{\sigma}
+\right)
+dt.
+\]
+
+Como a variável \(X\) depende do vetor aleatório \(Z\), sua densidade
+pode ser escrita condicionalmente como
+\[
+f_X(t)
+=
+\int_{\mathcal{D}_Z}
+\delta\!\left(
+t -
+\sum_{\boldsymbol{\alpha} \in \mathcal{A}}
+c_{\boldsymbol{\alpha}} \psi_{\boldsymbol{\alpha}}(x, z)
+\right)
+f_Z(z)\, dz.
+\]
+Substituindo esta expressão na integral de convolução e integrando em
+relação a \(t\), obtém-se finalmente
+%\[
+%f_{\tilde{Y}_x}(y)
+%=
+%\int_{\mathcal{D}_Z}
+%\frac{1}{\sigma}
+%\phi\!\left(
+%\frac{
+%y -\sum_{\boldsymbol{\alpha} \in \mathcal{A}}
+%c_{\boldsymbol{\alpha}}
+%\psi_{\boldsymbol{\alpha}}(x, z)}{\sigma}\right)
+%f_Z(z)\, dz,
+%\]
+
+%%%%%%%%%%%%%%%%
+\begin{equation}
+f_{\tilde{Y}_x}(y) =
+\int_{\mathcal{D}_Z}
+\frac{1}{\sigma}
+\phi\!\left(
+\frac{
+y -
+\sum_{\boldsymbol{\alpha} \in \mathcal{A}} 
+c_{\boldsymbol{\alpha}} \psi_{\boldsymbol{\alpha}}(x, z)
+}{\sigma}
+\right)
+f_Z(z) \, dz,
+\label{eq21}
+\end{equation}
+em que \(\phi(\cdot)\) representa a função densidade da normal padrão.
+%%%%%%%%%%%%%%
+\subsection{Cálculo de \(s(x)\) a partir do emulador SPCE}
+
+Para o SPCE, a CDF associada a uma previsão \(\tilde{Y}_x\), denotada como \(F_{\tilde{Y}_x}(y)\), é obtida integrando a PDF introduzida na Eq. (\ref{eq21}). Como esta PDF é uma integral unidimensional, ela pode ser avaliada utilizando quadratura de Gauss (Hermite)da seguinte forma:
+\begin{equation}
+f_{\tilde{Y}_x}(y) = \int_{D_Z} \frac{1}{\sigma} \varphi \left( \frac{y - \sum_{\alpha \in A} c_\alpha \psi_\alpha(x,z)}{\sigma} \right) f_Z(z) dz
+\approx \sum_{j=1}^{N_Q} \frac{w^{(j)}}{\sqrt{2\pi}\sigma} \exp \left( - \frac{\left(y - \sum_{\alpha \in A} c_\alpha \psi_\alpha \big(x, z^{(j)}\big)\right)^2}{2\sigma^2} \right),
+\end{equation}
+onde \(N_Q\) é o número de pontos de integração, \(z^{(j)}\) é o \(j\)-ésimo ponto de integração, e \(w^{(j)}\) é o peso correspondente, ambos associados à função de peso \(f_Z\), que na prática é a PDF uniforme ou Gaussiana, para a qual os pontos e pesos de integração são bem conhecidos.
+
+A aproximação introduzida pelo esquema de integração numérica implica que \(f_{\tilde{Y}_x}(y)\) é aproximada por uma mistura de \(N_Q\) distribuições Gaussianas
+\[
+\mathcal{N} \Bigg( \sum_{\alpha \in A} c_\alpha \psi_\alpha \big(x, z^{(j)}\big), \sigma^2 \Bigg), \quad j=1,\dots,N_Q.
+\]
+
+Com os correspondentes pesos $w^{(j)}$. A CDF (função de distribuição acumulada) dessa aproximação é direta e pode ser escrita como:
+
+\begin{align}
+F_{Y_x}(y) 
+&\approx \int_{-\infty}^{y} 
+\sum_{j=1}^{N_Q} 
+\frac{w^{(j)}}{\sqrt{2\pi}\sigma}
+\exp\!\left[
+-\frac{\left(
+y - \sum_{\alpha \in \mathcal{A}} c_\alpha \psi_\alpha(x, z^{(j)})
+\right)^2}{2\sigma^2}
+\right] dy \nonumber \\[6pt]
+&\approx 
+\sum_{j=1}^{N_Q} 
+w^{(j)} 
+\int_{-\infty}^{y}
+\frac{1}{\sqrt{2\pi}\sigma}
+\exp\!\left[
+-\frac{\left(
+y - \sum_{\alpha \in \mathcal{A}} c_\alpha \psi_\alpha(x, z^{(j)})
+\right)^2}{2\sigma^2}
+\right] dy \nonumber \\[6pt]
+&\approx 
+\sum_{j=1}^{N_Q}
+w^{(j)} 
+\Phi\!\left(
+\frac{
+y - \sum_{\alpha \in \mathcal{A}} c_\alpha \psi_\alpha(x, z^{(j)})
+}{\sigma}
+\right),
+\label{eq:29}
+\end{align}
+
+onde $\Phi$ é a CDF Gaussiana padrão.
+
+Finalmente, a função de probabilidade condicional de falha é dada por $F_{Y_x}(0)$, ou seja:
+
+\begin{equation}
+s(x) \approx
+\sum_{j=1}^{N_Q}
+w^{(j)} 
+\Phi\!\left(
+-\frac{
+\sum_{\alpha \in \mathcal{A}} c_\alpha \psi_\alpha(x, z^{(j)})
+}{\sigma}
+\right).
+\label{eq:30}
+\end{equation}
+
+Uma vez que o modelo SPCE é treinado, o cálculo de 
+$\sum_{\alpha \in \mathcal{A}} c_\alpha \psi_\alpha(x, z)$ 
+é computacionalmente barato.  
+A precisão dessa abordagem depende fortemente do número de pontos de quadratura utilizados.  
+Neste trabalho, utilizou-se $N_Q = 100$, o que, com base em nossos testes, resulta em erro numérico desprezível.
+ 
