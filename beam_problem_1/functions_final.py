@@ -1,6 +1,6 @@
 import os
+import time
 from pathlib import Path
-from pyexpat import model
 
 import numpy as np
 import pandas as pd
@@ -23,435 +23,143 @@ import joblib
 import pyglam as glam
 
 
-def execute_parallel_process(k: float | int, n_samples: int, n_latent_samples: int) -> dict:
-    """Execute parallel process for training, saving, and validating the PCE metamodel at time k.
-    
-    :param k: Time parameter affecting the state limit function
-    :param n_samples: Number of samples for training and validation
-    :param n_latent_samples: Number of latent samples to be generated for each input sample
-    
-    :return: Formatted string with R2 score for time k
-    """
-    
-    # 1. Training
-    r = Normal(loc=5., scale=0.8)
-    s = Normal(loc=2., scale=0.6)
-    joint = JointIndependent(marginals=[r, s])
-    x = joint.rvs(n_samples)
-    y, _ = state_limit_function_time(x, n_latent_samples, t=k)
-    max_degree = 3
-    polynomial_basis = TotalDegreeBasis(joint, max_degree)
-    least_squares = LeastSquareRegression()
-    pce_metamodel = PolynomialChaosExpansion(polynomial_basis=polynomial_basis, regression_method=least_squares)
-    pce_metamodel.fit(x, y)
-    
-    # 2. Save metamodel
-    filename = f'pce_metamodel_{k}.pkl'
-    with open(filename, 'wb') as f:
-        dill.dump(pce_metamodel, f)
-    
-    # 3. Validation
-    r_val = Normal(loc=5., scale=0.8)
-    s_val = Normal(loc=2., scale=0.6)
-    joint_val = JointIndependent(marginals=[r_val, s_val])
-    x_val = joint_val.rvs(n_samples)
-    y_val_obs, _ = state_limit_function_time(x_val, n_latent_samples, t=k)
-    with open(filename, 'rb') as f:
-        pce_metamodel_up = pickle.load(f)
-    y_val_pre = pce_metamodel_up.predict(x_val)
-    y_val_obs_aux_lambda_1 = list(y_val_obs[:, 0])
-    y_val_pre_aux_lambda_1 = list(y_val_pre[:, 0])
-    y_val_obs_aux_lambda_2 = list(y_val_obs[:, 1])
-    y_val_pre_aux_lambda_2 = list(y_val_pre[:, 1])
-    y_val_obs_aux_lambda_3 = list(y_val_obs[:, 2])
-    y_val_pre_aux_lambda_3 = list(y_val_pre[:, 2])
-    y_val_obs_aux_lambda_4 = list(y_val_obs[:, 3])
-    y_val_pre_aux_lambda_4 = list(y_val_pre[:, 3])
-           
-    # R2 scores
-    score_lambda_1 = r2_score(y_val_obs_aux_lambda_1, y_val_pre_aux_lambda_1)
-    score_lambda_2 = r2_score(y_val_obs_aux_lambda_2, y_val_pre_aux_lambda_2)
-    score_lambda_3 = r2_score(y_val_obs_aux_lambda_3, y_val_pre_aux_lambda_3)
-    score_lambda_4 = r2_score(y_val_obs_aux_lambda_4, y_val_pre_aux_lambda_4) 
-    
-    return {
-            'Time': k,
-            'R2 (Lambda 1)': score_lambda_1,
-            'R2 (Lambda 2)': score_lambda_2,
-            'R2 (Lambda 3)': score_lambda_3,
-            'R2 (Lambda 4)': score_lambda_4
-           }
 
 
-def pce_toy_problem_parallel_with_multiprocessing(n_samples: int = 1000, n_latent_samples: int = 5000) -> list:
-    """Execute PCE training process and validate.
-    
-    :return: r2 score about PCE training
+def generate_latent_variables(n_latent_samples: int, mean: float = 1.0, cov: float = 0.02) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Generates the latent multipliers related to the beam problem. All three follow a normal distribution with the same mean and coefficient of variation.
+
+    :param n_latent_samples: Number of latent samples to generate
+    :param mean: Mean of the latent multipliers
+    :param cov: Coefficient of variation of the latent multipliers
+
+    :return: Sampled multipliers for relative humidity, concrete compressive strength, and concrete cover
     """
 
-    time = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    inputs = [(k, n_samples, n_latent_samples) for k in time]
+    # Draw order is cover, relative humidity, then compressive strength: keep it
+    # so that a given seed reproduces the same stream.
+    scale      = cov * mean
+    cov_latent = np.random.normal(loc=mean, scale=scale, size=n_latent_samples)
+    rh_latent  = np.random.normal(loc=mean, scale=scale, size=n_latent_samples)
+    fck_latent = np.random.normal(loc=mean, scale=scale, size=n_latent_samples)
 
-    # Execution
-    n_processes = cpu_count()
-    with Pool(processes=n_processes) as pool:
-        results = pool.starmap(execute_parallel_process, inputs)
-
-    return results
+    return rh_latent, fck_latent, cov_latent
 
 
-def g_toy_problem_parallel_with_multiprocessing(x_val_list: np.ndarray | list, n_latent_samples: int, t: float = 0.0, n_processes: Optional[int] = None):
-    """Execute the state limit function in parallel using multiprocessing.
+def co2_percentage_1900_1950(year: int) -> float:
+    """CO2 atmospheric concentration (%) for historical period 1900–1950. Based on a linear approximation of the upward trend during this period.
 
-    :param x_val_list: R and S realization dividided in batches for parallel processing
-    :param n_latent_samples: Number of latent samples to be generated for each input sample
-    :param t: Time step. Default is 0
-    :param n_processes: Number of processes to use. If None, use the number of CPU cores
+    :param year: Calendar year (1900 <= year <= 1950)
 
-    :return: [0] All datat and [1] Dataset with GLAM parameters and state limit function results for each batch
+    :return: CO2 concentration in percentage (ppm / 10000)
     """
 
-    if n_processes is None:
-        n_processes = cpu_count()
-    args_list = [(x_val_list[i], n_latent_samples, t) for i in range(len(x_val_list))]
-    with Pool(processes=n_processes) as pool:
-        results = pool.starmap(state_limit_function_time, args_list)
-    y_list = [r[0] for r in results]
-    df_list = [r[1] for r in results]
-    df = []
-    i = 0
-    for j, sublist in enumerate(df_list):
-        for k, item in enumerate(sublist):
-            item['realization'] = i
-            item["lambda 1"] = y_list[j][k][0]
-            item["lambda 2"] = y_list[j][k][1]
-            item["lambda 3"] = y_list[j][k][2]
-            item["lambda 4"] = y_list[j][k][3]
-            i += 1
-            df.append(item)
-    df = pd.concat(df).reset_index(drop=True)
-    df['time'] = t
-    df = df[['realization', 'time', 'r', 's', 'z1', 'z2', 'g', 'lambda 1', 'lambda 2', 'lambda 3', 'lambda 4']]
-    glam_data = {'r': [], 's': [], 'lambda 1': [], 'lambda 2': [], 'lambda 3': [], 'lambda 4': []}
-    n_samples = df['realization'].nunique()
-    for i in range(n_samples):
-        x = df[df['realization'] == i]
-        r, s, lambda_1, lambda_2, lambda_3, lambda_4 = x['r'].values[0], x['s'].values[0], x['lambda 1'].values[0], x['lambda 2'].values[0], x['lambda 3'].values[0], x['lambda 4'].values[0]
-        glam_data['r'].append(r)
-        glam_data['s'].append(s)
-        glam_data['lambda 1'].append(lambda_1)
-        glam_data['lambda 2'].append(lambda_2)
-        glam_data['lambda 3'].append(lambda_3)
-        glam_data['lambda 4'].append(lambda_4)
-    glam_data = pd.DataFrame(glam_data)
+    if not 1900 <= year <= 1950:
+        raise ValueError("Year must be between 1900 and 1950 for this function.")
 
-    return df, glam_data
+    co2_ppm = 296.0 + 0.30 * (year - 1900)
+    return co2_ppm / 1e4
 
 
-def g_interpolated_at_t(bds, t_query, column='g_emulator_mean'):
-    """
-    Retorna g(t_query) por interpolação linear.
-    """
-    t = bds['time'].values
-    g = bds[column].values
+def co2_percentage_1950_2000(year: int) -> float:
+    """CO2 atmospheric concentration (%) for historical period 1950–2000. Based on a linear approximation of the accelerating upward trend.
 
-    f = interp1d(
-        t, g,
-        kind='linear',
-        fill_value='extrapolate',
-        bounds_error=False
-    )
+    :param year: Calendar year (1950 <= year <= 2000)
 
-    return float(f(t_query))
-
-
-def failure_time_interpolated(bds, g_threshold=0.0, column='g_emulator_mean'):
-    """
-    Retorna o tempo exato de falha por interpolação (g = g_threshold).
-    """
-    t = bds['time'].values
-    g = bds[column].values
-
-    # Detecta cruzamento
-    sign_change = np.where(np.diff(np.sign(g - g_threshold)) != 0)[0]
-
-    if len(sign_change) == 0:
-        return None  # nunca falha no horizonte analisado
-
-    i = sign_change[0]
-
-    # Interpolação linear entre os dois pontos
-    t1, t2 = t[i], t[i + 1]
-    g1, g2 = g[i], g[i + 1]
-
-    t_failure = t1 + (g_threshold - g1) * (t2 - t1) / (g2 - g1)
-
-    return float(t_failure)
-
-
-def rul(df, t_i, g_threshold, g_column='g_emulator_mean'):
-    """
-    Compute Remaining Useful Life (RUL) based on g(t)
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        Must contain columns ['time', g_column]
-    t_i : float
-        Inspection time
-    g_threshold : float
-        Failure threshold (usually 0)
-    g_column : str
-        Column name of g(t)
-
-    Returns
-    -------
-    dict
+    :return: CO2 concentration in percentage (ppm / 10000)
     """
 
-    # Ordenar por tempo
-    df = df.sort_values('time')
+    if not 1950 <= year <= 2000:
+        raise ValueError("Year must be between 1950 and 2000 for this function.")
 
-    time = df['time'].values
-    g = df[g_column].values
+    co2_ppm = 311.0 + 1.16 * (year - 1950)
+    return co2_ppm / 1e4
 
-    # -------------------------
-    # Interpolação em t_i
-    # -------------------------
-    g_ti = np.interp(t_i, time, g)
 
-    # Já falhou?
-    if g_ti <= g_threshold:
-        return {
-            't_inspection': t_i,
-            't_failure': t_i,
-            'RUL': 0.0,
-            'g_at_inspection': g_ti
-        }
+def co2_percentage_pos2000(year: int) -> float:
+    """CO2 atmospheric concentration (%) for post-2000 period. Captures the non-linear (quadratic) acceleration in CO2 buildup observed in recent decades.
 
-    # -------------------------
-    # Tempo de falha (g = threshold)
-    # -------------------------
-    idx = np.where(g <= g_threshold)[0]
+    :param year: Calendar year (>= 2000)
 
-    if len(idx) == 0:
-        t_failure = np.nan
-        rul_value = np.nan
+    :return: CO2 concentration in percentage (ppm / 10000)
+    """
+
+    if year < 2000:
+        raise ValueError("Year must be >= 2000 for this function.")
+
+    t  = year - 2000
+    C0 = 369.0   # ppm in 2000 (approximate observed value)
+    a  = 1.85    # ppm/year (linear component)
+    b  = 0.018   # ppm/year² (quadratic component)
+    co2_ppm = C0 + a * t + b * t**2
+
+    return co2_ppm / 1e4
+
+
+def co2_percentage_year(year: int) -> float:
+    """Global average atmospheric CO2 concentration (%) valid from 1900 onwards. Routes the calculation to the correct historical formula based on the year.
+
+    :param year: Calendar year (>= 1900)
+
+    :return: CO2 concentration in percentage (ppm / 10000)
+    """
+
+    if year < 1900:
+        raise ValueError(f"Year must be >= 1900. Received: {year}")
+
+    if year <= 1950:
+        return co2_percentage_1900_1950(year)
+    elif 1950 < year <= 2000:
+        return co2_percentage_1950_2000(year)
     else:
-        i = idx[0]
-        t_failure = np.interp(
-            g_threshold,
-            [g[i-1], g[i]],
-            [time[i-1], time[i]]
-        )
-        rul_value = t_failure - t_i
-
-    return {
-        't_inspection': t_i,
-        't_failure': t_failure,
-        'RUL': rul_value,
-        'g_at_inspection': g_ti
-    }
+        return co2_percentage_pos2000(year)
 
 
-def g_emulator_at_inspect_time(bds, t_i, g_col="g_emulator"):
-    """
-    Retorna os valores de g_emulator exatamente no tempo t_i.
-    Assume que t_i existe no dataset.
-    """
-    g_vals_ins = bds.loc[bds["time"] == t_i, g_col].values
+def carbonation_profile(model_: Any, lifetime: float, fc: float, rh: float, cement_type: int, exposure: int, start_year: int) -> pd.DataFrame:
+    """Generate carbonation profile starting at a given calendar year.
 
-    if len(g_vals_ins) == 0:
-        raise ValueError(f"Time t_i = {t_i} not found in dataset.")
+    :param model_: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.
+    :param lifetime: Design life of the structure [years]
+    :param fc: Concrete compressive strength [MPa]
+    :param rh: Relative humidity [%]
+    :param cement_type: Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)
+    :param exposure: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])
+    :param start_year: Calendar year of installation
 
-    return g_vals_ins
-
-
-def g_emulator_at_limit_time(bds, t_limit, g_col="g_emulator"):
-    """
-    Retorna os valores de g_emulator exatamente no tempo limite t_limit.
-    Assume que t_limit existe no dataset.
-    """
-    g_vals_lim = bds.loc[bds["time"] == t_limit, g_col].values
-
-    if len(g_vals_lim) == 0:
-        raise ValueError(f"Limit time t_limit = {t_limit} not found in dataset.")
-
-    return g_vals_lim
-
-
-# Beam class
-class Beam():
-    """_summary_
-    """
-    def __init__(self, geo: dict, mat: dict, load: dict, expo: dict):  
-        """Initializes a Beam object with geometric, material, load, and exposure properties.
-        
-        :param geo: Geometric properties of the beam. Empty in this context
-        :param mat: Material properties of the beam. Expected keys: 'f_ck [kPa]' - concrete compressive strength, 'Type of cement' - type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)
-        :param load: Load properties of the beam. Empty in this context
-        :param expo: Exposure conditions for carbonation. Expected keys: 'Installation year' - year of installation, 'Exposure conditions' - exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected]), and 'Relative humidity [%]' - relative humidity
-        """
-
-        self.geo  = geo
-        self.mat  = mat
-        self.load = load
-        self.expo = expo
-
-    def latent_variable_generator(self, n_latent_samples: int) -> list:
-        """Generates latent variables related the beam problem.
-
-        :param n_latent_samples: Number of latent samples to generate.
-
-        :return: Arrays of sampled relative humidity, concrete compressive strength, and concrete cover.
-        """
-
-        cov_mean   = 1.0
-        cov_cov    = 0.02
-        sigma_cov  = np.sqrt(np.log(1 + cov_cov**2))
-        mu_cov     = np.log(cov_mean) - sigma_cov**2 / 2
-        cov_latent = np.random.lognormal(mean=mu_cov, sigma=sigma_cov, size=n_latent_samples)
-
-        rh_mean = 1.0
-        rh_cov  = 0.02
-        sigma   = np.sqrt(np.log(1 + rh_cov**2))
-        mu      = np.log(rh_mean) - sigma**2 / 2
-        rh_latent = np.random.lognormal(mean=mu, sigma=sigma, size=n_latent_samples)
-
-        fck_mean   = 1.0
-        fck_cov    = 0.02
-        fck_latent = np.random.normal(loc=fck_mean, scale=fck_cov*fck_mean, size=n_latent_samples)
-        
-        return [rh_latent, fck_latent, cov_latent]
-
-class CO2Predictor:
-    """Predictor for historical and modern atmospheric CO2 concentrations.   
+    :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)
     """
 
-    def __init__(self, beam: Optional[Any] = None):
-        """Initialize CO2Predictor with beam properties.
-        
-        :param beam: Beam object containing exposure and material properties
-        """
-        self.beam = beam
-    
-    def set_beam(self, beam: Any):
-        """Set or update the beam properties."""
-        self.beam = beam
+    # Time steps
+    years = np.arange(0, lifetime + 1,10)
 
-    @staticmethod
-    def co2_percentage_1900_1950(year: int) -> float:
-        """CO2 atmospheric concentration (%) for historical period 1900–1950. Based on a linear approximation of the upward trend during this period.
-        
-        :param year: Calendar year (1900 <= year <= 1950)
+    # Romain calendar
+    calendar_years = start_year + years
 
-        :return: CO2 concentration in percentage (ppm / 10000)
-        """
+    # CO2 emission
+    co2_values = [co2_percentage_year(y) for y in calendar_years]
 
-        if not 1900 <= year <= 1950:
-            raise ValueError("Year must be between 1900 and 1950 for this method.")
-            
-        co2_ppm = 296.0 + 0.30 * (year - 1900)
-        return co2_ppm / 1e4
+    # Carbonation AI model and profile
+    df      = pd.DataFrame({'t (years)': years, 'CO2 (%)': co2_values, 'fc (MPa)': [fc]*len(years), 'RH (%)': [rh]*len(years), 'Type of cement': [cement_type]*len(years), 'Exposure conditions': [exposure]*len(years)})
+    df      = df[model_.feature_names_in_]
+    depth   = model_.predict(df)
+    profile = pd.DataFrame({'calendar year': calendar_years, 't (years)': years, 'CO2 (%)': co2_values, 'carbonation depth (mm)': depth})
+    profile['carbonation depth (mm)'] = profile['carbonation depth (mm)'].cummax()
 
-    @staticmethod
-    def co2_percentage_1950_2000(year: int) -> float:
-        """CO2 atmospheric concentration (%) for historical period 1950–2000. Based on a linear approximation of the accelerating upward trend.
-        
-        :param year: Calendar year (1950 <= year <= 2000)
+    return profile
 
-        :return: CO2 concentration in percentage (ppm / 10000)
-        """
-        if not 1950 <= year <= 2000:
-            raise ValueError("Year must be between 1950 and 2000 for this method.")
-            
-        co2_ppm = 311.0 + 1.16 * (year - 1950)
-        return co2_ppm / 1e4
 
-    @staticmethod
-    def co2_percentage_pos2000(year: int) -> float:
-        """CO2 atmospheric concentration (%) for post-2000 period. Captures the non-linear (quadratic) acceleration in CO2 buildup observed in recent decades.
-        
-        :param year: Calendar year (>= 2000)
+def carbonation_depth_at_time(profile: pd.DataFrame, t_query: float) -> float:
+    """Returns carbonation depth at a specific time.
 
-        :return: CO2 concentration in percentage (ppm / 10000)
-        """
-        if year < 2000:
-            raise ValueError("Year must be >= 2000 for this method.")
-            
-        t  = year - 2000
-        C0 = 369.0   # ppm in 2000 (approximate observed value)
-        a  = 1.85    # ppm/year (linear component)
-        b  = 0.018   # ppm/year² (quadratic component)
-        co2_ppm = C0 + a * t + b * t**2
-        
-        return co2_ppm / 1e4
+    :param profile : DataFrame with columns ['calendar year', 'carbonation depth (mm)']
+    :param t_query : Calendar year for which to query the carbonation depth
 
-    def co2_percentage_year(self, year: int) -> float:
-        """Global average atmospheric CO2 concentration (%) valid from 1900 onwards. Routes the calculation to the correct historical formula based on the year.
-        
-        :param year: Calendar year (>= 1900)
+    :return: Carbonation depth at the specified calendar year
+    """
 
-        :return: CO2 concentration in percentage (ppm / 10000)
-        """
-        if year < 1900:
-            raise ValueError(f"Year must be >= 1900. Received: {year}")
+    t     = profile['calendar year'].values
+    depth = profile['carbonation depth (mm)'].values
 
-        if year <= 1950:
-            return self.co2_percentage_1900_1950(year)
-        elif 1950 < year <= 2000:
-            return self.co2_percentage_1950_2000(year)
-        else:
-            return self.co2_percentage_pos2000(year)
-        
-    def carbonation_profile(self, model_: Any, lifetime: float) -> pd.DataFrame:
-        """Generate carbonation profile starting at a given calendar year.
-
-        :param model: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.
-        :param lifetime: Design life of the structure [years]
-
-        :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)
-        """
-        if self.beam is None:
-            raise ValueError("Beam not set. Use set_beam() or pass beam to constructor.")
-
-        start_year  = self.beam.expo['Installation year']
-        rh          = self.beam.expo['Relative humidity [%]']
-        exposure    = self.beam.expo['Exposure conditions']
-        fc          = self.beam.mat['f_ck [MPa]']
-        cement_type = self.beam.mat['Type of cement']
-
-        # Time steps
-        years = np.arange(0, lifetime + 1,10)
-
-        # Romain calendar
-        calendar_years = start_year + years
-
-        # CO2 emission
-        co2_values = [self.co2_percentage_year(y) for y in calendar_years]
-   
-        # Carbonation AI model and profile
-        df      = pd.DataFrame({'t (years)': years, 'CO2 (%)': co2_values, 'fc (MPa)': [fc]*len(years), 'RH (%)': [rh]*len(years), 'Type of cement': [cement_type]*len(years), 'Exposure conditions': [exposure]*len(years)})
-        df      = df[model_.feature_names_in_]
-        depth   = model_.predict(df)
-        profile = pd.DataFrame({'calendar year': calendar_years, 't (years)': years, 'CO2 (%)': co2_values, 'carbonation depth (mm)': depth})
-        profile['carbonation depth (mm)'] = profile['carbonation depth (mm)'].cummax()
-
-        return profile
-
-    def carbonation_depth_at_time(self, profile: pd.DataFrame, t_query: float) -> float:
-        """Returns carbonation depth at a specific time.
-
-        :param profile : DataFrame with columns ['calendar year', 'carbonation depth (mm)']
-        :param t_query : Calendar year for which to query the carbonation depth
-
-        :return: Carbonation depth at the specified calendar year
-        """
-
-        t     = profile['calendar year'].values
-        depth = profile['carbonation depth (mm)'].values
-
-        return float(np.interp(t_query, t, depth))
+    return float(np.interp(t_query, t, depth))
 
 
 def _interp_profile_at(calendar_years: np.ndarray, depths: np.ndarray, year_query: float) -> np.ndarray:
@@ -476,16 +184,137 @@ def _interp_profile_at(calendar_years: np.ndarray, depths: np.ndarray, year_quer
     return depths[:, k] + frac * (depths[:, k + 1] - depths[:, k])
 
 
-def emulator_function_time_durability(
-                                            x: np.ndarray, names_x_variables: list, carb_model: Any,
-                                            cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2,
-                                            time_step: float = 0.0, n_latent_samples: int = 1000, verbose: bool = False
-                                        ) -> tuple[pd.DataFrame, pd.DataFrame]:
+def generate_latent_variables_benchmark(n_latent_samples: int, z1_mean: float = 1.0, z1_std: float = 0.028, z2_mean: float = 1.0, z2_std: float = 0.096) -> tuple[np.ndarray, np.ndarray]:
+    """Generates the latent multipliers of the R/S benchmark. Both follow a normal distribution, in line with `generate_latent_variables`.
+
+    :param n_latent_samples: Number of latent samples to generate
+    :param z1_mean: Mean of the resistance latent multiplier
+    :param z1_std: Standard deviation of the resistance latent multiplier
+    :param z2_mean: Mean of the load latent multiplier
+    :param z2_std: Standard deviation of the load latent multiplier
+
+    :return: Sampled multipliers z1 (resistance) and z2 (load)
+    """
+
+    # Draw order is z1 then z2: keep it so that a given seed reproduces the same stream.
+    z1_latent = np.random.normal(loc=z1_mean, scale=z1_std, size=n_latent_samples)
+    z2_latent = np.random.normal(loc=z2_mean, scale=z2_std, size=n_latent_samples)
+
+    return z1_latent, z2_latent
+
+
+def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, time_step: float = 0.0, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Compute the emulator of the R/S benchmark state limit function.
+
+    The state limit function is g = k(t) * R / z1 - S * z2, where R is the resistance, S is the load, and z1 and z2 are normal latent multipliers. Failure is g < 0.
+
+    The degradation factor k(t) = 1 + (k_factor_final - 1) * t / 100 shrinks the resistance linearly with time, reaching `k_factor_final` at t = 100. Setting `k_factor_final` to 1.0 removes the time effect and leaves the plain g = R / z1 - S * z2.
+
+    Mirrors `emulator_function_time_durability`: one GLD fit per design point, and a per-design-point wall time so the cost of building the dataset can be compared against evaluating the surrogate.
+
+    :param x: Design samples, shape (n_samples, 2) as [R, S]
+    :param names_x_variables: Names of the two design variables, used as the identifying columns of the output
+    :param time_step: Time step of the analysis, feeding the degradation factor k(t)
+    :param n_latent_samples: Number of latent samples per design sample
+    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
+    :param z1_std: Standard deviation of the resistance latent multiplier
+    :param z2_std: Standard deviation of the load latent multiplier
+    :param verbose: Whether to print per-sample diagnostics
+
+    :return: [0] = one row per latent replica ; [1] = one row per design point, with the lambdas and the processing time
+    """
+
+    dfs = []
+
+    # =========================
+    # 0. Degradation factor
+    # =========================
+    k_factor = 1 + (k_factor_final - 1) * time_step / 100
+
+    for i in range(x.shape[0]):
+        # Wall time spent on this design point, used later to measure the emulator speed-up
+        t_start = time.perf_counter()
+
+        # =========================
+        # 1. Design point properties
+        # =========================
+        base_r = float(x[i][0])
+        base_s = float(x[i][1])
+
+        # =========================
+        # 2. Generate latent variables (resistance and load uncertainty)
+        # =========================
+        z1_latent, z2_latent = generate_latent_variables_benchmark(n_latent_samples, z1_std=z1_std, z2_std=z2_std)
+
+        # =========================
+        # 3. Emulator of state limit function g = k(t) * R / z1 - S * z2
+        # =========================
+        r_effective = k_factor * base_r / z1_latent
+        s_effective = base_s * z2_latent
+        g_vals      = r_effective - s_effective  # failure if g < 0
+
+        # =========================
+        # 4. Create DataFrame
+        # =========================
+        df = pd.DataFrame({
+                            names_x_variables[0]: [x[i, 0]] * n_latent_samples,
+                            names_x_variables[1]: [x[i, 1]] * n_latent_samples,
+                            'z1_latent': z1_latent,
+                            'R_effective': r_effective,
+                            'z2_latent': z2_latent,
+                            'S_effective': s_effective,
+                            'k factor': k_factor,
+                            'Time (years)': time_step,
+                            'g': g_vals
+                        })
+
+        # =========================
+        # 5. GLAM fitting
+        # =========================
+        if np.std(g_vals) < 1e-6:
+            lambdas = [np.nan, np.nan, np.nan, np.nan]
+        else:
+            try:
+                emulator = glam.GlamFKML()
+                sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
+                if sol.status in [-1, -2]:
+                    lambdas = [np.nan] * 4
+                else:
+                    lambdas = sol.x
+            except Exception as e:
+                if verbose:
+                    print(f"  GLAM fitting failed: {e}")
+                lambdas = [np.nan] * 4
+
+        df['lambda 1'] = lambdas[0]
+        df['lambda 2'] = lambdas[1]
+        df['lambda 3'] = lambdas[2]
+        df['lambda 4'] = lambdas[3]
+
+        # Cost of producing this design point: latent sampling, g evaluation and GLAM fitting
+        df['Processing time (s)'] = time.perf_counter() - t_start
+
+        dfs.append(df)
+
+        if verbose:
+            print(f"  Sample {i+1}:")
+            print(f"    P(g < 0) = {np.mean(g_vals < 0):.4f}")
+            print(f"    Mean g = {np.mean(g_vals):.4f}")
+
+    df_full    = pd.concat(dfs, ignore_index=True)
+    id_columns = list(names_x_variables[:2])
+    df_unique  = (
+                    df_full[id_columns + ['lambda 1', 'lambda 2', 'lambda 3', 'lambda 4', 'Processing time (s)']].drop_duplicates(subset=id_columns).reset_index(drop=True)
+                 )
+
+    return df_full, df_unique
+
+
+def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 1000, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections.
     """
 
     dfs = []
-    predictor  = CO2Predictor()  # Create predictor instance (sem beam ainda)
     start_year = installation_year
     year_query = start_year + time_step
 
@@ -497,36 +326,24 @@ def emulator_function_time_durability(
     grid_max       = min(lifetime_full, grid_step * (int(np.ceil(max(time_step, 0) / grid_step)) + 1))
     years          = np.arange(0, grid_max + 1, grid_step)
     calendar_years = start_year + years
-    co2_values     = np.array([predictor.co2_percentage_year(y) for y in calendar_years])
+    co2_values     = np.array([co2_percentage_year(y) for y in calendar_years])
     n_grid         = len(years)
 
     for i in range(x.shape[0]):
+        # Wall time spent on this design point, used later to measure the emulator speed-up
+        t_start = time.perf_counter()
+
         # =========================
         # 1. Beam properties (durability analysis)
         # =========================
-        mat = {
-                'f_ck [MPa]': float(x[i][0]),
-                'Type of cement': cement_type
-              }
-        expo = {
-                 'Installation year': installation_year,
-                 'Exposure conditions': exposure_conditions,
-                 'Relative humidity [%]': float(x[i][1])
-               }
-        geo = {'cover[mm]':float(x[i][2])}
-        load = {}
+        base_fck = float(x[i][0])
+        base_rh  = float(x[i][1])
+        base_cov = float(x[i][2])
 
         # =========================
         # 2. Generate latent variables (humidity uncertainty)
         # =========================
-        base_fck      = mat['f_ck [MPa]']
-        base_rh       = expo['Relative humidity [%]']
-        base_cov      = geo['cover[mm]']
-        beam_instance = Beam(geo=geo, mat=mat, load=load, expo=expo)
-        res           = beam_instance.latent_variable_generator(n_latent_samples)
-        rh_latent     = np.array(res[0]).flatten()
-        fck_latent    = np.array(res[1]).flatten()
-        cov_latent    = np.array(res[2]).flatten()
+        rh_latent, fck_latent, cov_latent = generate_latent_variables(n_latent_samples)
 
         # =========================
         # 3. Carbonation analysis for each latent humidity, fck and cover sample.
@@ -603,6 +420,9 @@ def emulator_function_time_durability(
         df['lambda 3'] = lambdas[2]
         df['lambda 4'] = lambdas[3]
 
+        # Cost of producing this design point: latent sampling, carbonation batch and GLAM fitting
+        df['Processing time (s)'] = time.perf_counter() - t_start
+
         dfs.append(df)
 
         if verbose:
@@ -613,10 +433,489 @@ def emulator_function_time_durability(
     df_full    = pd.concat(dfs, ignore_index=True)
     id_columns = list(names_x_variables[:3])
     df_unique  = (
-                    df_full[id_columns + ['lambda 1', 'lambda 2', 'lambda 3', 'lambda 4']].drop_duplicates(subset=id_columns).reset_index(drop=True)
+                    df_full[id_columns + ['lambda 1', 'lambda 2', 'lambda 3', 'lambda 4', 'Processing time (s)']].drop_duplicates(subset=id_columns).reset_index(drop=True)
                  )
 
     return df_full, df_unique
+
+
+def train_and_validate_pce_at_time_benchmark(x_train: np.ndarray, joint: Any, time_step: float, n_latent_samples: int = 1000, n_samples_validation: int = 250, n_lambdas: int = 4, max_degree: int = 3, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+    """Build the R/S benchmark dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.
+
+    Benchmark twin of `train_and_validate_pce_at_time`: same three stages, same artefacts, but driven by `emulator_function_time_benchmark` instead of the carbonation emulator.
+
+    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<time_step>_benchmark.pkl` naming convention.
+
+    :param x_train: Design samples used to train the PCE, shape (n_samples, 2) as [R, S]
+    :param joint: UQpy JointIndependent distribution of R and S, used for the polynomial basis and to draw the validation samples
+    :param time_step: Time step of the analysis, feeding the degradation factor k(t)
+    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix
+    :param n_samples_validation: Number of independent samples drawn from `joint` to validate the PCE
+    :param n_lambdas: Number of GLD lambdas predicted by the PCE
+    :param max_degree: Maximum total degree of the polynomial basis
+    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
+    :param z1_std: Standard deviation of the resistance latent multiplier
+    :param z2_std: Standard deviation of the load latent multiplier
+    :param output_dir: Directory where the .pkl artefacts are written
+    :param save: Whether to write the .pkl artefacts to disk
+    :param verbose: Whether to print the progress of each stage
+
+    :return: Dictionary with the emulator dataframes, the fitted PCE, the validation statistics, the total emulator wall time, and the paths written
+    """
+
+    out_dir     = Path(output_dir)
+    lambda_cols = [f'lambda {i}' for i in range(1, n_lambdas + 1)]
+    tag         = f'{time_step}_benchmark'
+    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples,
+                       k_factor_final=k_factor_final, z1_std=z1_std, z2_std=z2_std, verbose=False)
+
+    if verbose:
+        print(f'\n{"-"*40}')
+        print(f'PROCESSING EMULATOR FOR TIME STEP: {time_step} years')
+        print(f'{"-"*40}')
+
+    # =========================
+    # 1. Emulator dataset (state limit function and lambdas)
+    # =========================
+    df_full, df_unique = emulator_function_time_benchmark(x=x_train, **emulator_kw)
+
+    paths = {}
+    if save:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for kind, frame in (('dataset_full', df_full), ('dataset_unique', df_unique)):
+            paths[kind] = out_dir / f'{n_latent_samples}_{kind}_{tag}.pkl'
+            with open(paths[kind], 'wb') as f:
+                dill.dump(frame, f)
+        if verbose:
+            print('1. The dataset has been saved!')
+
+    # =========================
+    # 2. PCE metamodel
+    # =========================
+    y_train          = df_unique[lambda_cols].to_numpy()
+    polynomial_basis = TotalDegreeBasis(joint, max_degree)
+    least_squares    = LeastSquareRegression()
+    pce_metamodel    = PolynomialChaosExpansion(polynomial_basis=polynomial_basis, regression_method=least_squares)
+    pce_metamodel.fit(x_train, y_train)
+
+    if save:
+        paths['pce_metamodel'] = out_dir / f'{n_latent_samples}_pce_metamodel_{tag}.pkl'
+        with open(paths['pce_metamodel'], 'wb') as f:
+            dill.dump(pce_metamodel, f)
+        if verbose:
+            print('2. PCE training dataset has been saved!')
+
+    # =========================
+    # 3. Validation on an independent sample
+    # =========================
+    x_val                      = joint.rvs(n_samples_validation)
+    df_full_val, df_unique_val = emulator_function_time_benchmark(x=x_val, **emulator_kw)
+    y_val_true                 = df_unique_val[lambda_cols].to_numpy()
+    y_val_pred                 = pce_metamodel.predict(x_val)
+
+    mse_per_lambda = [mean_squared_error(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+    r2_per_lambda  = [r2_score(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+
+    stats_row = {f'MSE λ{i+1}': mse_per_lambda[i] for i in range(n_lambdas)}
+    stats_row.update({f'R² λ{i+1}': r2_per_lambda[i] for i in range(n_lambdas)})
+    statistics_ = pd.DataFrame(stats_row, index=[0])
+
+    if save:
+        paths['pce_validation_stats'] = out_dir / f'{n_latent_samples}_pce_validation_stats_{tag}.pkl'
+        with open(paths['pce_validation_stats'], 'wb') as f:
+            dill.dump(statistics_, f)
+        if verbose:
+            print('3. PCE statistcs has been saved!')
+
+    return {
+             'time_step':       time_step,
+             'df_full':         df_full,
+             'df_unique':       df_unique,
+             'pce_metamodel':   pce_metamodel,
+             'statistics':      statistics_,
+             'df_full_val':     df_full_val,
+             'df_unique_val':   df_unique_val,
+             'emulator_time_s': float(df_unique['Processing time (s)'].sum()),
+             'paths':           paths,
+           }
+
+
+def train_and_validate_pce_at_time(x_train: np.ndarray, joint: Any, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_samples_validation: int = 250, n_lambdas: int = 4, max_degree: int = 3, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+    """Build the durability emulator dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.
+
+    Runs the three stages of one time step of the dataset pipeline: (1) evaluates `emulator_function_time_durability` on the design samples to obtain the lambdas, (2) fits a PCE of `max_degree` mapping design variables to lambdas, and (3) re-evaluates the emulator on an independent validation sample to score the PCE with MSE and R2 per lambda.
+
+    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>.pkl` naming convention, which is what the downstream notebooks expect.
+
+    :param x_train: Design samples used to train the PCE, shape (n_samples, 3) as [fck, rh, cover]
+    :param joint: UQpy JointIndependent distribution of the design variables, used for the polynomial basis and to draw the validation samples
+    :param carb_model: Trained ML model for carbonation depth prediction
+    :param time_step: Time step of the analysis [years]
+    :param cement_type: Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)
+    :param installation_year: Calendar year of installation
+    :param exposure_conditions: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])
+    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix
+    :param n_samples_validation: Number of independent samples drawn from `joint` to validate the PCE
+    :param n_lambdas: Number of GLD lambdas predicted by the PCE
+    :param max_degree: Maximum total degree of the polynomial basis
+    :param output_dir: Directory where the .pkl artefacts are written
+    :param save: Whether to write the .pkl artefacts to disk
+    :param verbose: Whether to print the progress of each stage
+
+    :return: Dictionary with the emulator dataframes, the fitted PCE, the validation statistics, and the paths written
+    """
+
+    out_dir     = Path(output_dir)
+    lambda_cols = [f'lambda {i}' for i in range(1, n_lambdas + 1)]
+    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}'
+    emulator_kw = dict(names_x_variables=["fck", "rh", "cov"], carb_model=carb_model, cement_type=cement_type,
+                       installation_year=installation_year, exposure_conditions=exposure_conditions,
+                       time_step=time_step, n_latent_samples=n_latent_samples, verbose=False)
+
+    if verbose:
+        print(f'\n{"-"*40}')
+        print(f'PROCESSING EMULATOR FOR TIME STEP: {time_step} years')
+        print(f'{"-"*40}')
+
+    # =========================
+    # 1. Emulator dataset (carbonation depth and lambdas)
+    # =========================
+    df_full, df_unique = emulator_function_time_durability(x=x_train, **emulator_kw)
+
+    paths = {}
+    if save:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for kind, frame in (('dataset_full', df_full), ('dataset_unique', df_unique)):
+            paths[kind] = out_dir / f'{n_latent_samples}_{kind}_{tag}.pkl'
+            with open(paths[kind], 'wb') as f:
+                dill.dump(frame, f)
+        if verbose:
+            print('1. The dataset has been saved!')
+
+    # =========================
+    # 2. PCE metamodel
+    # =========================
+    y_train          = df_unique[lambda_cols].to_numpy()
+    polynomial_basis = TotalDegreeBasis(joint, max_degree)
+    least_squares    = LeastSquareRegression()
+    pce_metamodel    = PolynomialChaosExpansion(polynomial_basis=polynomial_basis, regression_method=least_squares)
+    pce_metamodel.fit(x_train, y_train)
+
+    if save:
+        paths['pce_metamodel'] = out_dir / f'{n_latent_samples}_pce_metamodel_{tag}.pkl'
+        with open(paths['pce_metamodel'], 'wb') as f:
+            dill.dump(pce_metamodel, f)
+        if verbose:
+            print('2. PCE training dataset has been saved!')
+
+    # =========================
+    # 3. Validation on an independent sample
+    # =========================
+    x_val                      = joint.rvs(n_samples_validation)
+    df_full_val, df_unique_val = emulator_function_time_durability(x=x_val, **emulator_kw)
+    y_val_true                 = df_unique_val[lambda_cols].to_numpy()
+    y_val_pred                 = pce_metamodel.predict(x_val)
+
+    mse_per_lambda = [mean_squared_error(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+    r2_per_lambda  = [r2_score(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+
+    stats_row = {f'MSE λ{i+1}': mse_per_lambda[i] for i in range(n_lambdas)}
+    stats_row.update({f'R² λ{i+1}': r2_per_lambda[i] for i in range(n_lambdas)})
+    statistics_ = pd.DataFrame(stats_row, index=[0])
+
+    if save:
+        paths['pce_validation_stats'] = out_dir / f'{n_latent_samples}_pce_validation_stats_{tag}.pkl'
+        with open(paths['pce_validation_stats'], 'wb') as f:
+            dill.dump(statistics_, f)
+        if verbose:
+            print('3. PCE statistcs has been saved!')
+
+    return {
+             'time_step':       time_step,
+             'df_full':         df_full,
+             'df_unique':       df_unique,
+             'pce_metamodel':   pce_metamodel,
+             'statistics':      statistics_,
+             'df_full_val':     df_full_val,
+             'df_unique_val':   df_unique_val,
+             'emulator_time_s': float(df_unique['Processing time (s)'].sum()),
+             'paths':           paths,
+           }
+
+
+def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, time_step: float, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+    """Stage 1 of the split benchmark pipeline: run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.
+
+    This is the only stage that draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_benchmark`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.
+
+    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<split>_<time_step>_benchmark.pkl` naming convention, where `<split>` is `train` or `val`.
+
+    :param x_train: Design samples used to later train the PCE, shape (n_samples, 2) as [R, S]
+    :param x_val: Independent design samples used to later validate the PCE, shape (n_samples_validation, 2)
+    :param time_step: Time step of the analysis, feeding the degradation factor k(t)
+    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix
+    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
+    :param z1_std: Standard deviation of the resistance latent multiplier
+    :param z2_std: Standard deviation of the load latent multiplier
+    :param output_dir: Directory where the .pkl artefacts are written
+    :param save: Whether to write the .pkl artefacts to disk
+    :param verbose: Whether to print the progress of each split
+
+    :return: Dictionary with the full/unique dataframes for the train and validation splits, the total emulator wall time, and the paths written
+    """
+
+    out_dir     = Path(output_dir)
+    tag         = f'{time_step}_benchmark'
+    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples,
+                       k_factor_final=k_factor_final, z1_std=z1_std, z2_std=z2_std, verbose=False)
+
+    if verbose:
+        print(f'\n{"-"*40}')
+        print(f'GENERATING DATASET FOR TIME STEP: {time_step} years')
+        print(f'{"-"*40}')
+
+    paths          = {}
+    result         = {'time_step': time_step, 'paths': paths}
+    emulator_time_s = 0.0
+    for split, x in (('train', x_train), ('val', x_val)):
+        df_full, df_unique = emulator_function_time_benchmark(x=x, **emulator_kw)
+        result[f'df_full_{split}']   = df_full
+        result[f'df_unique_{split}'] = df_unique
+        emulator_time_s             += float(df_unique['Processing time (s)'].sum())
+
+        if save:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            for kind, frame in (('dataset_full', df_full), ('dataset_unique', df_unique)):
+                key         = f'{kind}_{split}'
+                paths[key]  = out_dir / f'{n_latent_samples}_{kind}_{split}_{tag}.pkl'
+                with open(paths[key], 'wb') as f:
+                    dill.dump(frame, f)
+
+        if verbose:
+            print(f'  {split}: {len(x)} design points, {df_unique["Processing time (s)"].sum():.2f} s total')
+
+    result['emulator_time_s'] = emulator_time_s
+
+    return result
+
+
+def train_and_validate_pce_from_dataset_benchmark(df_unique_train: pd.DataFrame, df_unique_val: pd.DataFrame, joint: Any, time_step: float, n_latent_samples: int = 1000, n_lambdas: int = 4, max_degree: int = 3, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+    """Stage 2 of the split benchmark pipeline: fit a PCE metamodel to a previously generated lambda dataset and validate it. Makes no emulator calls and draws no latent samples.
+
+    Companion of `generate_dataset_at_time_benchmark`: takes its saved `dataset_unique` outputs (train and validation splits) and performs the PCE fit and scoring that `train_and_validate_pce_at_time_benchmark` used to do inline with the data generation.
+
+    Artefacts are written to `output_dir` with the same `<n_latent_samples>_<kind>_<time_step>_benchmark.pkl` naming convention as `train_and_validate_pce_at_time_benchmark`, so downstream notebooks that only read the PCE metamodel don't need to change.
+
+    :param df_unique_train: `dataset_unique_train` dataframe, as saved by `generate_dataset_at_time_benchmark`
+    :param df_unique_val: `dataset_unique_val` dataframe, as saved by `generate_dataset_at_time_benchmark`
+    :param joint: UQpy JointIndependent distribution of R and S, used for the polynomial basis. Must match the one used to draw `df_unique_train`/`df_unique_val`
+    :param time_step: Time step of the analysis (bookkeeping and filenames only — the time effect is already baked into the lambdas)
+    :param n_latent_samples: Number of latent samples used to generate the dataset. Only used for the filename prefix, to match `generate_dataset_at_time_benchmark`
+    :param n_lambdas: Number of GLD lambdas predicted by the PCE
+    :param max_degree: Maximum total degree of the polynomial basis
+    :param output_dir: Directory where the .pkl artefacts are written
+    :param save: Whether to write the .pkl artefacts to disk
+    :param verbose: Whether to print the progress of each stage
+
+    :return: Dictionary with the fitted PCE and the validation statistics
+    """
+
+    out_dir     = Path(output_dir)
+    lambda_cols = [f'lambda {i}' for i in range(1, n_lambdas + 1)]
+    tag         = f'{time_step}_benchmark'
+    id_columns  = ['r', 's']
+
+    if verbose:
+        print(f'\n{"-"*40}')
+        print(f'TRAINING PCE FOR TIME STEP: {time_step} years')
+        print(f'{"-"*40}')
+
+    # =========================
+    # 1. PCE metamodel
+    # =========================
+    x_train           = df_unique_train[id_columns].to_numpy()
+    y_train           = df_unique_train[lambda_cols].to_numpy()
+    polynomial_basis  = TotalDegreeBasis(joint, max_degree)
+    least_squares     = LeastSquareRegression()
+    pce_metamodel     = PolynomialChaosExpansion(polynomial_basis=polynomial_basis, regression_method=least_squares)
+    pce_metamodel.fit(x_train, y_train)
+
+    paths = {}
+    if save:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        paths['pce_metamodel'] = out_dir / f'{n_latent_samples}_pce_metamodel_{tag}.pkl'
+        with open(paths['pce_metamodel'], 'wb') as f:
+            dill.dump(pce_metamodel, f)
+        if verbose:
+            print('1. PCE training dataset has been saved!')
+
+    # =========================
+    # 2. Validation
+    # =========================
+    x_val          = df_unique_val[id_columns].to_numpy()
+    y_val_true     = df_unique_val[lambda_cols].to_numpy()
+    y_val_pred     = pce_metamodel.predict(x_val)
+
+    mse_per_lambda = [mean_squared_error(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+    r2_per_lambda  = [r2_score(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+
+    stats_row = {f'MSE λ{i+1}': mse_per_lambda[i] for i in range(n_lambdas)}
+    stats_row.update({f'R² λ{i+1}': r2_per_lambda[i] for i in range(n_lambdas)})
+    statistics_ = pd.DataFrame(stats_row, index=[0])
+
+    if save:
+        paths['pce_validation_stats'] = out_dir / f'{n_latent_samples}_pce_validation_stats_{tag}.pkl'
+        with open(paths['pce_validation_stats'], 'wb') as f:
+            dill.dump(statistics_, f)
+        if verbose:
+            print('2. PCE statistcs has been saved!')
+
+    return {
+             'time_step':     time_step,
+             'pce_metamodel': pce_metamodel,
+             'statistics':    statistics_,
+             'paths':         paths,
+           }
+
+
+def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+    """Stage 1 of the split durability pipeline: run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.
+
+    This is the only stage that runs `carb_model.predict`, draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_durability`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.
+
+    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<split>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>.pkl` naming convention, where `<split>` is `train` or `val`.
+
+    :param x_train: Design samples used to later train the PCE, shape (n_samples, 3) as [fck, rh, cover]
+    :param x_val: Independent design samples used to later validate the PCE, shape (n_samples_validation, 3)
+    :param carb_model: Trained ML model for carbonation depth prediction
+    :param time_step: Time step of the analysis [years]
+    :param cement_type: Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)
+    :param installation_year: Calendar year of installation
+    :param exposure_conditions: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])
+    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix
+    :param output_dir: Directory where the .pkl artefacts are written
+    :param save: Whether to write the .pkl artefacts to disk
+    :param verbose: Whether to print the progress of each split
+
+    :return: Dictionary with the full/unique dataframes for the train and validation splits, the total emulator wall time, and the paths written
+    """
+
+    out_dir     = Path(output_dir)
+    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}'
+    emulator_kw = dict(names_x_variables=["fck", "rh", "cov"], carb_model=carb_model, cement_type=cement_type,
+                       installation_year=installation_year, exposure_conditions=exposure_conditions,
+                       time_step=time_step, n_latent_samples=n_latent_samples, verbose=False)
+
+    if verbose:
+        print(f'\n{"-"*40}')
+        print(f'GENERATING DATASET FOR TIME STEP: {time_step} years')
+        print(f'{"-"*40}')
+
+    paths           = {}
+    result          = {'time_step': time_step, 'paths': paths}
+    emulator_time_s = 0.0
+    for split, x in (('train', x_train), ('val', x_val)):
+        df_full, df_unique = emulator_function_time_durability(x=x, **emulator_kw)
+        result[f'df_full_{split}']   = df_full
+        result[f'df_unique_{split}'] = df_unique
+        emulator_time_s             += float(df_unique['Processing time (s)'].sum())
+
+        if save:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            for kind, frame in (('dataset_full', df_full), ('dataset_unique', df_unique)):
+                key         = f'{kind}_{split}'
+                paths[key]  = out_dir / f'{n_latent_samples}_{kind}_{split}_{tag}.pkl'
+                with open(paths[key], 'wb') as f:
+                    dill.dump(frame, f)
+
+        if verbose:
+            print(f'  {split}: {len(x)} design points, {df_unique["Processing time (s)"].sum():.2f} s total')
+
+    result['emulator_time_s'] = emulator_time_s
+
+    return result
+
+
+def train_and_validate_pce_from_dataset_durability(df_unique_train: pd.DataFrame, df_unique_val: pd.DataFrame, joint: Any, time_step: float, installation_year: int = 1990, cement_type: int = 3, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_lambdas: int = 4, max_degree: int = 3, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+    """Stage 2 of the split durability pipeline: fit a PCE metamodel to a previously generated lambda dataset and validate it. Makes no emulator calls and draws no latent samples.
+
+    Companion of `generate_dataset_at_time_durability`: takes its saved `dataset_unique` outputs (train and validation splits) and performs the PCE fit and scoring that `train_and_validate_pce_at_time` used to do inline with the data generation.
+
+    Artefacts are written to `output_dir` with the same `<n_latent_samples>_<kind>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>.pkl` naming convention as `train_and_validate_pce_at_time`, so downstream notebooks that only read the PCE metamodel don't need to change.
+
+    :param df_unique_train: `dataset_unique_train` dataframe, as saved by `generate_dataset_at_time_durability`
+    :param df_unique_val: `dataset_unique_val` dataframe, as saved by `generate_dataset_at_time_durability`
+    :param joint: UQpy JointIndependent distribution of the design variables, used for the polynomial basis. Must match the one used to draw `df_unique_train`/`df_unique_val`
+    :param time_step: Time step of the analysis (bookkeeping and filenames only — the time effect is already baked into the lambdas)
+    :param installation_year: Calendar year of installation. Only used for the filename, to match `generate_dataset_at_time_durability`
+    :param cement_type: Type of cement. Only used for the filename, to match `generate_dataset_at_time_durability`
+    :param exposure_conditions: Exposure conditions. Only used for the filename, to match `generate_dataset_at_time_durability`
+    :param n_latent_samples: Number of latent samples used to generate the dataset. Only used for the filename prefix, to match `generate_dataset_at_time_durability`
+    :param n_lambdas: Number of GLD lambdas predicted by the PCE
+    :param max_degree: Maximum total degree of the polynomial basis
+    :param output_dir: Directory where the .pkl artefacts are written
+    :param save: Whether to write the .pkl artefacts to disk
+    :param verbose: Whether to print the progress of each stage
+
+    :return: Dictionary with the fitted PCE and the validation statistics
+    """
+
+    out_dir     = Path(output_dir)
+    lambda_cols = [f'lambda {i}' for i in range(1, n_lambdas + 1)]
+    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}'
+    id_columns  = ['fck', 'rh', 'cov']
+
+    if verbose:
+        print(f'\n{"-"*40}')
+        print(f'TRAINING PCE FOR TIME STEP: {time_step} years')
+        print(f'{"-"*40}')
+
+    # =========================
+    # 1. PCE metamodel
+    # =========================
+    x_train           = df_unique_train[id_columns].to_numpy()
+    y_train           = df_unique_train[lambda_cols].to_numpy()
+    polynomial_basis  = TotalDegreeBasis(joint, max_degree)
+    least_squares     = LeastSquareRegression()
+    pce_metamodel     = PolynomialChaosExpansion(polynomial_basis=polynomial_basis, regression_method=least_squares)
+    pce_metamodel.fit(x_train, y_train)
+
+    paths = {}
+    if save:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        paths['pce_metamodel'] = out_dir / f'{n_latent_samples}_pce_metamodel_{tag}.pkl'
+        with open(paths['pce_metamodel'], 'wb') as f:
+            dill.dump(pce_metamodel, f)
+        if verbose:
+            print('1. PCE training dataset has been saved!')
+
+    # =========================
+    # 2. Validation
+    # =========================
+    x_val          = df_unique_val[id_columns].to_numpy()
+    y_val_true     = df_unique_val[lambda_cols].to_numpy()
+    y_val_pred     = pce_metamodel.predict(x_val)
+
+    mse_per_lambda = [mean_squared_error(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+    r2_per_lambda  = [r2_score(y_val_true[:, i], y_val_pred[:, i]) for i in range(n_lambdas)]
+
+    stats_row = {f'MSE λ{i+1}': mse_per_lambda[i] for i in range(n_lambdas)}
+    stats_row.update({f'R² λ{i+1}': r2_per_lambda[i] for i in range(n_lambdas)})
+    statistics_ = pd.DataFrame(stats_row, index=[0])
+
+    if save:
+        paths['pce_validation_stats'] = out_dir / f'{n_latent_samples}_pce_validation_stats_{tag}.pkl'
+        with open(paths['pce_validation_stats'], 'wb') as f:
+            dill.dump(statistics_, f)
+        if verbose:
+            print('2. PCE statistcs has been saved!')
+
+    return {
+             'time_step':     time_step,
+             'pce_metamodel': pce_metamodel,
+             'statistics':    statistics_,
+             'paths':         paths,
+           }
 
 
 # if __name__ == "__main__":

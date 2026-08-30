@@ -56,21 +56,8 @@ print(f"   Expected features: {model.feature_names_in_}")
 
 """### 2.2 Testing model"""
 
-mat = {
-        'f_ck [MPa]': 30,
-        'Type of cement': 2
-      }
-expo = {
-          'Installation year': 1990,
-          'Exposure conditions': 2,
-          'Relative humidity [%]': 40
-        }
-geo = {'cover[mm]':30}
-load = {}
-predictor = CO2Predictor()
-beam_with_rh = Beam(geo=geo, mat=mat, load=load, expo=expo)
-predictor.set_beam(beam_with_rh)
-profile = predictor.carbonation_profile(model_=model, lifetime=150)
+profile = carbonation_profile(model_=model, lifetime=150, fc=30, rh=40,
+                              cement_type=2, exposure=2, start_year=1990)
 
 """### 2.3 Carbonation profile over time"""
 
@@ -78,7 +65,7 @@ profile
 
 """### 2.4 Test carbonation depth at 2025"""
 
-carb_depth_mm = predictor.carbonation_depth_at_time(profile, 2025)
+carb_depth_mm = carbonation_depth_at_time(profile, 2025)
 carb_depth_mm
 
 """# 3. DEFINITION OF RANDOM VARIABLES
