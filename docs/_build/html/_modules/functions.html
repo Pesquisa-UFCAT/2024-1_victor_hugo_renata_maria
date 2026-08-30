@@ -1,0 +1,1268 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
+
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>functions - Carbonation Durability Surrogates</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Carbonation Durability Surrogates</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  <span class="sidebar-brand-text">Carbonation Durability Surrogates</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for functions</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dill</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">odeint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">UQpy.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Uniform</span><span class="p">,</span> <span class="n">Normal</span><span class="p">,</span> <span class="n">JointIndependent</span> <span class="c1">#, Lognormal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">UQpy.distributions.collection.Lognormal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Lognormal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">UQpy.surrogates</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_squared_error</span><span class="p">,</span> <span class="n">r2_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">stats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">cpu_count</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">joblib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyglam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">glam</span>
+
+
+<div class="viewcode-block" id="generate_latent_variables">
+<a class="viewcode-back" href="../api.html#functions.generate_latent_variables">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_latent_variables</span><span class="p">(</span><span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Generates the latent multipliers related to the beam problem. All three follow a normal distribution with the same mean and coefficient of variation.</span>
+
+<span class="sd">    :param n_latent_samples: Number of latent samples to generate</span>
+<span class="sd">    :param mean: Mean of the latent multipliers</span>
+<span class="sd">    :param cov: Coefficient of variation of the latent multipliers</span>
+
+<span class="sd">    :return: Sampled multipliers for relative humidity, concrete compressive strength, and concrete cover</span>
+<span class="sd">    """</span>
+
+    <span class="n">scale</span>      <span class="o">=</span> <span class="n">cov</span> <span class="o">*</span> <span class="n">mean</span>
+    <span class="n">cov_latent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">)</span>
+    <span class="n">rh_latent</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">)</span>
+    <span class="n">fck_latent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rh_latent</span><span class="p">,</span> <span class="n">fck_latent</span><span class="p">,</span> <span class="n">cov_latent</span></div>
+
+
+
+<div class="viewcode-block" id="co2_percentage_1900_1950">
+<a class="viewcode-back" href="../api.html#functions.co2_percentage_1900_1950">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">co2_percentage_1900_1950</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""CO2 atmospheric concentration (%) for historical period 1900–1950. Based on a linear approximation of the upward trend during this period.</span>
+
+<span class="sd">    :param year: Calendar year (1900 &lt;= year &lt;= 1950)</span>
+
+<span class="sd">    :return: CO2 concentration in percentage (ppm / 10000)</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">1900</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">1950</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Year must be between 1900 and 1950 for this function."</span><span class="p">)</span>
+
+    <span class="n">co2_ppm</span> <span class="o">=</span> <span class="mf">296.0</span> <span class="o">+</span> <span class="mf">0.30</span> <span class="o">*</span> <span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1900</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">co2_ppm</span> <span class="o">/</span> <span class="mf">1e4</span></div>
+
+
+
+<div class="viewcode-block" id="co2_percentage_1950_2000">
+<a class="viewcode-back" href="../api.html#functions.co2_percentage_1950_2000">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">co2_percentage_1950_2000</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""CO2 atmospheric concentration (%) for historical period 1950–2000. Based on a linear approximation of the accelerating upward trend.</span>
+
+<span class="sd">    :param year: Calendar year (1950 &lt;= year &lt;= 2000)</span>
+
+<span class="sd">    :return: CO2 concentration in percentage (ppm / 10000)</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">1950</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">2000</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Year must be between 1950 and 2000 for this function."</span><span class="p">)</span>
+
+    <span class="n">co2_ppm</span> <span class="o">=</span> <span class="mf">311.0</span> <span class="o">+</span> <span class="mf">1.16</span> <span class="o">*</span> <span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1950</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">co2_ppm</span> <span class="o">/</span> <span class="mf">1e4</span></div>
+
+
+
+<div class="viewcode-block" id="co2_percentage_pos2000">
+<a class="viewcode-back" href="../api.html#functions.co2_percentage_pos2000">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">co2_percentage_pos2000</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""CO2 atmospheric concentration (%) for post-2000 period. Captures the non-linear (quadratic) acceleration in CO2 buildup observed in recent decades.</span>
+
+<span class="sd">    :param year: Calendar year (&gt;= 2000)</span>
+
+<span class="sd">    :return: CO2 concentration in percentage (ppm / 10000)</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="n">year</span> <span class="o">&lt;</span> <span class="mi">2000</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Year must be &gt;= 2000 for this function."</span><span class="p">)</span>
+
+    <span class="n">t</span>  <span class="o">=</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">2000</span>
+    <span class="n">C0</span> <span class="o">=</span> <span class="mf">369.0</span>   <span class="c1"># ppm in 2000 (approximate observed value)</span>
+    <span class="n">a</span>  <span class="o">=</span> <span class="mf">1.85</span>    <span class="c1"># ppm/year (linear component)</span>
+    <span class="n">b</span>  <span class="o">=</span> <span class="mf">0.018</span>   <span class="c1"># ppm/year² (quadratic component)</span>
+    <span class="n">co2_ppm</span> <span class="o">=</span> <span class="n">C0</span> <span class="o">+</span> <span class="n">a</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">t</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="k">return</span> <span class="n">co2_ppm</span> <span class="o">/</span> <span class="mf">1e4</span></div>
+
+
+
+<div class="viewcode-block" id="co2_percentage_year">
+<a class="viewcode-back" href="../api.html#functions.co2_percentage_year">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">co2_percentage_year</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Global average atmospheric CO2 concentration (%) valid from 1900 onwards. Routes the calculation to the correct historical formula based on the year.</span>
+
+<span class="sd">    :param year: Calendar year (&gt;= 1900)</span>
+
+<span class="sd">    :return: CO2 concentration in percentage (ppm / 10000)</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="n">year</span> <span class="o">&lt;</span> <span class="mi">1900</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Year must be &gt;= 1900. Received: </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">1950</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">co2_percentage_1900_1950</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="mi">1950</span> <span class="o">&lt;</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">2000</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">co2_percentage_1950_2000</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">co2_percentage_pos2000</span><span class="p">(</span><span class="n">year</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="carbonation_profile">
+<a class="viewcode-back" href="../api.html#functions.carbonation_profile">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">carbonation_profile</span><span class="p">(</span><span class="n">model_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">lifetime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fc</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rh</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cement_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">exposure</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">start_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Generate carbonation profile starting at a given calendar year.</span>
+
+<span class="sd">    :param model_: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.</span>
+<span class="sd">    :param lifetime: Design life of the structure [years]</span>
+<span class="sd">    :param fc: Concrete compressive strength [MPa]</span>
+<span class="sd">    :param rh: Relative humidity [%]</span>
+<span class="sd">    :param cement_type: Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)</span>
+<span class="sd">    :param exposure: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])</span>
+<span class="sd">    :param start_year: Calendar year of installation</span>
+
+<span class="sd">    :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Time steps</span>
+    <span class="n">years</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lifetime</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="c1"># Romain calendar</span>
+    <span class="n">calendar_years</span> <span class="o">=</span> <span class="n">start_year</span> <span class="o">+</span> <span class="n">years</span>
+
+    <span class="c1"># CO2 emission</span>
+    <span class="n">co2_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">co2_percentage_year</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">calendar_years</span><span class="p">]</span>
+
+    <span class="c1"># Carbonation AI model and profile</span>
+    <span class="n">df</span>      <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">'t (years)'</span><span class="p">:</span> <span class="n">years</span><span class="p">,</span> <span class="s1">'CO2 (%)'</span><span class="p">:</span> <span class="n">co2_values</span><span class="p">,</span> <span class="s1">'fc (MPa)'</span><span class="p">:</span> <span class="p">[</span><span class="n">fc</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">),</span> <span class="s1">'RH (%)'</span><span class="p">:</span> <span class="p">[</span><span class="n">rh</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">),</span> <span class="s1">'Type of cement'</span><span class="p">:</span> <span class="p">[</span><span class="n">cement_type</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">),</span> <span class="s1">'Exposure conditions'</span><span class="p">:</span> <span class="p">[</span><span class="n">exposure</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">)})</span>
+    <span class="n">df</span>      <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">model_</span><span class="o">.</span><span class="n">feature_names_in_</span><span class="p">]</span>
+    <span class="n">depth</span>   <span class="o">=</span> <span class="n">model_</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">'calendar year'</span><span class="p">:</span> <span class="n">calendar_years</span><span class="p">,</span> <span class="s1">'t (years)'</span><span class="p">:</span> <span class="n">years</span><span class="p">,</span> <span class="s1">'CO2 (%)'</span><span class="p">:</span> <span class="n">co2_values</span><span class="p">,</span> <span class="s1">'carbonation depth (mm)'</span><span class="p">:</span> <span class="n">depth</span><span class="p">})</span>
+    <span class="n">profile</span><span class="p">[</span><span class="s1">'carbonation depth (mm)'</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">'carbonation depth (mm)'</span><span class="p">]</span><span class="o">.</span><span class="n">cummax</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">profile</span></div>
+
+
+
+<div class="viewcode-block" id="carbonation_depth_at_time">
+<a class="viewcode-back" href="../api.html#functions.carbonation_depth_at_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">carbonation_depth_at_time</span><span class="p">(</span><span class="n">profile</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">t_query</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Returns carbonation depth at a specific time.</span>
+
+<span class="sd">    :param profile : DataFrame with columns ['calendar year', 'carbonation depth (mm)']</span>
+<span class="sd">    :param t_query : Calendar year for which to query the carbonation depth</span>
+
+<span class="sd">    :return: Carbonation depth at the specified calendar year</span>
+<span class="sd">    """</span>
+
+    <span class="n">t</span>     <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">'calendar year'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">'carbonation depth (mm)'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">t_query</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">depth</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="_interp_profile_at">
+<a class="viewcode-back" href="../api.html#functions._interp_profile_at">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_interp_profile_at</span><span class="p">(</span><span class="n">calendar_years</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">depths</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">year_query</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Linear interpolation (with linear extrapolation outside the range) of a batch of</span>
+<span class="sd">    cumulative-max carbonation profiles at a single query year, vectorized across rows.</span>
+
+<span class="sd">    :param calendar_years: Grid of calendar years shared by every row, sorted ascending</span>
+<span class="sd">    :param depths: Carbonation depth profile per row, shape (n_rows, n_grid)</span>
+<span class="sd">    :param year_query: Calendar year at which to evaluate every row</span>
+
+<span class="sd">    :return: Interpolated carbonation depth for each row</span>
+<span class="sd">    """</span>
+
+    <span class="n">n_grid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendar_years</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_grid</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">depths</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">calendar_years</span><span class="p">,</span> <span class="n">year_query</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">'right'</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n_grid</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">calendar_years</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">calendar_years</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">frac</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">t1</span> <span class="o">==</span> <span class="n">t0</span> <span class="k">else</span> <span class="p">(</span><span class="n">year_query</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">depths</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">+</span> <span class="n">frac</span> <span class="o">*</span> <span class="p">(</span><span class="n">depths</span><span class="p">[:,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">depths</span><span class="p">[:,</span> <span class="n">k</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="generate_latent_variables_benchmark">
+<a class="viewcode-back" href="../api.html#functions.generate_latent_variables_benchmark">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_latent_variables_benchmark</span><span class="p">(</span><span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">z1_mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z1_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.028</span><span class="p">,</span> <span class="n">z2_mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z2_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.096</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Generates the latent multipliers of the R/S benchmark. Both follow a normal distribution, in line with `generate_latent_variables`.</span>
+
+<span class="sd">    :param n_latent_samples: Number of latent samples to generate</span>
+<span class="sd">    :param z1_mean: Mean of the resistance latent multiplier</span>
+<span class="sd">    :param z1_std: Standard deviation of the resistance latent multiplier</span>
+<span class="sd">    :param z2_mean: Mean of the load latent multiplier</span>
+<span class="sd">    :param z2_std: Standard deviation of the load latent multiplier</span>
+
+<span class="sd">    :return: Sampled multipliers z1 (resistance) and z2 (load)</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Draw order is z1 then z2: keep it so that a given seed reproduces the same stream.</span>
+    <span class="n">z1_latent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">z1_mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">z1_std</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">)</span>
+    <span class="n">z2_latent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">z2_mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">z2_std</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">z1_latent</span><span class="p">,</span> <span class="n">z2_latent</span></div>
+
+
+
+<div class="viewcode-block" id="emulator_function_time_benchmark">
+<a class="viewcode-back" href="../api.html#functions.emulator_function_time_benchmark">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">emulator_function_time_benchmark</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">names_x_variables</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">k_factor_final</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">z1_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.028</span><span class="p">,</span> <span class="n">z2_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.096</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Compute the emulator of the R/S benchmark state limit function.</span>
+
+<span class="sd">    The state limit function is g = k(t) * R / z1 - S * z2, where R is the resistance, S is the load, and z1 and z2 are normal latent multipliers. Failure is g &lt; 0.</span>
+
+<span class="sd">    The degradation factor k(t) = 1 + (k_factor_final - 1) * t / 100 shrinks the resistance linearly with time, reaching `k_factor_final` at t = 100. Setting `k_factor_final` to 1.0 removes the time effect and leaves the plain g = R / z1 - S * z2.</span>
+
+<span class="sd">    Mirrors `emulator_function_time_durability`: one GLD fit per design point, and a per-design-point wall time so the cost of building the dataset can be compared against evaluating the surrogate.</span>
+
+<span class="sd">    :param x: Design samples, shape (n_samples, 2) as [R, S]</span>
+<span class="sd">    :param names_x_variables: Names of the two design variables, used as the identifying columns of the output</span>
+<span class="sd">    :param time_step: Time step of the analysis, feeding the degradation factor k(t)</span>
+<span class="sd">    :param n_latent_samples: Number of latent samples per design sample</span>
+<span class="sd">    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect</span>
+<span class="sd">    :param z1_std: Standard deviation of the resistance latent multiplier</span>
+<span class="sd">    :param z2_std: Standard deviation of the load latent multiplier</span>
+<span class="sd">    :param verbose: Whether to print per-sample diagnostics</span>
+
+<span class="sd">    :return: [0] = one row per latent replica ; [1] = one row per design point, with the lambdas and the processing time</span>
+<span class="sd">    """</span>
+
+    <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 0. Degradation factor</span>
+    <span class="c1"># =========================</span>
+    <span class="n">k_factor</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">k_factor_final</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">time_step</span> <span class="o">/</span> <span class="mi">100</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="c1"># Wall time spent on this design point, used later to measure the emulator speed-up</span>
+        <span class="n">t_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 1. Design point properties</span>
+        <span class="c1"># =========================</span>
+        <span class="n">base_r</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">base_s</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 2. Generate latent variables (resistance and load uncertainty)</span>
+        <span class="c1"># =========================</span>
+        <span class="n">z1_latent</span><span class="p">,</span> <span class="n">z2_latent</span> <span class="o">=</span> <span class="n">generate_latent_variables_benchmark</span><span class="p">(</span><span class="n">n_latent_samples</span><span class="p">,</span> <span class="n">z1_std</span><span class="o">=</span><span class="n">z1_std</span><span class="p">,</span> <span class="n">z2_std</span><span class="o">=</span><span class="n">z2_std</span><span class="p">)</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 3. Emulator of state limit function g = k(t) * R / z1 - S * z2</span>
+        <span class="c1"># =========================</span>
+        <span class="n">r_effective</span> <span class="o">=</span> <span class="n">k_factor</span> <span class="o">*</span> <span class="n">base_r</span> <span class="o">/</span> <span class="n">z1_latent</span>
+        <span class="n">s_effective</span> <span class="o">=</span> <span class="n">base_s</span> <span class="o">*</span> <span class="n">z2_latent</span>
+        <span class="n">g_vals</span>      <span class="o">=</span> <span class="n">r_effective</span> <span class="o">-</span> <span class="n">s_effective</span>  <span class="c1"># failure if g &lt; 0</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 4. Create DataFrame</span>
+        <span class="c1"># =========================</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                            <span class="n">names_x_variables</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="n">n_latent_samples</span><span class="p">,</span>
+                            <span class="n">names_x_variables</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">*</span> <span class="n">n_latent_samples</span><span class="p">,</span>
+                            <span class="s1">'z1_latent'</span><span class="p">:</span> <span class="n">z1_latent</span><span class="p">,</span>
+                            <span class="s1">'R_effective'</span><span class="p">:</span> <span class="n">r_effective</span><span class="p">,</span>
+                            <span class="s1">'z2_latent'</span><span class="p">:</span> <span class="n">z2_latent</span><span class="p">,</span>
+                            <span class="s1">'S_effective'</span><span class="p">:</span> <span class="n">s_effective</span><span class="p">,</span>
+                            <span class="s1">'k factor'</span><span class="p">:</span> <span class="n">k_factor</span><span class="p">,</span>
+                            <span class="s1">'Time (years)'</span><span class="p">:</span> <span class="n">time_step</span><span class="p">,</span>
+                            <span class="s1">'g'</span><span class="p">:</span> <span class="n">g_vals</span>
+                        <span class="p">})</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 5. GLAM fitting</span>
+        <span class="c1"># =========================</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">g_vals</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="n">lambdas</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">emulator</span> <span class="o">=</span> <span class="n">glam</span><span class="o">.</span><span class="n">GlamFKML</span><span class="p">()</span>
+                <span class="n">sol</span> <span class="o">=</span> <span class="n">emulator</span><span class="o">.</span><span class="n">fit_lambdas</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">'g'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"least_squares"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">sol</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
+                    <span class="n">lambdas</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lambdas</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">x</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  GLAM fitting failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">lambdas</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>
+
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 1'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 2'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 3'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 4'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="c1"># Cost of producing this design point: latent sampling, g evaluation and GLAM fitting</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'Processing time (s)'</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t_start</span>
+
+        <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Sample </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    P(g &lt; 0) = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">g_vals</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Mean g = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">g_vals</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">df_full</span>    <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">id_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">names_x_variables</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">df_unique</span>  <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">df_full</span><span class="p">[</span><span class="n">id_columns</span> <span class="o">+</span> <span class="p">[</span><span class="s1">'lambda 1'</span><span class="p">,</span> <span class="s1">'lambda 2'</span><span class="p">,</span> <span class="s1">'lambda 3'</span><span class="p">,</span> <span class="s1">'lambda 4'</span><span class="p">,</span> <span class="s1">'Processing time (s)'</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="n">id_columns</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                 <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df_full</span><span class="p">,</span> <span class="n">df_unique</span></div>
+
+
+
+<div class="viewcode-block" id="emulator_function_time_durability">
+<a class="viewcode-back" href="../api.html#functions.emulator_function_time_durability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">emulator_function_time_durability</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">names_x_variables</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">carb_model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cement_type</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">installation_year</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1990</span><span class="p">,</span> <span class="n">exposure_conditions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">start_year</span> <span class="o">=</span> <span class="n">installation_year</span>
+    <span class="n">year_query</span> <span class="o">=</span> <span class="n">start_year</span> <span class="o">+</span> <span class="n">time_step</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 0. Time grid and CO2(%) profile</span>
+    <span class="c1"># =========================</span>
+    <span class="n">lifetime_full</span>  <span class="o">=</span> <span class="mi">150</span>
+    <span class="n">grid_step</span>      <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">grid_max</span>       <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lifetime_full</span><span class="p">,</span> <span class="n">grid_step</span> <span class="o">*</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">time_step</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">grid_step</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">years</span>          <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">grid_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">grid_step</span><span class="p">)</span>
+    <span class="n">calendar_years</span> <span class="o">=</span> <span class="n">start_year</span> <span class="o">+</span> <span class="n">years</span>
+    <span class="n">co2_values</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">co2_percentage_year</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">calendar_years</span><span class="p">])</span>
+    <span class="n">n_grid</span>         <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="c1"># Wall time spent on this design point, used later to measure the emulator speed-up</span>
+        <span class="n">t_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 1. Beam properties (durability analysis)</span>
+        <span class="c1"># =========================</span>
+        <span class="n">base_fck</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">base_rh</span>  <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">base_cov</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 2. Generate latent variables (humidity uncertainty)</span>
+        <span class="c1"># =========================</span>
+        <span class="n">rh_latent</span><span class="p">,</span> <span class="n">fck_latent</span><span class="p">,</span> <span class="n">cov_latent</span> <span class="o">=</span> <span class="n">generate_latent_variables</span><span class="p">(</span><span class="n">n_latent_samples</span><span class="p">)</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 3. Carbonation analysis for each latent humidity, fck and cover sample.</span>
+        <span class="c1"># =========================</span>
+        <span class="n">new_rh_raw</span>  <span class="o">=</span> <span class="n">base_rh</span> <span class="o">*</span> <span class="n">rh_latent</span>
+        <span class="n">new_fck_raw</span> <span class="o">=</span> <span class="n">base_fck</span> <span class="o">*</span> <span class="n">fck_latent</span>
+        <span class="n">new_cov_raw</span> <span class="o">=</span> <span class="n">base_cov</span> <span class="o">*</span> <span class="n">cov_latent</span>
+
+        <span class="c1"># Ensure physical limits</span>
+        <span class="n">new_rh</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">new_rh_raw</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">new_fck</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">new_fck_raw</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">new_cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">new_cov_raw</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">n_total</span>  <span class="o">=</span> <span class="n">n_latent_samples</span> <span class="o">*</span> <span class="n">n_grid</span>
+        <span class="n">batch_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                                    <span class="s1">'t (years)'</span><span class="p">:</span>            <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">years</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">),</span>
+                                    <span class="s1">'CO2 (%)'</span><span class="p">:</span>              <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">co2_values</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">),</span>
+                                    <span class="s1">'fc (MPa)'</span><span class="p">:</span>             <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">new_fck</span><span class="p">,</span> <span class="n">n_grid</span><span class="p">),</span>
+                                    <span class="s1">'RH (%)'</span><span class="p">:</span>               <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">new_rh</span><span class="p">,</span> <span class="n">n_grid</span><span class="p">),</span>
+                                    <span class="s1">'Type of cement'</span><span class="p">:</span>       <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_total</span><span class="p">,</span> <span class="n">cement_type</span><span class="p">),</span>
+                                    <span class="s1">'Exposure conditions'</span><span class="p">:</span>  <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_total</span><span class="p">,</span> <span class="n">exposure_conditions</span><span class="p">),</span>
+                                 <span class="p">})</span>
+        <span class="n">batch_df</span> <span class="o">=</span> <span class="n">batch_df</span><span class="p">[</span><span class="n">carb_model</span><span class="o">.</span><span class="n">feature_names_in_</span><span class="p">]</span>
+
+        <span class="n">depths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">carb_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">batch_df</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_latent_samples</span><span class="p">,</span> <span class="n">n_grid</span><span class="p">)</span>
+        <span class="n">depths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">depths</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># same effect as the per-sample cummax profile</span>
+
+        <span class="n">carbonation_depths</span> <span class="o">=</span> <span class="n">_interp_profile_at</span><span class="p">(</span><span class="n">calendar_years</span><span class="p">,</span> <span class="n">depths</span><span class="p">,</span> <span class="n">year_query</span><span class="p">)</span>
+        <span class="n">carbonation_depths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">carbonation_depths</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 3.1. Emulator of state limit function g = cover - carbonation depth</span>
+        <span class="c1"># =========================</span>
+        <span class="n">g_vals</span> <span class="o">=</span> <span class="n">new_cov</span> <span class="o">-</span> <span class="n">carbonation_depths</span>  <span class="c1"># g = cover - carbonation depth (failure if g &lt; 0)</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 4. Create DataFrame</span>
+        <span class="c1"># =========================</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                            <span class="n">names_x_variables</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="n">n_latent_samples</span><span class="p">,</span>
+                            <span class="n">names_x_variables</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">*</span> <span class="n">n_latent_samples</span><span class="p">,</span>
+                            <span class="n">names_x_variables</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span> <span class="o">*</span> <span class="n">n_latent_samples</span><span class="p">,</span>
+                            <span class="s1">'RH_latent'</span><span class="p">:</span> <span class="n">rh_latent</span><span class="p">,</span>
+                            <span class="s1">'RH_effective'</span><span class="p">:</span> <span class="n">new_rh_raw</span><span class="p">,</span>
+                            <span class="s1">'FCK_latent'</span><span class="p">:</span> <span class="n">fck_latent</span><span class="p">,</span>
+                            <span class="s1">'FCK_effective'</span><span class="p">:</span> <span class="n">new_fck_raw</span><span class="p">,</span>
+                            <span class="s1">'cov_latent'</span><span class="p">:</span> <span class="n">cov_latent</span><span class="p">,</span>
+                            <span class="s1">'cov_effective'</span><span class="p">:</span> <span class="n">new_cov_raw</span><span class="p">,</span>
+                            <span class="s1">'Carbonation_depth_mm'</span><span class="p">:</span> <span class="n">carbonation_depths</span><span class="p">,</span>
+                            <span class="s1">'Time (years)'</span><span class="p">:</span> <span class="n">time_step</span><span class="p">,</span>
+                            <span class="s1">'g'</span><span class="p">:</span> <span class="n">g_vals</span>
+                        <span class="p">})</span>
+
+        <span class="c1"># =========================</span>
+        <span class="c1"># 5. GLAM fitting</span>
+        <span class="c1"># =========================</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">g_vals</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="n">lambdas</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">emulator</span> <span class="o">=</span> <span class="n">glam</span><span class="o">.</span><span class="n">GlamFKML</span><span class="p">()</span>
+                <span class="n">sol</span> <span class="o">=</span> <span class="n">emulator</span><span class="o">.</span><span class="n">fit_lambdas</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">'g'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"least_squares"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">sol</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
+                    <span class="n">lambdas</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lambdas</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">x</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  GLAM fitting failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">lambdas</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>
+
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 1'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 2'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 3'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'lambda 4'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="c1"># Cost of producing this design point: latent sampling, carbonation batch and GLAM fitting</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'Processing time (s)'</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t_start</span>
+
+        <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Sample </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    P(g &lt; 0) = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">g_vals</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Mean carbonation depth = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">carbonation_depths</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm"</span><span class="p">)</span>
+
+    <span class="n">df_full</span>    <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">id_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">names_x_variables</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">df_unique</span>  <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">df_full</span><span class="p">[</span><span class="n">id_columns</span> <span class="o">+</span> <span class="p">[</span><span class="s1">'lambda 1'</span><span class="p">,</span> <span class="s1">'lambda 2'</span><span class="p">,</span> <span class="s1">'lambda 3'</span><span class="p">,</span> <span class="s1">'lambda 4'</span><span class="p">,</span> <span class="s1">'Processing time (s)'</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="n">id_columns</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                 <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df_full</span><span class="p">,</span> <span class="n">df_unique</span></div>
+
+
+
+<div class="viewcode-block" id="train_and_validate_pce_at_time_benchmark">
+<a class="viewcode-back" href="../api.html#functions.train_and_validate_pce_at_time_benchmark">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_and_validate_pce_at_time_benchmark</span><span class="p">(</span><span class="n">x_train</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">n_samples_validation</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">250</span><span class="p">,</span> <span class="n">n_lambdas</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">k_factor_final</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">z1_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.028</span><span class="p">,</span> <span class="n">z2_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.096</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s1">'.'</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the R/S benchmark dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.</span>
+
+<span class="sd">    Benchmark twin of `train_and_validate_pce_at_time`: same three stages, same artefacts, but driven by `emulator_function_time_benchmark` instead of the carbonation emulator.</span>
+
+<span class="sd">    Artefacts are written to `output_dir` with the `&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_benchmark.pkl` naming convention.</span>
+
+<span class="sd">    :param x_train: Design samples used to train the PCE, shape (n_samples, 2) as [R, S]</span>
+<span class="sd">    :param joint: UQpy JointIndependent distribution of R and S, used for the polynomial basis and to draw the validation samples</span>
+<span class="sd">    :param time_step: Time step of the analysis, feeding the degradation factor k(t)</span>
+<span class="sd">    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix</span>
+<span class="sd">    :param n_samples_validation: Number of independent samples drawn from `joint` to validate the PCE</span>
+<span class="sd">    :param n_lambdas: Number of GLD lambdas predicted by the PCE</span>
+<span class="sd">    :param max_degree: Maximum total degree of the polynomial basis</span>
+<span class="sd">    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect</span>
+<span class="sd">    :param z1_std: Standard deviation of the resistance latent multiplier</span>
+<span class="sd">    :param z2_std: Standard deviation of the load latent multiplier</span>
+<span class="sd">    :param output_dir: Directory where the .pkl artefacts are written</span>
+<span class="sd">    :param save: Whether to write the .pkl artefacts to disk</span>
+<span class="sd">    :param verbose: Whether to print the progress of each stage</span>
+
+<span class="sd">    :return: Dictionary with the emulator dataframes, the fitted PCE, the validation statistics, the total emulator wall time, and the paths written</span>
+<span class="sd">    """</span>
+
+    <span class="n">out_dir</span>     <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">lambda_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'lambda </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_lambdas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">tag</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1">_benchmark'</span>
+    <span class="n">emulator_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">names_x_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"s"</span><span class="p">],</span> <span class="n">time_step</span><span class="o">=</span><span class="n">time_step</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">,</span>
+                       <span class="n">k_factor_final</span><span class="o">=</span><span class="n">k_factor_final</span><span class="p">,</span> <span class="n">z1_std</span><span class="o">=</span><span class="n">z1_std</span><span class="p">,</span> <span class="n">z2_std</span><span class="o">=</span><span class="n">z2_std</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'PROCESSING EMULATOR FOR TIME STEP: </span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1"> years'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 1. Emulator dataset (state limit function and lambdas)</span>
+    <span class="c1"># =========================</span>
+    <span class="n">df_full</span><span class="p">,</span> <span class="n">df_unique</span> <span class="o">=</span> <span class="n">emulator_function_time_benchmark</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="o">**</span><span class="n">emulator_kw</span><span class="p">)</span>
+
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'dataset_full'</span><span class="p">,</span> <span class="n">df_full</span><span class="p">),</span> <span class="p">(</span><span class="s1">'dataset_unique'</span><span class="p">,</span> <span class="n">df_unique</span><span class="p">)):</span>
+            <span class="n">paths</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'1. The dataset has been saved!'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 2. PCE metamodel</span>
+    <span class="c1"># =========================</span>
+    <span class="n">y_train</span>          <span class="o">=</span> <span class="n">df_unique</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">polynomial_basis</span> <span class="o">=</span> <span class="n">TotalDegreeBasis</span><span class="p">(</span><span class="n">joint</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">)</span>
+    <span class="n">least_squares</span>    <span class="o">=</span> <span class="n">LeastSquareRegression</span><span class="p">()</span>
+    <span class="n">pce_metamodel</span>    <span class="o">=</span> <span class="n">PolynomialChaosExpansion</span><span class="p">(</span><span class="n">polynomial_basis</span><span class="o">=</span><span class="n">polynomial_basis</span><span class="p">,</span> <span class="n">regression_method</span><span class="o">=</span><span class="n">least_squares</span><span class="p">)</span>
+    <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_metamodel_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">pce_metamodel</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'2. PCE training dataset has been saved!'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 3. Validation on an independent sample</span>
+    <span class="c1"># =========================</span>
+    <span class="n">x_val</span>                      <span class="o">=</span> <span class="n">joint</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n_samples_validation</span><span class="p">)</span>
+    <span class="n">df_full_val</span><span class="p">,</span> <span class="n">df_unique_val</span> <span class="o">=</span> <span class="n">emulator_function_time_benchmark</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_val</span><span class="p">,</span> <span class="o">**</span><span class="n">emulator_kw</span><span class="p">)</span>
+    <span class="n">y_val_true</span>                 <span class="o">=</span> <span class="n">df_unique_val</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_val_pred</span>                 <span class="o">=</span> <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_val</span><span class="p">)</span>
+
+    <span class="n">mse_per_lambda</span> <span class="o">=</span> <span class="p">[</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+    <span class="n">r2_per_lambda</span>  <span class="o">=</span> <span class="p">[</span><span class="n">r2_score</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+
+    <span class="n">stats_row</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s1">'MSE λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">mse_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)}</span>
+    <span class="n">stats_row</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s1">'R² λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">r2_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)})</span>
+    <span class="n">statistics_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">stats_row</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_validation_stats_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">statistics_</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'3. PCE statistcs has been saved!'</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+             <span class="s1">'time_step'</span><span class="p">:</span>       <span class="n">time_step</span><span class="p">,</span>
+             <span class="s1">'df_full'</span><span class="p">:</span>         <span class="n">df_full</span><span class="p">,</span>
+             <span class="s1">'df_unique'</span><span class="p">:</span>       <span class="n">df_unique</span><span class="p">,</span>
+             <span class="s1">'pce_metamodel'</span><span class="p">:</span>   <span class="n">pce_metamodel</span><span class="p">,</span>
+             <span class="s1">'statistics'</span><span class="p">:</span>      <span class="n">statistics_</span><span class="p">,</span>
+             <span class="s1">'df_full_val'</span><span class="p">:</span>     <span class="n">df_full_val</span><span class="p">,</span>
+             <span class="s1">'df_unique_val'</span><span class="p">:</span>   <span class="n">df_unique_val</span><span class="p">,</span>
+             <span class="s1">'emulator_time_s'</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">df_unique</span><span class="p">[</span><span class="s1">'Processing time (s)'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+             <span class="s1">'paths'</span><span class="p">:</span>           <span class="n">paths</span><span class="p">,</span>
+           <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="train_and_validate_pce_at_time">
+<a class="viewcode-back" href="../api.html#functions.train_and_validate_pce_at_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_and_validate_pce_at_time</span><span class="p">(</span><span class="n">x_train</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">carb_model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cement_type</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">installation_year</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1990</span><span class="p">,</span> <span class="n">exposure_conditions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">n_samples_validation</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">250</span><span class="p">,</span> <span class="n">n_lambdas</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s1">'.'</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the durability emulator dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.</span>
+
+<span class="sd">    Runs the three stages of one time step of the dataset pipeline: (1) evaluates `emulator_function_time_durability` on the design samples to obtain the lambdas, (2) fits a PCE of `max_degree` mapping design variables to lambdas, and (3) re-evaluates the emulator on an independent validation sample to score the PCE with MSE and R2 per lambda.</span>
+
+<span class="sd">    Artefacts are written to `output_dir` with the `&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_install_&lt;year&gt;_cement_&lt;type&gt;_exposure_&lt;exposure&gt;.pkl` naming convention, which is what the downstream notebooks expect.</span>
+
+<span class="sd">    :param x_train: Design samples used to train the PCE, shape (n_samples, 3) as [fck, rh, cover]</span>
+<span class="sd">    :param joint: UQpy JointIndependent distribution of the design variables, used for the polynomial basis and to draw the validation samples</span>
+<span class="sd">    :param carb_model: Trained ML model for carbonation depth prediction</span>
+<span class="sd">    :param time_step: Time step of the analysis [years]</span>
+<span class="sd">    :param cement_type: Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)</span>
+<span class="sd">    :param installation_year: Calendar year of installation</span>
+<span class="sd">    :param exposure_conditions: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])</span>
+<span class="sd">    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix</span>
+<span class="sd">    :param n_samples_validation: Number of independent samples drawn from `joint` to validate the PCE</span>
+<span class="sd">    :param n_lambdas: Number of GLD lambdas predicted by the PCE</span>
+<span class="sd">    :param max_degree: Maximum total degree of the polynomial basis</span>
+<span class="sd">    :param output_dir: Directory where the .pkl artefacts are written</span>
+<span class="sd">    :param save: Whether to write the .pkl artefacts to disk</span>
+<span class="sd">    :param verbose: Whether to print the progress of each stage</span>
+
+<span class="sd">    :return: Dictionary with the emulator dataframes, the fitted PCE, the validation statistics, and the paths written</span>
+<span class="sd">    """</span>
+
+    <span class="n">out_dir</span>     <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">lambda_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'lambda </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_lambdas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">tag</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1">_install_</span><span class="si">{</span><span class="n">installation_year</span><span class="si">}</span><span class="s1">_cement_</span><span class="si">{</span><span class="n">cement_type</span><span class="si">}</span><span class="s1">_exposure_</span><span class="si">{</span><span class="n">exposure_conditions</span><span class="si">}</span><span class="s1">'</span>
+    <span class="n">emulator_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">names_x_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"fck"</span><span class="p">,</span> <span class="s2">"rh"</span><span class="p">,</span> <span class="s2">"cov"</span><span class="p">],</span> <span class="n">carb_model</span><span class="o">=</span><span class="n">carb_model</span><span class="p">,</span> <span class="n">cement_type</span><span class="o">=</span><span class="n">cement_type</span><span class="p">,</span>
+                       <span class="n">installation_year</span><span class="o">=</span><span class="n">installation_year</span><span class="p">,</span> <span class="n">exposure_conditions</span><span class="o">=</span><span class="n">exposure_conditions</span><span class="p">,</span>
+                       <span class="n">time_step</span><span class="o">=</span><span class="n">time_step</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'PROCESSING EMULATOR FOR TIME STEP: </span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1"> years'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 1. Emulator dataset (carbonation depth and lambdas)</span>
+    <span class="c1"># =========================</span>
+    <span class="n">df_full</span><span class="p">,</span> <span class="n">df_unique</span> <span class="o">=</span> <span class="n">emulator_function_time_durability</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="o">**</span><span class="n">emulator_kw</span><span class="p">)</span>
+
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'dataset_full'</span><span class="p">,</span> <span class="n">df_full</span><span class="p">),</span> <span class="p">(</span><span class="s1">'dataset_unique'</span><span class="p">,</span> <span class="n">df_unique</span><span class="p">)):</span>
+            <span class="n">paths</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="n">kind</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'1. The dataset has been saved!'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 2. PCE metamodel</span>
+    <span class="c1"># =========================</span>
+    <span class="n">y_train</span>          <span class="o">=</span> <span class="n">df_unique</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">polynomial_basis</span> <span class="o">=</span> <span class="n">TotalDegreeBasis</span><span class="p">(</span><span class="n">joint</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">)</span>
+    <span class="n">least_squares</span>    <span class="o">=</span> <span class="n">LeastSquareRegression</span><span class="p">()</span>
+    <span class="n">pce_metamodel</span>    <span class="o">=</span> <span class="n">PolynomialChaosExpansion</span><span class="p">(</span><span class="n">polynomial_basis</span><span class="o">=</span><span class="n">polynomial_basis</span><span class="p">,</span> <span class="n">regression_method</span><span class="o">=</span><span class="n">least_squares</span><span class="p">)</span>
+    <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_metamodel_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">pce_metamodel</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'2. PCE training dataset has been saved!'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 3. Validation on an independent sample</span>
+    <span class="c1"># =========================</span>
+    <span class="n">x_val</span>                      <span class="o">=</span> <span class="n">joint</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n_samples_validation</span><span class="p">)</span>
+    <span class="n">df_full_val</span><span class="p">,</span> <span class="n">df_unique_val</span> <span class="o">=</span> <span class="n">emulator_function_time_durability</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_val</span><span class="p">,</span> <span class="o">**</span><span class="n">emulator_kw</span><span class="p">)</span>
+    <span class="n">y_val_true</span>                 <span class="o">=</span> <span class="n">df_unique_val</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_val_pred</span>                 <span class="o">=</span> <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_val</span><span class="p">)</span>
+
+    <span class="n">mse_per_lambda</span> <span class="o">=</span> <span class="p">[</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+    <span class="n">r2_per_lambda</span>  <span class="o">=</span> <span class="p">[</span><span class="n">r2_score</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+
+    <span class="n">stats_row</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s1">'MSE λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">mse_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)}</span>
+    <span class="n">stats_row</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s1">'R² λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">r2_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)})</span>
+    <span class="n">statistics_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">stats_row</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_validation_stats_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">statistics_</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'3. PCE statistcs has been saved!'</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+             <span class="s1">'time_step'</span><span class="p">:</span>       <span class="n">time_step</span><span class="p">,</span>
+             <span class="s1">'df_full'</span><span class="p">:</span>         <span class="n">df_full</span><span class="p">,</span>
+             <span class="s1">'df_unique'</span><span class="p">:</span>       <span class="n">df_unique</span><span class="p">,</span>
+             <span class="s1">'pce_metamodel'</span><span class="p">:</span>   <span class="n">pce_metamodel</span><span class="p">,</span>
+             <span class="s1">'statistics'</span><span class="p">:</span>      <span class="n">statistics_</span><span class="p">,</span>
+             <span class="s1">'df_full_val'</span><span class="p">:</span>     <span class="n">df_full_val</span><span class="p">,</span>
+             <span class="s1">'df_unique_val'</span><span class="p">:</span>   <span class="n">df_unique_val</span><span class="p">,</span>
+             <span class="s1">'emulator_time_s'</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">df_unique</span><span class="p">[</span><span class="s1">'Processing time (s)'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+             <span class="s1">'paths'</span><span class="p">:</span>           <span class="n">paths</span><span class="p">,</span>
+           <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="generate_dataset_at_time_benchmark">
+<a class="viewcode-back" href="../api.html#functions.generate_dataset_at_time_benchmark">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_dataset_at_time_benchmark</span><span class="p">(</span><span class="n">x_train</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x_val</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">k_factor_final</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">z1_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.028</span><span class="p">,</span> <span class="n">z2_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.096</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s1">'.'</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.</span>
+
+<span class="sd">    This is the only stage that draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_benchmark`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.</span>
+
+<span class="sd">    Artefacts are written to `output_dir` with the `&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;split&gt;_&lt;time_step&gt;_benchmark.pkl` naming convention, where `&lt;split&gt;` is `train` or `val`.</span>
+
+<span class="sd">    :param x_train: Design samples used to later train the PCE, shape (n_samples, 2) as [R, S]</span>
+<span class="sd">    :param x_val: Independent design samples used to later validate the PCE, shape (n_samples_validation, 2)</span>
+<span class="sd">    :param time_step: Time step of the analysis, feeding the degradation factor k(t)</span>
+<span class="sd">    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix</span>
+<span class="sd">    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect</span>
+<span class="sd">    :param z1_std: Standard deviation of the resistance latent multiplier</span>
+<span class="sd">    :param z2_std: Standard deviation of the load latent multiplier</span>
+<span class="sd">    :param output_dir: Directory where the .pkl artefacts are written</span>
+<span class="sd">    :param save: Whether to write the .pkl artefacts to disk</span>
+<span class="sd">    :param verbose: Whether to print the progress of each split</span>
+
+<span class="sd">    :return: Dictionary with the full/unique dataframes for the train and validation splits, the total emulator wall time, and the paths written</span>
+<span class="sd">    """</span>
+
+    <span class="n">out_dir</span>     <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">tag</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1">_benchmark'</span>
+    <span class="n">emulator_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">names_x_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"s"</span><span class="p">],</span> <span class="n">time_step</span><span class="o">=</span><span class="n">time_step</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">,</span> <span class="n">k_factor_final</span><span class="o">=</span><span class="n">k_factor_final</span><span class="p">,</span> <span class="n">z1_std</span><span class="o">=</span><span class="n">z1_std</span><span class="p">,</span> <span class="n">z2_std</span><span class="o">=</span><span class="n">z2_std</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'GENERATING DATASET FOR TIME STEP: </span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1"> years'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="n">paths</span>          <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">result</span>         <span class="o">=</span> <span class="p">{</span><span class="s1">'time_step'</span><span class="p">:</span> <span class="n">time_step</span><span class="p">,</span> <span class="s1">'paths'</span><span class="p">:</span> <span class="n">paths</span><span class="p">}</span>
+    <span class="n">emulator_time_s</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'train'</span><span class="p">,</span> <span class="n">x_train</span><span class="p">),</span> <span class="p">(</span><span class="s1">'val'</span><span class="p">,</span> <span class="n">x_val</span><span class="p">)):</span>
+        <span class="n">df_full</span><span class="p">,</span> <span class="n">df_unique</span> <span class="o">=</span> <span class="n">emulator_function_time_benchmark</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">emulator_kw</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s1">'df_full_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>   <span class="o">=</span> <span class="n">df_full</span>
+        <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s1">'df_unique_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_unique</span>
+        <span class="n">emulator_time_s</span>             <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">df_unique</span><span class="p">[</span><span class="s1">'Processing time (s)'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+            <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'dataset_full'</span><span class="p">,</span> <span class="n">df_full</span><span class="p">),</span> <span class="p">(</span><span class="s1">'dataset_unique'</span><span class="p">,</span> <span class="n">df_unique</span><span class="p">)):</span>
+                <span class="n">key</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">'</span>
+                <span class="n">paths</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s1"> design points, </span><span class="si">{</span><span class="n">df_unique</span><span class="p">[</span><span class="s2">"Processing time (s)"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> s total'</span><span class="p">)</span>
+
+    <span class="n">result</span><span class="p">[</span><span class="s1">'emulator_time_s'</span><span class="p">]</span> <span class="o">=</span> <span class="n">emulator_time_s</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="train_and_validate_pce_from_dataset_benchmark">
+<a class="viewcode-back" href="../api.html#functions.train_and_validate_pce_from_dataset_benchmark">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_and_validate_pce_from_dataset_benchmark</span><span class="p">(</span><span class="n">df_unique_train</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_unique_val</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">n_lambdas</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s1">'.'</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Stage 2 of the split benchmark pipeline: fit a PCE metamodel to a previously generated lambda dataset and validate it. Makes no emulator calls and draws no latent samples.</span>
+
+<span class="sd">    Companion of `generate_dataset_at_time_benchmark`: takes its saved `dataset_unique` outputs (train and validation splits) and performs the PCE fit and scoring that `train_and_validate_pce_at_time_benchmark` used to do inline with the data generation.</span>
+
+<span class="sd">    Artefacts are written to `output_dir` with the same `&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_benchmark.pkl` naming convention as `train_and_validate_pce_at_time_benchmark`, so downstream notebooks that only read the PCE metamodel don't need to change.</span>
+
+<span class="sd">    :param df_unique_train: `dataset_unique_train` dataframe, as saved by `generate_dataset_at_time_benchmark`</span>
+<span class="sd">    :param df_unique_val: `dataset_unique_val` dataframe, as saved by `generate_dataset_at_time_benchmark`</span>
+<span class="sd">    :param joint: UQpy JointIndependent distribution of R and S, used for the polynomial basis. Must match the one used to draw `df_unique_train`/`df_unique_val`</span>
+<span class="sd">    :param time_step: Time step of the analysis (bookkeeping and filenames only — the time effect is already baked into the lambdas)</span>
+<span class="sd">    :param n_latent_samples: Number of latent samples used to generate the dataset. Only used for the filename prefix, to match `generate_dataset_at_time_benchmark`</span>
+<span class="sd">    :param n_lambdas: Number of GLD lambdas predicted by the PCE</span>
+<span class="sd">    :param max_degree: Maximum total degree of the polynomial basis</span>
+<span class="sd">    :param output_dir: Directory where the .pkl artefacts are written</span>
+<span class="sd">    :param save: Whether to write the .pkl artefacts to disk</span>
+<span class="sd">    :param verbose: Whether to print the progress of each stage</span>
+
+<span class="sd">    :return: Dictionary with the fitted PCE and the validation statistics</span>
+<span class="sd">    """</span>
+
+    <span class="n">out_dir</span>     <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">lambda_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'lambda </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_lambdas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">tag</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1">_benchmark'</span>
+    <span class="n">id_columns</span>  <span class="o">=</span> <span class="p">[</span><span class="s1">'r'</span><span class="p">,</span> <span class="s1">'s'</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'TRAINING PCE FOR TIME STEP: </span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1"> years'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 1. PCE metamodel</span>
+    <span class="c1"># =========================</span>
+    <span class="n">x_train</span>           <span class="o">=</span> <span class="n">df_unique_train</span><span class="p">[</span><span class="n">id_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_train</span>           <span class="o">=</span> <span class="n">df_unique_train</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">polynomial_basis</span>  <span class="o">=</span> <span class="n">TotalDegreeBasis</span><span class="p">(</span><span class="n">joint</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">)</span>
+    <span class="n">least_squares</span>     <span class="o">=</span> <span class="n">LeastSquareRegression</span><span class="p">()</span>
+    <span class="n">pce_metamodel</span>     <span class="o">=</span> <span class="n">PolynomialChaosExpansion</span><span class="p">(</span><span class="n">polynomial_basis</span><span class="o">=</span><span class="n">polynomial_basis</span><span class="p">,</span> <span class="n">regression_method</span><span class="o">=</span><span class="n">least_squares</span><span class="p">)</span>
+    <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_metamodel_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">pce_metamodel</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'1. PCE training dataset has been saved!'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 2. Validation</span>
+    <span class="c1"># =========================</span>
+    <span class="n">x_val</span>          <span class="o">=</span> <span class="n">df_unique_val</span><span class="p">[</span><span class="n">id_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_val_true</span>     <span class="o">=</span> <span class="n">df_unique_val</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_val_pred</span>     <span class="o">=</span> <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_val</span><span class="p">)</span>
+
+    <span class="n">mse_per_lambda</span> <span class="o">=</span> <span class="p">[</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+    <span class="n">r2_per_lambda</span>  <span class="o">=</span> <span class="p">[</span><span class="n">r2_score</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+
+    <span class="n">stats_row</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s1">'MSE λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">mse_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)}</span>
+    <span class="n">stats_row</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s1">'R² λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">r2_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)})</span>
+    <span class="n">statistics_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">stats_row</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_validation_stats_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">statistics_</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'2. PCE statistcs has been saved!'</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+             <span class="s1">'time_step'</span><span class="p">:</span>     <span class="n">time_step</span><span class="p">,</span>
+             <span class="s1">'pce_metamodel'</span><span class="p">:</span> <span class="n">pce_metamodel</span><span class="p">,</span>
+             <span class="s1">'statistics'</span><span class="p">:</span>    <span class="n">statistics_</span><span class="p">,</span>
+             <span class="s1">'paths'</span><span class="p">:</span>         <span class="n">paths</span><span class="p">,</span>
+           <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="generate_dataset_at_time_durability">
+<a class="viewcode-back" href="../api.html#functions.generate_dataset_at_time_durability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_dataset_at_time_durability</span><span class="p">(</span><span class="n">x_train</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x_val</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">carb_model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cement_type</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">installation_year</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1990</span><span class="p">,</span> <span class="n">exposure_conditions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s1">'.'</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Stage 1 of the split durability pipeline: run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.</span>
+
+<span class="sd">    This is the only stage that runs `carb_model.predict`, draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_durability`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.</span>
+
+<span class="sd">    Artefacts are written to `output_dir` with the `&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;split&gt;_&lt;time_step&gt;_install_&lt;year&gt;_cement_&lt;type&gt;_exposure_&lt;exposure&gt;.pkl` naming convention, where `&lt;split&gt;` is `train` or `val`.</span>
+
+<span class="sd">    :param x_train: Design samples used to later train the PCE, shape (n_samples, 3) as [fck, rh, cover]</span>
+<span class="sd">    :param x_val: Independent design samples used to later validate the PCE, shape (n_samples_validation, 3)</span>
+<span class="sd">    :param carb_model: Trained ML model for carbonation depth prediction</span>
+<span class="sd">    :param time_step: Time step of the analysis [years]</span>
+<span class="sd">    :param cement_type: Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)</span>
+<span class="sd">    :param installation_year: Calendar year of installation</span>
+<span class="sd">    :param exposure_conditions: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])</span>
+<span class="sd">    :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix</span>
+<span class="sd">    :param output_dir: Directory where the .pkl artefacts are written</span>
+<span class="sd">    :param save: Whether to write the .pkl artefacts to disk</span>
+<span class="sd">    :param verbose: Whether to print the progress of each split</span>
+
+<span class="sd">    :return: Dictionary with the full/unique dataframes for the train and validation splits, the total emulator wall time, and the paths written</span>
+<span class="sd">    """</span>
+
+    <span class="n">out_dir</span>     <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">tag</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1">_install_</span><span class="si">{</span><span class="n">installation_year</span><span class="si">}</span><span class="s1">_cement_</span><span class="si">{</span><span class="n">cement_type</span><span class="si">}</span><span class="s1">_exposure_</span><span class="si">{</span><span class="n">exposure_conditions</span><span class="si">}</span><span class="s1">'</span>
+    <span class="n">emulator_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">names_x_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"fck"</span><span class="p">,</span> <span class="s2">"rh"</span><span class="p">,</span> <span class="s2">"cov"</span><span class="p">],</span> <span class="n">carb_model</span><span class="o">=</span><span class="n">carb_model</span><span class="p">,</span> <span class="n">cement_type</span><span class="o">=</span><span class="n">cement_type</span><span class="p">,</span>
+                       <span class="n">installation_year</span><span class="o">=</span><span class="n">installation_year</span><span class="p">,</span> <span class="n">exposure_conditions</span><span class="o">=</span><span class="n">exposure_conditions</span><span class="p">,</span>
+                       <span class="n">time_step</span><span class="o">=</span><span class="n">time_step</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="o">=</span><span class="n">n_latent_samples</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'GENERATING DATASET FOR TIME STEP: </span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1"> years'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="n">paths</span>           <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">result</span>          <span class="o">=</span> <span class="p">{</span><span class="s1">'time_step'</span><span class="p">:</span> <span class="n">time_step</span><span class="p">,</span> <span class="s1">'paths'</span><span class="p">:</span> <span class="n">paths</span><span class="p">}</span>
+    <span class="n">emulator_time_s</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'train'</span><span class="p">,</span> <span class="n">x_train</span><span class="p">),</span> <span class="p">(</span><span class="s1">'val'</span><span class="p">,</span> <span class="n">x_val</span><span class="p">)):</span>
+        <span class="n">df_full</span><span class="p">,</span> <span class="n">df_unique</span> <span class="o">=</span> <span class="n">emulator_function_time_durability</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">emulator_kw</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s1">'df_full_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span>   <span class="o">=</span> <span class="n">df_full</span>
+        <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s1">'df_unique_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_unique</span>
+        <span class="n">emulator_time_s</span>             <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">df_unique</span><span class="p">[</span><span class="s1">'Processing time (s)'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+            <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'dataset_full'</span><span class="p">,</span> <span class="n">df_full</span><span class="p">),</span> <span class="p">(</span><span class="s1">'dataset_unique'</span><span class="p">,</span> <span class="n">df_unique</span><span class="p">)):</span>
+                <span class="n">key</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">'</span>
+                <span class="n">paths</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s1"> design points, </span><span class="si">{</span><span class="n">df_unique</span><span class="p">[</span><span class="s2">"Processing time (s)"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> s total'</span><span class="p">)</span>
+
+    <span class="n">result</span><span class="p">[</span><span class="s1">'emulator_time_s'</span><span class="p">]</span> <span class="o">=</span> <span class="n">emulator_time_s</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="train_and_validate_pce_from_dataset_durability">
+<a class="viewcode-back" href="../api.html#functions.train_and_validate_pce_from_dataset_durability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_and_validate_pce_from_dataset_durability</span><span class="p">(</span><span class="n">df_unique_train</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_unique_val</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">time_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">installation_year</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1990</span><span class="p">,</span> <span class="n">cement_type</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">exposure_conditions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_latent_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">n_lambdas</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s1">'.'</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Stage 2 of the split durability pipeline: fit a PCE metamodel to a previously generated lambda dataset and validate it. Makes no emulator calls and draws no latent samples.</span>
+
+<span class="sd">    Companion of `generate_dataset_at_time_durability`: takes its saved `dataset_unique` outputs (train and validation splits) and performs the PCE fit and scoring that `train_and_validate_pce_at_time` used to do inline with the data generation.</span>
+
+<span class="sd">    Artefacts are written to `output_dir` with the same `&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_install_&lt;year&gt;_cement_&lt;type&gt;_exposure_&lt;exposure&gt;.pkl` naming convention as `train_and_validate_pce_at_time`, so downstream notebooks that only read the PCE metamodel don't need to change.</span>
+
+<span class="sd">    :param df_unique_train: `dataset_unique_train` dataframe, as saved by `generate_dataset_at_time_durability`</span>
+<span class="sd">    :param df_unique_val: `dataset_unique_val` dataframe, as saved by `generate_dataset_at_time_durability`</span>
+<span class="sd">    :param joint: UQpy JointIndependent distribution of the design variables, used for the polynomial basis. Must match the one used to draw `df_unique_train`/`df_unique_val`</span>
+<span class="sd">    :param time_step: Time step of the analysis (bookkeeping and filenames only — the time effect is already baked into the lambdas)</span>
+<span class="sd">    :param installation_year: Calendar year of installation. Only used for the filename, to match `generate_dataset_at_time_durability`</span>
+<span class="sd">    :param cement_type: Type of cement. Only used for the filename, to match `generate_dataset_at_time_durability`</span>
+<span class="sd">    :param exposure_conditions: Exposure conditions. Only used for the filename, to match `generate_dataset_at_time_durability`</span>
+<span class="sd">    :param n_latent_samples: Number of latent samples used to generate the dataset. Only used for the filename prefix, to match `generate_dataset_at_time_durability`</span>
+<span class="sd">    :param n_lambdas: Number of GLD lambdas predicted by the PCE</span>
+<span class="sd">    :param max_degree: Maximum total degree of the polynomial basis</span>
+<span class="sd">    :param output_dir: Directory where the .pkl artefacts are written</span>
+<span class="sd">    :param save: Whether to write the .pkl artefacts to disk</span>
+<span class="sd">    :param verbose: Whether to print the progress of each stage</span>
+
+<span class="sd">    :return: Dictionary with the fitted PCE and the validation statistics</span>
+<span class="sd">    """</span>
+
+    <span class="n">out_dir</span>     <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">lambda_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'lambda </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_lambdas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">tag</span>         <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1">_install_</span><span class="si">{</span><span class="n">installation_year</span><span class="si">}</span><span class="s1">_cement_</span><span class="si">{</span><span class="n">cement_type</span><span class="si">}</span><span class="s1">_exposure_</span><span class="si">{</span><span class="n">exposure_conditions</span><span class="si">}</span><span class="s1">'</span>
+    <span class="n">id_columns</span>  <span class="o">=</span> <span class="p">[</span><span class="s1">'fck'</span><span class="p">,</span> <span class="s1">'rh'</span><span class="p">,</span> <span class="s1">'cov'</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'TRAINING PCE FOR TIME STEP: </span><span class="si">{</span><span class="n">time_step</span><span class="si">}</span><span class="s1"> years'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">40</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 1. PCE metamodel</span>
+    <span class="c1"># =========================</span>
+    <span class="n">x_train</span>           <span class="o">=</span> <span class="n">df_unique_train</span><span class="p">[</span><span class="n">id_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_train</span>           <span class="o">=</span> <span class="n">df_unique_train</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">polynomial_basis</span>  <span class="o">=</span> <span class="n">TotalDegreeBasis</span><span class="p">(</span><span class="n">joint</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">)</span>
+    <span class="n">least_squares</span>     <span class="o">=</span> <span class="n">LeastSquareRegression</span><span class="p">()</span>
+    <span class="n">pce_metamodel</span>     <span class="o">=</span> <span class="n">PolynomialChaosExpansion</span><span class="p">(</span><span class="n">polynomial_basis</span><span class="o">=</span><span class="n">polynomial_basis</span><span class="p">,</span> <span class="n">regression_method</span><span class="o">=</span><span class="n">least_squares</span><span class="p">)</span>
+    <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_metamodel_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_metamodel'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">pce_metamodel</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'1. PCE training dataset has been saved!'</span><span class="p">)</span>
+
+    <span class="c1"># =========================</span>
+    <span class="c1"># 2. Validation</span>
+    <span class="c1"># =========================</span>
+    <span class="n">x_val</span>          <span class="o">=</span> <span class="n">df_unique_val</span><span class="p">[</span><span class="n">id_columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_val_true</span>     <span class="o">=</span> <span class="n">df_unique_val</span><span class="p">[</span><span class="n">lambda_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">y_val_pred</span>     <span class="o">=</span> <span class="n">pce_metamodel</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_val</span><span class="p">)</span>
+
+    <span class="n">mse_per_lambda</span> <span class="o">=</span> <span class="p">[</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+    <span class="n">r2_per_lambda</span>  <span class="o">=</span> <span class="p">[</span><span class="n">r2_score</span><span class="p">(</span><span class="n">y_val_true</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_val_pred</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)]</span>
+
+    <span class="n">stats_row</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s1">'MSE λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">mse_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)}</span>
+    <span class="n">stats_row</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s1">'R² λ</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">'</span><span class="p">:</span> <span class="n">r2_per_lambda</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lambdas</span><span class="p">)})</span>
+    <span class="n">statistics_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">stats_row</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_latent_samples</span><span class="si">}</span><span class="s1">_pce_validation_stats_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1">.pkl'</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="s1">'pce_validation_stats'</span><span class="p">],</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dill</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">statistics_</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'2. PCE statistcs has been saved!'</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+             <span class="s1">'time_step'</span><span class="p">:</span>     <span class="n">time_step</span><span class="p">,</span>
+             <span class="s1">'pce_metamodel'</span><span class="p">:</span> <span class="n">pce_metamodel</span><span class="p">,</span>
+             <span class="s1">'statistics'</span><span class="p">:</span>    <span class="n">statistics_</span><span class="p">,</span>
+             <span class="s1">'paths'</span><span class="p">:</span>         <span class="n">paths</span><span class="p">,</span>
+           <span class="p">}</span></div>
+
+
+
+<span class="c1"># if __name__ == "__main__":</span>
+<span class="c1">#     name_best_model = r'D:\github\2024-1_victor_hugo_renata_maria\beam_problem_1\model_NeuralNetwork_MLP_fold_4.pkl'</span>
+<span class="c1">#     # Load the model</span>
+<span class="c1">#     model = joblib.load(name_best_model)</span>
+<span class="c1">#     print("Carbonation model loaded successfully!")</span>
+<span class="c1">#     print(f"   Expected features: {model.feature_names_in_}")</span>
+<span class="c1">#     # Example usage</span>
+<span class="c1">#     x_pce_rvs = np.array([[30, 40, 30], [35, 40, 28]])</span>
+<span class="c1">#     cement_type          = 3</span>
+<span class="c1">#     installation_year    = 1990</span>
+<span class="c1">#     exposure_conditions  = 2</span>
+<span class="c1">#     n_samples            = 50          # Number of design samples. Use 1 for testing one sample</span>
+<span class="c1">#     n_latent_samples     = 500        # Number of latent samples per design sample</span>
+<span class="c1">#     n_samples_validation = 3           # Number of validation samples</span>
+<span class="c1">#     n_lambdas            = 4           # Number of λs to be predicted (λ1, λ2, λ3, λ4)</span>
+<span class="c1">#     times = [10]</span>
+<span class="c1">#     for t in times:</span>
+<span class="c1">#         # ============================================================</span>
+<span class="c1">#         # EMULATOR FUNCTION - CARBONATION DEPTH AND LAMBDAS</span>
+<span class="c1">#         # ============================================================</span>
+<span class="c1">#         df_full, df_unique = emulator_function_time_durability(</span>
+<span class="c1">#                                                     x=x_pce_rvs,</span>
+<span class="c1">#                                                     names_x_variables=["fck", "rh", "cov"],</span>
+<span class="c1">#                                                     carb_model=model,</span>
+<span class="c1">#                                                     cement_type=cement_type,</span>
+<span class="c1">#                                                     installation_year=installation_year,</span>
+<span class="c1">#                                                     exposure_conditions=exposure_conditions,</span>
+<span class="c1">#                                                     time_step=t,</span>
+<span class="c1">#                                                     n_latent_samples=n_latent_samples,</span>
+<span class="c1">#                                                     verbose=False</span>
+<span class="c1">#                                                 )</span>
+<span class="c1">#         print(df_unique.head())</span>
+<span class="c1">#         print(df_full.describe())</span>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Victor Hugo, Renata Maria, Wanderlei Malaquias Pereira Junior
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>

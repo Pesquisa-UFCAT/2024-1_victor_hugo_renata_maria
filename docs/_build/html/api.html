@@ -1,0 +1,817 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="prev" title="Getting started" href="usage.html">
+
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>API reference - Carbonation Durability Surrogates</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">Carbonation Durability Surrogates</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">Carbonation Durability Surrogates</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Getting started</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">API reference</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/api.md.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section class="tex2jax_ignore mathjax_ignore" id="module-functions">
+<span id="api-reference"></span><h1>API reference<a class="headerlink" href="#module-functions" title="Link to this heading">¶</a></h1>
+<p>Every object below lives in <code class="docutils literal notranslate"><span class="pre">functions.py</span></code> at the repository root.</p>
+<p>Autodoc emits reStructuredText, which MyST cannot reparse as Markdown, so the
+directives below sit inside <code class="docutils literal notranslate"><span class="pre">{eval-rst}</span></code> blocks. The prose around them, and the
+docstrings themselves, need no such wrapper.</p>
+<section id="atmospheric-co2-model">
+<h2>Atmospheric CO<sub>2</sub> model<a class="headerlink" href="#atmospheric-co2-model" title="Link to this heading">¶</a></h2>
+<p>Piecewise historical model of the global average CO<sub>2</sub> concentration, expressed
+as a percentage (ppm / 10000). <a class="reference internal" href="#functions.co2_percentage_year" title="functions.co2_percentage_year"><code class="xref py py-func docutils literal notranslate"><span class="pre">co2_percentage_year()</span></code></a> is the entry point; the
+period-specific functions are exposed because the carbonation profile calls them
+directly.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.co2_percentage_year">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">co2_percentage_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#co2_percentage_year"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.co2_percentage_year" title="Link to this definition">¶</a></dt>
+<dd><p>Global average atmospheric CO2 concentration (%) valid from 1900 onwards. Routes the calculation to the correct historical formula based on the year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year (&gt;= 1900)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>CO2 concentration in percentage (ppm / 10000)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.co2_percentage_1900_1950">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">co2_percentage_1900_1950</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#co2_percentage_1900_1950"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.co2_percentage_1900_1950" title="Link to this definition">¶</a></dt>
+<dd><p>CO2 atmospheric concentration (%) for historical period 1900–1950. Based on a linear approximation of the upward trend during this period.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year (1900 &lt;= year &lt;= 1950)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>CO2 concentration in percentage (ppm / 10000)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.co2_percentage_1950_2000">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">co2_percentage_1950_2000</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#co2_percentage_1950_2000"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.co2_percentage_1950_2000" title="Link to this definition">¶</a></dt>
+<dd><p>CO2 atmospheric concentration (%) for historical period 1950–2000. Based on a linear approximation of the accelerating upward trend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year (1950 &lt;= year &lt;= 2000)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>CO2 concentration in percentage (ppm / 10000)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.co2_percentage_pos2000">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">co2_percentage_pos2000</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#co2_percentage_pos2000"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.co2_percentage_pos2000" title="Link to this definition">¶</a></dt>
+<dd><p>CO2 atmospheric concentration (%) for post-2000 period. Captures the non-linear (quadratic) acceleration in CO2 buildup observed in recent decades.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year (&gt;= 2000)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>CO2 concentration in percentage (ppm / 10000)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="carbonation-profile">
+<h2>Carbonation profile<a class="headerlink" href="#carbonation-profile" title="Link to this heading">¶</a></h2>
+<p>Wraps a trained ML carbonation model into a calendar-year depth profile, and queries
+that profile at an arbitrary year.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.carbonation_profile">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">carbonation_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lifetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cement_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_year</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#carbonation_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.carbonation_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Generate carbonation profile starting at a given calendar year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.</p></li>
+<li><p><strong>lifetime</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Design life of the structure [years]</p></li>
+<li><p><strong>fc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Concrete compressive strength [MPa]</p></li>
+<li><p><strong>rh</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Relative humidity [%]</p></li>
+<li><p><strong>cement_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)</p></li>
+<li><p><strong>exposure</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])</p></li>
+<li><p><strong>start_year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year of installation</p></li>
+<li><p><strong>model_</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.carbonation_depth_at_time">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">carbonation_depth_at_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_query</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#carbonation_depth_at_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.carbonation_depth_at_time" title="Link to this definition">¶</a></dt>
+<dd><p>Returns carbonation depth at a specific time.</p>
+<p>:param profile : DataFrame with columns [‘calendar year’, ‘carbonation depth (mm)’]
+:param t_query : Calendar year for which to query the carbonation depth</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Carbonation depth at the specified calendar year</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>profile</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>)</p></li>
+<li><p><strong>t_query</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions._interp_profile_at">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">_interp_profile_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calendar_years</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year_query</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#_interp_profile_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions._interp_profile_at" title="Link to this definition">¶</a></dt>
+<dd><p>Linear interpolation (with linear extrapolation outside the range) of a batch of
+cumulative-max carbonation profiles at a single query year, vectorized across rows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>calendar_years</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Grid of calendar years shared by every row, sorted ascending</p></li>
+<li><p><strong>depths</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Carbonation depth profile per row, shape (n_rows, n_grid)</p></li>
+<li><p><strong>year_query</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Calendar year at which to evaluate every row</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Interpolated carbonation depth for each row</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="latent-variables">
+<h2>Latent variables<a class="headerlink" href="#latent-variables" title="Link to this heading">¶</a></h2>
+<p>Random multipliers that turn each deterministic design point into a distribution, one
+pair of generators per track.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.generate_latent_variables">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">generate_latent_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#generate_latent_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.generate_latent_variables" title="Link to this definition">¶</a></dt>
+<dd><p>Generates the latent multipliers related to the beam problem. All three follow a normal distribution with the same mean and coefficient of variation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples to generate</p></li>
+<li><p><strong>mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Mean of the latent multipliers</p></li>
+<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Coefficient of variation of the latent multipliers</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sampled multipliers for relative humidity, concrete compressive strength, and concrete cover</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.generate_latent_variables_benchmark">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">generate_latent_variables_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.028</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.096</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#generate_latent_variables_benchmark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.generate_latent_variables_benchmark" title="Link to this definition">¶</a></dt>
+<dd><p>Generates the latent multipliers of the R/S benchmark. Both follow a normal distribution, in line with <cite>generate_latent_variables</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples to generate</p></li>
+<li><p><strong>z1_mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Mean of the resistance latent multiplier</p></li>
+<li><p><strong>z1_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the resistance latent multiplier</p></li>
+<li><p><strong>z2_mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Mean of the load latent multiplier</p></li>
+<li><p><strong>z2_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the load latent multiplier</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sampled multipliers z1 (resistance) and z2 (load)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="emulators">
+<h2>Emulators<a class="headerlink" href="#emulators" title="Link to this heading">¶</a></h2>
+<p>The expensive stage: for each design point, sample the latent variables, evaluate the
+underlying model, and fit a Generalized Lambda Distribution to the resulting response.
+Both return <code class="docutils literal notranslate"><span class="pre">(df_full,</span> <span class="pre">df_unique)</span></code>, where <code class="docutils literal notranslate"><span class="pre">df_unique</span></code> carries the GLD lambdas and the
+per-design-point <code class="docutils literal notranslate"><span class="pre">Processing</span> <span class="pre">time</span> <span class="pre">(s)</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.emulator_function_time_durability">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">emulator_function_time_durability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names_x_variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carb_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cement_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">installation_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1990</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposure_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#emulator_function_time_durability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.emulator_function_time_durability" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>names_x_variables</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>)</p></li>
+<li><p><strong>carb_model</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>cement_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>installation_year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>exposure_conditions</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>, <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.emulator_function_time_benchmark">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">emulator_function_time_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names_x_variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_factor_final</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.028</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#emulator_function_time_benchmark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.emulator_function_time_benchmark" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the emulator of the R/S benchmark state limit function.</p>
+<p>The state limit function is g = k(t) * R / z1 - S * z2, where R is the resistance, S is the load, and z1 and z2 are normal latent multipliers. Failure is g &lt; 0.</p>
+<p>The degradation factor k(t) = 1 + (k_factor_final - 1) * t / 100 shrinks the resistance linearly with time, reaching <cite>k_factor_final</cite> at t = 100. Setting <cite>k_factor_final</cite> to 1.0 removes the time effect and leaves the plain g = R / z1 - S * z2.</p>
+<p>Mirrors <cite>emulator_function_time_durability</cite>: one GLD fit per design point, and a per-design-point wall time so the cost of building the dataset can be compared against evaluating the surrogate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Design samples, shape (n_samples, 2) as [R, S]</p></li>
+<li><p><strong>names_x_variables</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – Names of the two design variables, used as the identifying columns of the output</p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Time step of the analysis, feeding the degradation factor k(t)</p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples per design sample</p></li>
+<li><p><strong>k_factor_final</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of the degradation factor at t = 100. Use 1.0 for no time effect</p></li>
+<li><p><strong>z1_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the resistance latent multiplier</p></li>
+<li><p><strong>z2_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the load latent multiplier</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to print per-sample diagnostics</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>[0] = one row per latent replica ; [1] = one row per design point, with the lambdas and the processing time</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>, <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="one-shot-pipeline">
+<h2>One-shot pipeline<a class="headerlink" href="#one-shot-pipeline" title="Link to this heading">¶</a></h2>
+<p>Data generation, PCE fit and validation in a single call, for one time step.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.train_and_validate_pce_at_time">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">train_and_validate_pce_at_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carb_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cement_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">installation_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1990</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposure_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples_validation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_lambdas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#train_and_validate_pce_at_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.train_and_validate_pce_at_time" title="Link to this definition">¶</a></dt>
+<dd><p>Build the durability emulator dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.</p>
+<p>Runs the three stages of one time step of the dataset pipeline: (1) evaluates <cite>emulator_function_time_durability</cite> on the design samples to obtain the lambdas, (2) fits a PCE of <cite>max_degree</cite> mapping design variables to lambdas, and (3) re-evaluates the emulator on an independent validation sample to score the PCE with MSE and R2 per lambda.</p>
+<p>Artefacts are written to <cite>output_dir</cite> with the <cite>&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_install_&lt;year&gt;_cement_&lt;type&gt;_exposure_&lt;exposure&gt;.pkl</cite> naming convention, which is what the downstream notebooks expect.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_train</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Design samples used to train the PCE, shape (n_samples, 3) as [fck, rh, cover]</p></li>
+<li><p><strong>joint</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>) – UQpy JointIndependent distribution of the design variables, used for the polynomial basis and to draw the validation samples</p></li>
+<li><p><strong>carb_model</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>) – Trained ML model for carbonation depth prediction</p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Time step of the analysis [years]</p></li>
+<li><p><strong>cement_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)</p></li>
+<li><p><strong>installation_year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year of installation</p></li>
+<li><p><strong>exposure_conditions</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])</p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples per design sample. Also used as the filename prefix</p></li>
+<li><p><strong>n_samples_validation</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of independent samples drawn from <cite>joint</cite> to validate the PCE</p></li>
+<li><p><strong>n_lambdas</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of GLD lambdas predicted by the PCE</p></li>
+<li><p><strong>max_degree</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum total degree of the polynomial basis</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – Directory where the .pkl artefacts are written</p></li>
+<li><p><strong>save</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to write the .pkl artefacts to disk</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to print the progress of each stage</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the emulator dataframes, the fitted PCE, the validation statistics, and the paths written</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.train_and_validate_pce_at_time_benchmark">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">train_and_validate_pce_at_time_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples_validation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_lambdas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_factor_final</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.028</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#train_and_validate_pce_at_time_benchmark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.train_and_validate_pce_at_time_benchmark" title="Link to this definition">¶</a></dt>
+<dd><p>Build the R/S benchmark dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.</p>
+<p>Benchmark twin of <cite>train_and_validate_pce_at_time</cite>: same three stages, same artefacts, but driven by <cite>emulator_function_time_benchmark</cite> instead of the carbonation emulator.</p>
+<p>Artefacts are written to <cite>output_dir</cite> with the <cite>&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_benchmark.pkl</cite> naming convention.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_train</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Design samples used to train the PCE, shape (n_samples, 2) as [R, S]</p></li>
+<li><p><strong>joint</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>) – UQpy JointIndependent distribution of R and S, used for the polynomial basis and to draw the validation samples</p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Time step of the analysis, feeding the degradation factor k(t)</p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples per design sample. Also used as the filename prefix</p></li>
+<li><p><strong>n_samples_validation</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of independent samples drawn from <cite>joint</cite> to validate the PCE</p></li>
+<li><p><strong>n_lambdas</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of GLD lambdas predicted by the PCE</p></li>
+<li><p><strong>max_degree</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum total degree of the polynomial basis</p></li>
+<li><p><strong>k_factor_final</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of the degradation factor at t = 100. Use 1.0 for no time effect</p></li>
+<li><p><strong>z1_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the resistance latent multiplier</p></li>
+<li><p><strong>z2_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the load latent multiplier</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – Directory where the .pkl artefacts are written</p></li>
+<li><p><strong>save</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to write the .pkl artefacts to disk</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to print the progress of each stage</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the emulator dataframes, the fitted PCE, the validation statistics, the total emulator wall time, and the paths written</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="split-pipeline">
+<h2>Split pipeline<a class="headerlink" href="#split-pipeline" title="Link to this heading">¶</a></h2>
+<p>The same work in two stages, so the emulator run can be reused across PCE refits.
+Stage 1 writes the lambda datasets to disk; stage 2 reads them back, fits the PCE and
+scores it, making no emulator calls.</p>
+<section id="stage-1-dataset-generation">
+<h3>Stage 1 — dataset generation<a class="headerlink" href="#stage-1-dataset-generation" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.generate_dataset_at_time_durability">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">generate_dataset_at_time_durability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carb_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cement_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">installation_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1990</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposure_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#generate_dataset_at_time_durability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.generate_dataset_at_time_durability" title="Link to this definition">¶</a></dt>
+<dd><p>Stage 1 of the split durability pipeline: run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.</p>
+<p>This is the only stage that runs <cite>carb_model.predict</cite>, draws latent samples and fits the GLD — the expensive part that <cite>Processing time (s)</cite> measures. Splitting it from the PCE fit (<cite>train_and_validate_pce_from_dataset_durability</cite>) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.</p>
+<p>Artefacts are written to <cite>output_dir</cite> with the <cite>&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;split&gt;_&lt;time_step&gt;_install_&lt;year&gt;_cement_&lt;type&gt;_exposure_&lt;exposure&gt;.pkl</cite> naming convention, where <cite>&lt;split&gt;</cite> is <cite>train</cite> or <cite>val</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_train</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Design samples used to later train the PCE, shape (n_samples, 3) as [fck, rh, cover]</p></li>
+<li><p><strong>x_val</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Independent design samples used to later validate the PCE, shape (n_samples_validation, 3)</p></li>
+<li><p><strong>carb_model</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>) – Trained ML model for carbonation depth prediction</p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Time step of the analysis [years]</p></li>
+<li><p><strong>cement_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)</p></li>
+<li><p><strong>installation_year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year of installation</p></li>
+<li><p><strong>exposure_conditions</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])</p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples per design sample. Also used as the filename prefix</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – Directory where the .pkl artefacts are written</p></li>
+<li><p><strong>save</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to write the .pkl artefacts to disk</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to print the progress of each split</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the full/unique dataframes for the train and validation splits, the total emulator wall time, and the paths written</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.generate_dataset_at_time_benchmark">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">generate_dataset_at_time_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_factor_final</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.028</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#generate_dataset_at_time_benchmark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.generate_dataset_at_time_benchmark" title="Link to this definition">¶</a></dt>
+<dd><p>Run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.</p>
+<p>This is the only stage that draws latent samples and fits the GLD — the expensive part that <cite>Processing time (s)</cite> measures. Splitting it from the PCE fit (<cite>train_and_validate_pce_from_dataset_benchmark</cite>) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.</p>
+<p>Artefacts are written to <cite>output_dir</cite> with the <cite>&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;split&gt;_&lt;time_step&gt;_benchmark.pkl</cite> naming convention, where <cite>&lt;split&gt;</cite> is <cite>train</cite> or <cite>val</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_train</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Design samples used to later train the PCE, shape (n_samples, 2) as [R, S]</p></li>
+<li><p><strong>x_val</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>) – Independent design samples used to later validate the PCE, shape (n_samples_validation, 2)</p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Time step of the analysis, feeding the degradation factor k(t)</p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples per design sample. Also used as the filename prefix</p></li>
+<li><p><strong>k_factor_final</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of the degradation factor at t = 100. Use 1.0 for no time effect</p></li>
+<li><p><strong>z1_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the resistance latent multiplier</p></li>
+<li><p><strong>z2_std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Standard deviation of the load latent multiplier</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – Directory where the .pkl artefacts are written</p></li>
+<li><p><strong>save</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to write the .pkl artefacts to disk</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to print the progress of each split</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the full/unique dataframes for the train and validation splits, the total emulator wall time, and the paths written</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="stage-2-pce-fit-and-validation">
+<h3>Stage 2 — PCE fit and validation<a class="headerlink" href="#stage-2-pce-fit-and-validation" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.train_and_validate_pce_from_dataset_durability">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">train_and_validate_pce_from_dataset_durability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_unique_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_unique_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">installation_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1990</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cement_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposure_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_lambdas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#train_and_validate_pce_from_dataset_durability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.train_and_validate_pce_from_dataset_durability" title="Link to this definition">¶</a></dt>
+<dd><p>Stage 2 of the split durability pipeline: fit a PCE metamodel to a previously generated lambda dataset and validate it. Makes no emulator calls and draws no latent samples.</p>
+<p>Companion of <cite>generate_dataset_at_time_durability</cite>: takes its saved <cite>dataset_unique</cite> outputs (train and validation splits) and performs the PCE fit and scoring that <cite>train_and_validate_pce_at_time</cite> used to do inline with the data generation.</p>
+<p>Artefacts are written to <cite>output_dir</cite> with the same <cite>&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_install_&lt;year&gt;_cement_&lt;type&gt;_exposure_&lt;exposure&gt;.pkl</cite> naming convention as <cite>train_and_validate_pce_at_time</cite>, so downstream notebooks that only read the PCE metamodel don’t need to change.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_unique_train</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>) – <cite>dataset_unique_train</cite> dataframe, as saved by <cite>generate_dataset_at_time_durability</cite></p></li>
+<li><p><strong>df_unique_val</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>) – <cite>dataset_unique_val</cite> dataframe, as saved by <cite>generate_dataset_at_time_durability</cite></p></li>
+<li><p><strong>joint</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>) – UQpy JointIndependent distribution of the design variables, used for the polynomial basis. Must match the one used to draw <cite>df_unique_train</cite>/<cite>df_unique_val</cite></p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Time step of the analysis (bookkeeping and filenames only — the time effect is already baked into the lambdas)</p></li>
+<li><p><strong>installation_year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Calendar year of installation. Only used for the filename, to match <cite>generate_dataset_at_time_durability</cite></p></li>
+<li><p><strong>cement_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Type of cement. Only used for the filename, to match <cite>generate_dataset_at_time_durability</cite></p></li>
+<li><p><strong>exposure_conditions</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Exposure conditions. Only used for the filename, to match <cite>generate_dataset_at_time_durability</cite></p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples used to generate the dataset. Only used for the filename prefix, to match <cite>generate_dataset_at_time_durability</cite></p></li>
+<li><p><strong>n_lambdas</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of GLD lambdas predicted by the PCE</p></li>
+<li><p><strong>max_degree</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum total degree of the polynomial basis</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – Directory where the .pkl artefacts are written</p></li>
+<li><p><strong>save</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to write the .pkl artefacts to disk</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to print the progress of each stage</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the fitted PCE and the validation statistics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="functions.train_and_validate_pce_from_dataset_benchmark">
+<span class="sig-prename descclassname"><span class="pre">functions.</span></span><span class="sig-name descname"><span class="pre">train_and_validate_pce_from_dataset_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_unique_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_unique_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_latent_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_lambdas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functions.html#train_and_validate_pce_from_dataset_benchmark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#functions.train_and_validate_pce_from_dataset_benchmark" title="Link to this definition">¶</a></dt>
+<dd><p>Stage 2 of the split benchmark pipeline: fit a PCE metamodel to a previously generated lambda dataset and validate it. Makes no emulator calls and draws no latent samples.</p>
+<p>Companion of <cite>generate_dataset_at_time_benchmark</cite>: takes its saved <cite>dataset_unique</cite> outputs (train and validation splits) and performs the PCE fit and scoring that <cite>train_and_validate_pce_at_time_benchmark</cite> used to do inline with the data generation.</p>
+<p>Artefacts are written to <cite>output_dir</cite> with the same <cite>&lt;n_latent_samples&gt;_&lt;kind&gt;_&lt;time_step&gt;_benchmark.pkl</cite> naming convention as <cite>train_and_validate_pce_at_time_benchmark</cite>, so downstream notebooks that only read the PCE metamodel don’t need to change.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_unique_train</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>) – <cite>dataset_unique_train</cite> dataframe, as saved by <cite>generate_dataset_at_time_benchmark</cite></p></li>
+<li><p><strong>df_unique_val</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v3.0.5)"><em>DataFrame</em></a>) – <cite>dataset_unique_val</cite> dataframe, as saved by <cite>generate_dataset_at_time_benchmark</cite></p></li>
+<li><p><strong>joint</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>) – UQpy JointIndependent distribution of R and S, used for the polynomial basis. Must match the one used to draw <cite>df_unique_train</cite>/<cite>df_unique_val</cite></p></li>
+<li><p><strong>time_step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Time step of the analysis (bookkeeping and filenames only — the time effect is already baked into the lambdas)</p></li>
+<li><p><strong>n_latent_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of latent samples used to generate the dataset. Only used for the filename prefix, to match <cite>generate_dataset_at_time_benchmark</cite></p></li>
+<li><p><strong>n_lambdas</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of GLD lambdas predicted by the PCE</p></li>
+<li><p><strong>max_degree</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum total degree of the polynomial basis</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>) – Directory where the .pkl artefacts are written</p></li>
+<li><p><strong>save</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to write the .pkl artefacts to disk</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to print the progress of each stage</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the fitted PCE and the validation statistics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="usage.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Getting started</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Victor Hugo, Renata Maria, Wanderlei Malaquias Pereira Junior
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">API reference</a><ul>
+<li><a class="reference internal" href="#atmospheric-co2-model">Atmospheric CO<sub>2</sub> model</a><ul>
+<li><a class="reference internal" href="#functions.co2_percentage_year"><code class="docutils literal notranslate"><span class="pre">co2_percentage_year()</span></code></a></li>
+<li><a class="reference internal" href="#functions.co2_percentage_1900_1950"><code class="docutils literal notranslate"><span class="pre">co2_percentage_1900_1950()</span></code></a></li>
+<li><a class="reference internal" href="#functions.co2_percentage_1950_2000"><code class="docutils literal notranslate"><span class="pre">co2_percentage_1950_2000()</span></code></a></li>
+<li><a class="reference internal" href="#functions.co2_percentage_pos2000"><code class="docutils literal notranslate"><span class="pre">co2_percentage_pos2000()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#carbonation-profile">Carbonation profile</a><ul>
+<li><a class="reference internal" href="#functions.carbonation_profile"><code class="docutils literal notranslate"><span class="pre">carbonation_profile()</span></code></a></li>
+<li><a class="reference internal" href="#functions.carbonation_depth_at_time"><code class="docutils literal notranslate"><span class="pre">carbonation_depth_at_time()</span></code></a></li>
+<li><a class="reference internal" href="#functions._interp_profile_at"><code class="docutils literal notranslate"><span class="pre">_interp_profile_at()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#latent-variables">Latent variables</a><ul>
+<li><a class="reference internal" href="#functions.generate_latent_variables"><code class="docutils literal notranslate"><span class="pre">generate_latent_variables()</span></code></a></li>
+<li><a class="reference internal" href="#functions.generate_latent_variables_benchmark"><code class="docutils literal notranslate"><span class="pre">generate_latent_variables_benchmark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#emulators">Emulators</a><ul>
+<li><a class="reference internal" href="#functions.emulator_function_time_durability"><code class="docutils literal notranslate"><span class="pre">emulator_function_time_durability()</span></code></a></li>
+<li><a class="reference internal" href="#functions.emulator_function_time_benchmark"><code class="docutils literal notranslate"><span class="pre">emulator_function_time_benchmark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#one-shot-pipeline">One-shot pipeline</a><ul>
+<li><a class="reference internal" href="#functions.train_and_validate_pce_at_time"><code class="docutils literal notranslate"><span class="pre">train_and_validate_pce_at_time()</span></code></a></li>
+<li><a class="reference internal" href="#functions.train_and_validate_pce_at_time_benchmark"><code class="docutils literal notranslate"><span class="pre">train_and_validate_pce_at_time_benchmark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#split-pipeline">Split pipeline</a><ul>
+<li><a class="reference internal" href="#stage-1-dataset-generation">Stage 1 — dataset generation</a><ul>
+<li><a class="reference internal" href="#functions.generate_dataset_at_time_durability"><code class="docutils literal notranslate"><span class="pre">generate_dataset_at_time_durability()</span></code></a></li>
+<li><a class="reference internal" href="#functions.generate_dataset_at_time_benchmark"><code class="docutils literal notranslate"><span class="pre">generate_dataset_at_time_benchmark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#stage-2-pce-fit-and-validation">Stage 2 — PCE fit and validation</a><ul>
+<li><a class="reference internal" href="#functions.train_and_validate_pce_from_dataset_durability"><code class="docutils literal notranslate"><span class="pre">train_and_validate_pce_from_dataset_durability()</span></code></a></li>
+<li><a class="reference internal" href="#functions.train_and_validate_pce_from_dataset_benchmark"><code class="docutils literal notranslate"><span class="pre">train_and_validate_pce_from_dataset_benchmark()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=01f34227"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>

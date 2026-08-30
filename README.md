@@ -48,3 +48,13 @@ pip-chill > requirements.txt
 # Main papers
 - [paper dataset](https://drive.google.com/open?id=1yzvW4NIV35N7V_6y5RW59U3tiGp_AwL6&usp=drive_fs)
 - [board](https://wbd.ms/share/v2/aHR0cHM6Ly93aGl0ZWJvYXJkLm1pY3Jvc29mdC5jb20vYXBpL3YxLjAvd2hpdGVib2FyZHMvcmVkZWVtLzNkZTZjYzQ0MTA4MzQ1ODVhMDJjNGJhZjFhMTc4ZDI0X0JCQTcxNzYyLTEyRTAtNDJFMS1CMzI0LTVCMTMxRjQyNEUzRF84YTZiZTY1MS04MjYyLTRlN2MtYTQyOS00MzZlNmRiNTQ0ODU=)
+# Documentation
+
+The API reference for `functions.py` is built with Sphinx from the `docs/` folder:
+
+```bash
+uv sync --group docs
+uv run sphinx-build -b html docs docs/_build/html
+```
+
+Then open `docs/_build/html/index.html`.
