@@ -8,7 +8,8 @@ from typing import Optional, Any
 import seaborn as sns
 import pickle
 import dill
-from scipy.integrate import odeint
+from scipy.integrate import odeint, simpson
+from scipy.stats import ks_2samp, wasserstein_distance, gaussian_kde
 from UQpy.distributions import Uniform, Normal, JointIndependent #, Lognormal
 from UQpy.distributions.collection.Lognormal import Lognormal
 from UQpy.surrogates import *
@@ -300,6 +301,261 @@ def train_and_validate_pce_from_dataset_benchmark(df_unique_train: pd.DataFrame,
              'statistics':    statistics_,
              'paths':         paths,
            }
+
+
+def _gld_pdf_benchmark(lambdas: np.ndarray, x_vals: np.ndarray, n_reference: int = 20001) -> np.ndarray:
+    r"""Density of an FKML generalized lambda distribution at arbitrary points, without pyGLAM's slow ``pdf``.
+
+    The FKML GLD is defined by its quantile function, so its density is only analytic *at* a
+    quantile: with :math:`Q(u) = \lambda_1 + \lambda_2^{-1}[(u^{\lambda_3}-1)/\lambda_3 -
+    ((1-u)^{\lambda_4}-1)/\lambda_4]`, the density there is
+    :math:`f(Q(u)) = \lambda_2 / [u^{\lambda_3-1} + (1-u)^{\lambda_4-1}]`. Evaluating at an
+    arbitrary :math:`x` instead needs :math:`u = Q^{-1}(x)`, which is what makes
+    `pyglam.GlamFKML.pdf` expensive (~0.6 ms per point).
+
+    Since :math:`Q` is monotonic and cheap, this tabulates :math:`(Q(u), f(Q(u)))` once on a dense
+    `n_reference` grid and interpolates — same values to ~1e-10 relative error, but fast enough to
+    sweep thousands of design points. Outside the distribution's support the density is 0.
+
+    :param lambdas: GLD parameters (lambda 1-4, in order)
+    :param x_vals: Points to evaluate the density at
+    :param n_reference: Size of the internal quantile table used for the inversion
+
+    :return: Density at each of `x_vals`
+    """
+
+    l1, l2, l3, l4 = (float(v) for v in lambdas)
+
+    # Uniform in u, plus geometric clustering at both ends: Q(u) moves fastest in the tails, so a
+    # purely uniform table interpolates them badly (a few % error near the extremes).
+    u_tail   = np.geomspace(1e-12, 0.5, n_reference // 2)
+    u_ref    = np.unique(np.clip(np.concatenate([np.linspace(0.0, 1.0, n_reference), u_tail, 1.0 - u_tail]), 1e-12, 1 - 1e-12))
+    x_ref    = l1 + (1.0 / l2) * ((u_ref ** l3 - 1.0) / l3 - ((1.0 - u_ref) ** l4 - 1.0) / l4)
+    dens_ref = l2 / (u_ref ** (l3 - 1.0) + (1.0 - u_ref) ** (l4 - 1.0))
+
+    return np.interp(x_vals, x_ref, dens_ref, left=0.0, right=0.0)
+
+
+def _compare_gld_to_raw_benchmark(g_real: np.ndarray, lambda_pred: np.ndarray, n_grid: int = 400) -> dict:
+    r"""Score a predicted GLD directly against the raw Monte Carlo :math:`g` samples.
+
+    Shared numerical core of `validate_pce_kl_divergence_benchmark` and
+    `validate_nn_kl_divergence_benchmark`. The reference side is the raw data itself — a Gaussian
+    KDE of `g_real` — not a GLD fitted to it, so the score measures only the surrogate's error and
+    does not fold in the GLD-fitting error of pyGLAM on top of it.
+
+    The KL divergence and :math:`R^2` are integrated on a grid spanning the raw data's own range. If
+    the predicted GLD's support does not cover that range its density is clipped to a floor there,
+    which makes the KL divergence large — that is the intended reading: the surrogate puts almost no
+    probability where real data actually lives.
+
+    A surrogate can also predict :math:`\\lambda_2 \\le 0`, which is not a valid GLD at all (the
+    quantile function stops being increasing, and `pyglam` returns empty samples). That happens at a
+    handful of extreme design points at late ages. Those are scored as NaN rather than raised, so a
+    sweep over the whole dataset still completes and the failures show up as gaps in the maps.
+
+    :param g_real: Raw Monte Carlo g samples for one design point
+    :param lambda_pred: The GLD being scored (lambda 1-4, in order)
+    :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
+
+    :return: Dictionary with the KL divergence, KS statistic, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the shared grid, both densities, and the fresh sample drawn from the predicted GLD
+    """
+
+    g_real = np.asarray(g_real, dtype=float)
+    x_vals = np.linspace(g_real.min(), g_real.max(), n_grid)
+    p_real = gaussian_kde(g_real)(x_vals)
+
+    if float(lambda_pred[1]) <= 0.0:
+        return {
+                 'kl_divergence':  np.nan,
+                 'ks_statistic':   np.nan,
+                 'wasserstein':    np.nan,
+                 'r2_pdf':         np.nan,
+                 'rel_err_p5':     np.nan,
+                 'rel_err_p50':    np.nan,
+                 'rel_err_p95':    np.nan,
+                 'x_grid':         x_vals,
+                 'pdf_real':       p_real / simpson(p_real, x_vals),
+                 'pdf_pred':       np.full_like(x_vals, np.nan),
+                 'g_pred_samples': np.array([]),
+               }
+
+    pred_dist = glam.GlamFKML(*lambda_pred)
+
+    # =========================
+    # 1. KL divergence and R²: KDE of the raw data vs. the predicted GLD's own density
+    # =========================
+    p = p_real
+    q = np.nan_to_num(_gld_pdf_benchmark(lambda_pred, x_vals), nan=0.0, posinf=0.0, neginf=0.0)
+
+    eps = 1e-12
+    p = np.clip(p, eps, None)
+    q = np.clip(q, eps, None)
+    p = p / simpson(p, x_vals)
+    q = q / simpson(q, x_vals)
+
+    kl_divergence = max(float(simpson(p * np.log(p / q), x_vals)), 0.0)
+
+    ss_res = np.sum((p - q) ** 2)
+    ss_tot = np.sum((p - p.mean()) ** 2)
+    r2_pdf = float(np.clip(1 - ss_res / ss_tot, -1, 1)) if ss_tot > 1e-14 else np.nan
+
+    # =========================
+    # 2. Sample-based diagnostics: raw Monte Carlo g vs. a fresh sample from the predicted GLD
+    # =========================
+    g_pred = pred_dist.rvs(size=len(g_real))
+
+    ks_statistic = float(ks_2samp(g_real, g_pred).statistic)
+    w1_distance  = float(wasserstein_distance(g_real, g_pred))
+
+    def _relative_error(model, real, tol=1e-5):
+        return float(model - real) if abs(real) < tol else float((model - real) / abs(real))
+
+    p5_real, p50_real, p95_real = np.percentile(g_real, [5, 50, 95])
+    p5_pred, p50_pred, p95_pred = np.percentile(g_pred, [5, 50, 95])
+
+    return {
+             'kl_divergence':  kl_divergence,
+             'ks_statistic':   ks_statistic,
+             'wasserstein':    w1_distance,
+             'r2_pdf':         r2_pdf,
+             'rel_err_p5':     _relative_error(p5_pred, p5_real),
+             'rel_err_p50':    _relative_error(p50_pred, p50_real),
+             'rel_err_p95':    _relative_error(p95_pred, p95_real),
+             'x_grid':         x_vals,
+             'pdf_real':       p,
+             'pdf_pred':       q,
+             'g_pred_samples': g_pred,
+           }
+
+
+def validate_pce_kl_divergence_benchmark(pce_metamodel: Any, r: float, s: float, g_real: np.ndarray, lambda3: float, lambda4: float, n_grid: int = 400) -> dict:
+    r"""Score the PCE's predicted GLD against the raw Monte Carlo :math:`g` data, at one (R, S) design point.
+
+    The PCE supplies lambda 1 / lambda 2 for :math:`(R, S)`; lambda 3 / lambda 4 are supplied by the
+    caller. The PCE does predict all four, but its lambda 3 / lambda 4 are consistently poor (R² near
+    zero or negative at every time step in `02_train_pce.ipynb`'s validation table), so they are
+    written by hand instead — see `generate_rul_dataset_benchmark`, which fixes them the same way.
+
+    The comparison is against `g_real` itself (via a KDE), not against a GLD fitted to it, so the
+    score reflects the PCE's error alone and not pyGLAM's fitting error stacked on top. See
+    `_compare_gld_to_raw_benchmark` for the metrics computed.
+
+    :param pce_metamodel: Fitted PCE for the time step `g_real` was computed at, as returned by `train_and_validate_pce_from_dataset_benchmark`
+    :param r: Resistance value of the design point being checked
+    :param s: Load value of the design point being checked
+    :param g_real: Raw Monte Carlo g samples for this design point (that design point's rows of `dataset_full`'s `g` column)
+    :param lambda3: Fixed lambda 3 to pair with the PCE's lambda 1 / lambda 2
+    :param lambda4: Fixed lambda 4 to pair with the PCE's lambda 1 / lambda 2
+    :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
+
+    :return: Dictionary with the KL divergence, KS statistic, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the lambda vector used (plus the PCE's raw, unmodified prediction), the shared grid, both densities, and the fresh sample drawn from the PCE's GLD
+    """
+
+    lambda_pce_raw = np.asarray(pce_metamodel.predict(np.array([[r, s]]))[0], dtype=float)
+    lambda_pce     = np.array([lambda_pce_raw[0], lambda_pce_raw[1], lambda3, lambda4], dtype=float)
+
+    result = _compare_gld_to_raw_benchmark(g_real, lambda_pce, n_grid=n_grid)
+    result['lambda_pce']     = lambda_pce
+    result['lambda_pce_raw'] = lambda_pce_raw
+    result['pdf_pce']        = result.pop('pdf_pred')
+    result['g_pce_samples']  = result.pop('g_pred_samples')
+
+    return result
+
+
+def validate_nn_kl_divergence_benchmark(models: dict, scaler: Any, r: float, s: float, t: float, g_real: np.ndarray, lambda3: float, lambda4: float, n_grid: int = 400) -> dict:
+    r"""Score the global NN's predicted GLD against the raw Monte Carlo :math:`g` data, at one (R, S, t) design point.
+
+    Mirrors `validate_pce_kl_divergence_benchmark`, for the global NN
+    (`train_and_validate_nn_lambda_benchmark`) instead of the per-time-step PCE — same idea, but the
+    NN takes :math:`t` directly, instead of needing one PCE per time step. The NN only ever predicts
+    lambda 1 / lambda 2 by design, so lambda 3 / lambda 4 come from the caller here too.
+
+    :param models: ``{'lambda 1': fitted MLPRegressor, 'lambda 2': fitted MLPRegressor}``, as returned by `train_and_validate_nn_lambda_benchmark`
+    :param scaler: The fitted `StandardScaler` for `(r, s, t)`, as returned by `train_and_validate_nn_lambda_benchmark`
+    :param r: Resistance value of the design point being checked
+    :param s: Load value of the design point being checked
+    :param t: Time step of the design point being checked
+    :param g_real: Raw Monte Carlo g samples for this design point (that design point's rows of `dataset_full`'s `g` column)
+    :param lambda3: Fixed lambda 3 to pair with the NN's lambda 1 / lambda 2
+    :param lambda4: Fixed lambda 4 to pair with the NN's lambda 1 / lambda 2
+    :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
+
+    :return: Dictionary with the KL divergence, KS statistic, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the lambda vector used, the shared grid, both densities, and the fresh sample drawn from the NN's GLD
+    """
+
+    x_scaled  = scaler.transform(np.array([[r, s, t]]))
+    lambda_nn = np.array([float(models['lambda 1'].predict(x_scaled)[0]),
+                          float(models['lambda 2'].predict(x_scaled)[0]),
+                          lambda3,
+                          lambda4], dtype=float)
+
+    result = _compare_gld_to_raw_benchmark(g_real, lambda_nn, n_grid=n_grid)
+    result['lambda_nn']    = lambda_nn
+    result['pdf_nn']       = result.pop('pdf_pred')
+    result['g_nn_samples'] = result.pop('g_pred_samples')
+
+    return result
+
+
+def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd.DataFrame, time_step: float, lambda3: float, lambda4: float, n_grid: int = 400, max_points: int | None = None, verbose: bool = True) -> pd.DataFrame:
+    r"""Run `validate_pce_kl_divergence_benchmark` over every design point of one time step's `dataset_full`.
+
+    Groups `df_full` by design point, pulls that point's raw Monte Carlo :math:`g` samples, and scores
+    the PCE's predicted GLD against them — one row of statistics per design point. Stacking the
+    result over every time step gives the (R, S) maps of surrogate error that
+    `02_train_pce_plot.ipynb` plots.
+
+    :param pce_metamodel: Fitted PCE for `time_step`, as returned by `train_and_validate_pce_from_dataset_benchmark`
+    :param df_full: That time step's `dataset_full` frame, one row per latent replica
+    :param time_step: Time step being scored [years], copied into the output frame
+    :param lambda3: Fixed lambda 3 to pair with the PCE's lambda 1 / lambda 2
+    :param lambda4: Fixed lambda 4 to pair with the PCE's lambda 1 / lambda 2
+    :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
+    :param max_points: Score only the first `max_points` design points. None scores all of them
+    :param verbose: Whether to print progress
+
+    :return: One row per design point, with `r`, `s`, `Time (years)` and the seven statistics
+    """
+
+    grouped = list(df_full.groupby(['r', 's'], sort=False))
+    if max_points is not None:
+        grouped = grouped[:max_points]
+
+    if verbose:
+        print(f'  t = {time_step:.2f} years: scoring {len(grouped)} design points')
+
+    rows = []
+    for (r, s), group in grouped:
+        stats_ = validate_pce_kl_divergence_benchmark(
+                                                         pce_metamodel=pce_metamodel,
+                                                         r=r,
+                                                         s=s,
+                                                         g_real=group['g'].to_numpy(),
+                                                         lambda3=lambda3,
+                                                         lambda4=lambda4,
+                                                         n_grid=n_grid,
+                                                     )
+        rows.append({
+                        'r':             r,
+                        's':             s,
+                        'Time (years)':  time_step,
+                        'KL':            stats_['kl_divergence'],
+                        'KS':            stats_['ks_statistic'],
+                        'Wasserstein':   stats_['wasserstein'],
+                        'R2 (PDF)':      stats_['r2_pdf'],
+                        'Rel. error P5':  stats_['rel_err_p5'],
+                        'Rel. error P50': stats_['rel_err_p50'],
+                        'Rel. error P95': stats_['rel_err_p95'],
+                    })
+
+    df_out    = pd.DataFrame(rows)
+    n_invalid = int(df_out['KL'].isna().sum())
+    if verbose and n_invalid:
+        print(f'    {n_invalid} design point(s) scored NaN — the PCE predicted an invalid GLD (lambda 2 <= 0) there')
+
+    return df_out
 
 
 def generate_nn_dataset_benchmark(pce_metamodels: list, times: np.ndarray, joint: Any, n_points: int = 5000, n_lambdas: int = 4, n_latent_samples: int = 1000, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
