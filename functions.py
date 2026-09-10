@@ -49,7 +49,7 @@ def generate_latent_variables_benchmark(n_latent_samples: int, z1_mean: float = 
     return z1_latent, z2_latent
 
 
-def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, time_step: float = 0.0, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, time_step: float = 0.0, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, n_starts: int = 15, seed: int = 42, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     r"""Compute the emulator of the R/S benchmark state limit function.
 
     The state limit function is
@@ -78,6 +78,11 @@ def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, tim
     :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
     :param z1_std: Standard deviation of the resistance latent multiplier
     :param z2_std: Standard deviation of the load latent multiplier
+    :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit; each restart begins from a
+        different point on the shape plane, which guards against the moment-matching optimizer
+        settling in a poor local minimum (the failure mode that produced bad lambda 2 fits)
+    :param seed: Seed used by pyGLAM to draw extra multi-start points once `n_starts` exceeds its
+        fixed shape grid, for reproducible fits
     :param verbose: Whether to print per-sample diagnostics
 
     :return: [0] = one row per latent replica ; [1] = one row per design point, with the lambdas and the processing time
@@ -135,7 +140,7 @@ def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, tim
         else:
             try:
                 emulator = glam.GlamFKML()
-                sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
+                sol = emulator.fit_lambdas(df['g'].values, method="least_squares", n_starts=n_starts, seed=seed)
                 if sol.status in [-1, -2]:
                     lambdas = [np.nan] * 4
                 else:
@@ -169,7 +174,7 @@ def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, tim
     return df_full, df_unique
 
 
-def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, time_step: float, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, time_step: float, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
     """Run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.
 
     This is the only stage that draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_benchmark`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.
@@ -183,6 +188,9 @@ def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, t
     :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
     :param z1_std: Standard deviation of the resistance latent multiplier
     :param z2_std: Standard deviation of the load latent multiplier
+    :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit, passed through to
+        `emulator_function_time_benchmark`
+    :param seed: Seed used by pyGLAM's multi-start, passed through to `emulator_function_time_benchmark`
     :param output_dir: Directory where the .pkl artefacts are written
     :param save: Whether to write the .pkl artefacts to disk
     :param verbose: Whether to print the progress of each split
@@ -192,7 +200,7 @@ def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, t
 
     out_dir     = Path(output_dir)
     tag         = f'{time_step}_benchmark'
-    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples, k_factor_final=k_factor_final, z1_std=z1_std, z2_std=z2_std, verbose=False)
+    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples, k_factor_final=k_factor_final, z1_std=z1_std, z2_std=z2_std, n_starts=n_starts, seed=seed, verbose=False)
 
     if verbose:
         print(f'\n{"-"*40}')
@@ -336,7 +344,7 @@ def _gld_pdf_benchmark(lambdas: np.ndarray, x_vals: np.ndarray, n_reference: int
     return np.interp(x_vals, x_ref, dens_ref, left=0.0, right=0.0)
 
 
-def _compare_gld_to_raw_benchmark(g_real: np.ndarray, lambda_pred: np.ndarray, n_grid: int = 400) -> dict:
+def _compare_gld_to_raw_benchmark(g_real: np.ndarray, lambda_pred: np.ndarray, n_grid: int = 400, random_state: int | np.random.Generator | None = 42) -> dict:
     r"""Score a predicted GLD directly against the raw Monte Carlo :math:`g` samples.
 
     Shared numerical core of `validate_pce_kl_divergence_benchmark` and
@@ -357,6 +365,10 @@ def _compare_gld_to_raw_benchmark(g_real: np.ndarray, lambda_pred: np.ndarray, n
     :param g_real: Raw Monte Carlo g samples for one design point
     :param lambda_pred: The GLD being scored (lambda 1-4, in order)
     :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
+    :param random_state: Seed, NumPy Generator or None passed to pyGLAM's `rvs`. pyGLAM's `rvs` now
+        draws true random samples instead of the old deterministic quantile grid, so a fixed seed (the
+        default) keeps this diagnostic reproducible; pass a shared `np.random.Generator` to draw a
+        different sample per call while keeping a whole sweep reproducible from one seed
 
     :return: Dictionary with the KL divergence, KS statistic, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the shared grid, both densities, and the fresh sample drawn from the predicted GLD
     """
@@ -403,7 +415,7 @@ def _compare_gld_to_raw_benchmark(g_real: np.ndarray, lambda_pred: np.ndarray, n
     # =========================
     # 2. Sample-based diagnostics: raw Monte Carlo g vs. a fresh sample from the predicted GLD
     # =========================
-    g_pred = pred_dist.rvs(size=len(g_real))
+    g_pred = pred_dist.rvs(size=len(g_real), random_state=random_state)
 
     ks_statistic = float(ks_2samp(g_real, g_pred).statistic)
     w1_distance  = float(wasserstein_distance(g_real, g_pred))
@@ -429,7 +441,7 @@ def _compare_gld_to_raw_benchmark(g_real: np.ndarray, lambda_pred: np.ndarray, n
            }
 
 
-def validate_pce_kl_divergence_benchmark(pce_metamodel: Any, r: float, s: float, g_real: np.ndarray, lambda3: float, lambda4: float, n_grid: int = 400) -> dict:
+def validate_pce_kl_divergence_benchmark(pce_metamodel: Any, r: float, s: float, g_real: np.ndarray, lambda3: float, lambda4: float, n_grid: int = 400, random_state: int | np.random.Generator | None = 42) -> dict:
     r"""Score the PCE's predicted GLD against the raw Monte Carlo :math:`g` data, at one (R, S) design point.
 
     The PCE supplies lambda 1 / lambda 2 for :math:`(R, S)`; lambda 3 / lambda 4 are supplied by the
@@ -448,6 +460,7 @@ def validate_pce_kl_divergence_benchmark(pce_metamodel: Any, r: float, s: float,
     :param lambda3: Fixed lambda 3 to pair with the PCE's lambda 1 / lambda 2
     :param lambda4: Fixed lambda 4 to pair with the PCE's lambda 1 / lambda 2
     :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
+    :param random_state: Seed, NumPy Generator or None passed to pyGLAM's `rvs` for the fresh sample; see `_compare_gld_to_raw_benchmark`
 
     :return: Dictionary with the KL divergence, KS statistic, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the lambda vector used (plus the PCE's raw, unmodified prediction), the shared grid, both densities, and the fresh sample drawn from the PCE's GLD
     """
@@ -455,7 +468,7 @@ def validate_pce_kl_divergence_benchmark(pce_metamodel: Any, r: float, s: float,
     lambda_pce_raw = np.asarray(pce_metamodel.predict(np.array([[r, s]]))[0], dtype=float)
     lambda_pce     = np.array([lambda_pce_raw[0], lambda_pce_raw[1], lambda3, lambda4], dtype=float)
 
-    result = _compare_gld_to_raw_benchmark(g_real, lambda_pce, n_grid=n_grid)
+    result = _compare_gld_to_raw_benchmark(g_real, lambda_pce, n_grid=n_grid, random_state=random_state)
     result['lambda_pce']     = lambda_pce
     result['lambda_pce_raw'] = lambda_pce_raw
     result['pdf_pce']        = result.pop('pdf_pred')
@@ -464,7 +477,7 @@ def validate_pce_kl_divergence_benchmark(pce_metamodel: Any, r: float, s: float,
     return result
 
 
-def validate_nn_kl_divergence_benchmark(models: dict, scaler: Any, r: float, s: float, t: float, g_real: np.ndarray, lambda3: float, lambda4: float, n_grid: int = 400) -> dict:
+def validate_nn_kl_divergence_benchmark(models: dict, scaler: Any, r: float, s: float, t: float, g_real: np.ndarray, lambda3: float, lambda4: float, n_grid: int = 400, random_state: int | np.random.Generator | None = 42) -> dict:
     r"""Score the global NN's predicted GLD against the raw Monte Carlo :math:`g` data, at one (R, S, t) design point.
 
     Mirrors `validate_pce_kl_divergence_benchmark`, for the global NN
@@ -481,6 +494,7 @@ def validate_nn_kl_divergence_benchmark(models: dict, scaler: Any, r: float, s: 
     :param lambda3: Fixed lambda 3 to pair with the NN's lambda 1 / lambda 2
     :param lambda4: Fixed lambda 4 to pair with the NN's lambda 1 / lambda 2
     :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
+    :param random_state: Seed, NumPy Generator or None passed to pyGLAM's `rvs` for the fresh sample; see `_compare_gld_to_raw_benchmark`
 
     :return: Dictionary with the KL divergence, KS statistic, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the lambda vector used, the shared grid, both densities, and the fresh sample drawn from the NN's GLD
     """
@@ -491,7 +505,7 @@ def validate_nn_kl_divergence_benchmark(models: dict, scaler: Any, r: float, s: 
                           lambda3,
                           lambda4], dtype=float)
 
-    result = _compare_gld_to_raw_benchmark(g_real, lambda_nn, n_grid=n_grid)
+    result = _compare_gld_to_raw_benchmark(g_real, lambda_nn, n_grid=n_grid, random_state=random_state)
     result['lambda_nn']    = lambda_nn
     result['pdf_nn']       = result.pop('pdf_pred')
     result['g_nn_samples'] = result.pop('g_pred_samples')
@@ -499,7 +513,7 @@ def validate_nn_kl_divergence_benchmark(models: dict, scaler: Any, r: float, s: 
     return result
 
 
-def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd.DataFrame, time_step: float, lambda3: float, lambda4: float, n_grid: int = 400, max_points: int | None = None, verbose: bool = True) -> pd.DataFrame:
+def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd.DataFrame, time_step: float, lambda3: float, lambda4: float, n_grid: int = 400, max_points: int | None = None, random_state: int = 42, verbose: bool = True) -> pd.DataFrame:
     r"""Run `validate_pce_kl_divergence_benchmark` over every design point of one time step's `dataset_full`.
 
     Groups `df_full` by design point, pulls that point's raw Monte Carlo :math:`g` samples, and scores
@@ -514,6 +528,9 @@ def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd
     :param lambda4: Fixed lambda 4 to pair with the PCE's lambda 1 / lambda 2
     :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
     :param max_points: Score only the first `max_points` design points. None scores all of them
+    :param random_state: Seed for the pyGLAM samples drawn at every design point. A single
+        `np.random.Generator` is seeded once from it and advanced across the sweep, so each design
+        point gets an independent draw while the whole sweep stays reproducible from one seed
     :param verbose: Whether to print progress
 
     :return: One row per design point, with `r`, `s`, `Time (years)` and the seven statistics
@@ -526,6 +543,7 @@ def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd
     if verbose:
         print(f'  t = {time_step:.2f} years: scoring {len(grouped)} design points')
 
+    rng  = np.random.default_rng(random_state)
     rows = []
     for (r, s), group in grouped:
         stats_ = validate_pce_kl_divergence_benchmark(
@@ -536,6 +554,7 @@ def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd
                                                          lambda3=lambda3,
                                                          lambda4=lambda4,
                                                          n_grid=n_grid,
+                                                         random_state=rng,
                                                      )
         rows.append({
                         'r':             r,
@@ -721,7 +740,7 @@ def train_and_validate_nn_lambda_benchmark(df_nn: pd.DataFrame, feature_cols: li
            }
 
 
-def generate_rul_dataset_benchmark(r: float, s: float, times: np.ndarray, n_latent_samples: int = 1000, lambda3_fixed: float | None = None, lambda4_fixed: float | None = None, n_glam_samples: int = 10000, input_dir: str | Path = '.', output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def generate_rul_dataset_benchmark(r: float, s: float, times: np.ndarray, n_latent_samples: int = 1000, lambda3_fixed: float | None = None, lambda4_fixed: float | None = None, n_glam_samples: int = 10000, random_state: int = 42, input_dir: str | Path = '.', output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
     """Predict lambda 1/2 at a fixed (R, S) across a grid of time steps with the trained global NN, fix lambda 3/4, and draw GLD Monte Carlo samples of g at each time step.
 
     The raw material for a spaghetti / RUL plot: querying the NN instead of the emulator or a per-time-step PCE means any `(R, S, t)` can be evaluated directly, without picking a PCE for a specific `t` first.
@@ -737,6 +756,10 @@ def generate_rul_dataset_benchmark(r: float, s: float, times: np.ndarray, n_late
     :param lambda3_fixed: Fixed value for lambda 3. If None, uses the mean over the NN training dataset
     :param lambda4_fixed: Fixed value for lambda 4. If None, uses the mean over the NN training dataset
     :param n_glam_samples: Number of Monte Carlo samples drawn from the GLD at each time step
+    :param random_state: Seed for the GLD Monte Carlo draws. pyGLAM's `rvs` now draws true random
+        samples instead of the old deterministic quantile grid, so a single `np.random.Generator` is
+        seeded once from this and advanced across time steps, keeping the whole spaghetti/RUL sweep
+        reproducible from one seed
     :param input_dir: Directory the NN artefacts (and, if needed, the NN training dataset) are read from
     :param output_dir: Directory where the .pkl artefacts are written
     :param save: Whether to write the .pkl artefacts to disk
@@ -791,10 +814,11 @@ def generate_rul_dataset_benchmark(r: float, s: float, times: np.ndarray, n_late
     # =========================
     # 4. GLD Monte Carlo samples of g at each time step
     # =========================
+    rng     = np.random.default_rng(random_state)
     samples = np.empty((n_glam_samples, len(times)))
     for i, row in lambda_df.iterrows():
         gld           = glam.GlamFKML(lam1=row['lambda 1'], lam2=row['lambda 2'], lam3=row['lambda 3'], lam4=row['lambda 4'])
-        samples[:, i] = gld.rvs(size=n_glam_samples)
+        samples[:, i] = gld.rvs(size=n_glam_samples, random_state=rng)
         if verbose:
             print(f'  t = {row["Time (years)"]:.1f}: lambda 1 = {row["lambda 1"]:.3f}, lambda 2 = {row["lambda 2"]:.3f}, '
                   f'sample mean = {samples[:, i].mean():.3f}, sample std = {samples[:, i].std():.3f}')
@@ -964,8 +988,14 @@ def _interp_profile_at(calendar_years: np.ndarray, depths: np.ndarray, year_quer
     return depths[:, k] + frac * (depths[:, k + 1] - depths[:, k])
 
 
-def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 1000, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections.
+
+    :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit; each restart begins from a
+        different point on the shape plane, which guards against the moment-matching optimizer
+        settling in a poor local minimum (the failure mode that produced bad lambda 2 fits)
+    :param seed: Seed used by pyGLAM to draw extra multi-start points once `n_starts` exceeds its
+        fixed shape grid, for reproducible fits
     """
 
     dfs = []
@@ -1059,7 +1089,7 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ca
         else:
             try:
                 emulator = glam.GlamFKML()
-                sol = emulator.fit_lambdas(df['g'].values, method="least_squares")
+                sol = emulator.fit_lambdas(df['g'].values, method="least_squares", n_starts=n_starts, seed=seed)
                 if sol.status in [-1, -2]:
                     lambdas = [np.nan] * 4
                 else:
@@ -1093,7 +1123,7 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ca
     return df_full, df_unique
 
 
-def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
     """Stage 1 of the split durability pipeline: run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.
 
     This is the only stage that runs `carb_model.predict`, draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_durability`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.
@@ -1108,6 +1138,9 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
     :param installation_year: Calendar year of installation
     :param exposure_conditions: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])
     :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix
+    :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit, passed through to
+        `emulator_function_time_durability`
+    :param seed: Seed used by pyGLAM's multi-start, passed through to `emulator_function_time_durability`
     :param output_dir: Directory where the .pkl artefacts are written
     :param save: Whether to write the .pkl artefacts to disk
     :param verbose: Whether to print the progress of each split
@@ -1119,7 +1152,7 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
     tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}'
     emulator_kw = dict(names_x_variables=["fck", "rh", "cov"], carb_model=carb_model, cement_type=cement_type,
                        installation_year=installation_year, exposure_conditions=exposure_conditions,
-                       time_step=time_step, n_latent_samples=n_latent_samples, verbose=False)
+                       time_step=time_step, n_latent_samples=n_latent_samples, n_starts=n_starts, seed=seed, verbose=False)
 
     if verbose:
         print(f'\n{"-"*40}')

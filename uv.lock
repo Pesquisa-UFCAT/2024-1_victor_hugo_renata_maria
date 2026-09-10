@@ -1616,15 +1616,16 @@ wheels = [
 
 [[package]]
 name = "pyglam"
-version = "0.2.2"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "numpy" },
     { name = "pandas" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/50/71/3c5afb4c8a19c1ab649740b3c43b5df570805764a5e8d7853f7deeb272fc/pyglam-0.2.2.tar.gz", hash = "sha256:7d97e8c731248e50871959e5bcef036ca801d27ad16c1cff69c69bff5106f4ea", size = 4088, upload-time = "2026-04-24T21:09:20.733Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/c6/6f39fa03b6f2e4021a81b2c0802efc28f3ce28019f962a7a64d9d5478cd6/pyglam-1.0.0.tar.gz", hash = "sha256:8413e2f687ff7ddec12d2c8fa670a0670207168870e85b44ed809d5a13954785", size = 16406, upload-time = "2026-09-10T01:07:19.258Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/92/96e1ce3d901d1ddb599a8279be7cfa54a051f24dc19d36a5b078e772ba53/pyglam-0.2.2-py3-none-any.whl", hash = "sha256:546004dec93ac0a989010258df183fa108040069447b5192002db67bd93c008a", size = 4545, upload-time = "2026-04-24T21:09:21.477Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/71/01d7523658da11a639acc085f7ae1a298235e82ca0c97f1dbaf8fe50ed20/pyglam-1.0.0-py3-none-any.whl", hash = "sha256:58cecfea25643c6a244519eb75e2d3bf9617b8b35403ec3c4595cc99ed45b183", size = 16413, upload-time = "2026-09-10T01:07:18.059Z" },
 ]
 
 [[package]]
