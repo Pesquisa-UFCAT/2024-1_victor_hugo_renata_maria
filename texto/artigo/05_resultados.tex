@@ -1,0 +1,523 @@
+\section{Resultados e discuss\~ao}\label{sec:resultados}
+
+% Exemplo 1 (benchmark) JA EXECUTADO: texto e numeros preservados do
+% grupo. Exemplos 2 e 3 com estrutura completa e placeholders \falta
+% (a executar). Ver plano de melhorias para a defini\c{c}\~ao dos
+% exemplos finais (RUL, manuten\c{c}\~ao, otimiza\c{c}\~ao, p_f vs limiar).
+
+Os exemplos a seguir formam uma escada de evidência: o Exemplo~1 verifica o arcabouço metodológico em um problema de referência de baixo custo, no qual a solução de Monte Carlo direta serve de \textit{ground truth}; o Exemplo~2 aplica o emulador ao problema-alvo --- a previsão da RUL probabilística de uma viga de concreto armado sob corrosão induzida por carbonatação; e o Exemplo~3 estende a análise a um cenário com intervenção de manutenção, demonstrando o uso do emulador no suporte à decisão.
+
+\subsection{Verifica\c{c}\~ao da biblioteca PyGLAM}
+\label{subsec:pyglam}
+
+A biblioteca \textit{PyGLAM}, desenvolvida pelos autores em linguagem Python, implementa o ajuste, a amostragem e a avaliação da Distribuição Lambda Generalizada na parametrização FKML \parencite{Freimer1988}. Por ser o núcleo estatístico de todo o arcabouço --- é ela que converte cada conjunto de réplicas do simulador em um vetor $\boldsymbol{\lambda}$ ---, sua acurácia condiciona a de todos os resultados subsequentes. Esta subseção verifica essa acurácia de forma isolada, antes que o emulador seja exercitado nos Exemplos~\ref{subsec:exemplo1} e \ref{subsec:exemplo2}.
+
+\subsubsection{Procedimento}
+
+Quatro distribuições-alvo foram escolhidas por exercitarem geometrias distintas: a \textbf{Normal} (simétrica, suporte ilimitado), a de \textbf{Gumbel} (assimétrica à direita, cauda exponencial), a \textbf{Uniforme} (suporte compacto, sem moda) e a \textbf{Lognormal} (assimétrica à direita, cauda mais pesada). Para cada alvo, amostras de tamanho $N \in \{50;\, 200;\, 1.000;\, 5.000\}$ foram geradas e ajustadas pelo método dos momentos com 15 reinícios de otimização. Cada célula $(\text{distribuição}, N)$ foi repetida 20 vezes com amostras independentes, e os valores reportados são as médias dessas repetições --- precaução necessária porque, em $N = 50$, um ajuste isolado é dominado por ruído amostral.
+
+As métricas são calculadas contra a distribuição-alvo \textit{analítica}, e não contra a amostra, de modo a medir a qualidade da aproximação da família GLD e não o ajuste ao ruído. A estatística de Kolmogorov--Smirnov é tomada como $\sup_x |F_{\mathrm{GLD}}(x) - F_{\mathrm{alvo}}(x)|$, os erros de quantil são normalizados pela amplitude $P_5$--$P_{95}$ do alvo, e a divergência de Kullback--Leibler (Equação~\eqref{eq:kl_continua}) é avaliada na direção $D(q \| p)$, da GLD ajustada em relação ao alvo. Essa escolha de direção não é arbitrária: com $\lambda_3, \lambda_4 > 0$ a GLD-FKML possui suporte \textit{compacto}, ao passo que Normal, Gumbel e Lognormal não, de modo que $D(p \| q)$ diverge por construção.
+
+\subsubsection{Resultados}
+
+A Figura~\ref{fig:pyglam_fits} apresenta os ajustes para $N = 1.000$ e a Tabela~\ref{tab:pyglam_metricas} consolida as métricas.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{z_pyglam_fits_pt.pdf}
+    \caption{Ajuste da GLD, pelo método dos momentos implementado no PyGLAM, a quatro distribuições-alvo ($N = 1.000$). O histograma corresponde à amostra e a linha contínua à densidade da GLD ajustada.}
+    \label{fig:pyglam_fits}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas de qualidade do ajuste da GLD às distribuições-alvo, em média sobre 20 repetições independentes por célula. Erros de quantil normalizados pela amplitude $P_5$--$P_{95}$.}
+\label{tab:pyglam_metricas}
+\begin{tabular}{lrrrrrrr}
+\toprule
+\textbf{Distribuição} & \textbf{$N$} & \textbf{KS} & \textbf{$D(q\|p)$} & \textbf{Wasserstein} & \textbf{$P_5$ (\%)} & \textbf{$P_{50}$ (\%)} & \textbf{$P_{95}$ (\%)} \\
+\midrule
+Normal & 50 & 0,0659 & 0,0488 & 0,0877 & 5,55 & 3,37 & 7,18 \\
+ & 200 & 0,0366 & 0,0108 & 0,0512 & 3,59 & 2,04 & 2,27 \\
+ & 1.000 & 0,0158 & 0,0021 & 0,0228 & 1,43 & 0,74 & 1,34 \\
+ & 5.000 & 0,0059 & 0,0003 & 0,0129 & 0,46 & 0,28 & 0,53 \\
+\midrule
+Gumbel & 50 & 0,0818 & 0,1047 & 0,1333 & 5,01 & 3,88 & 9,92 \\
+ & 200 & 0,0476 & 0,0623 & 0,0947 & 2,46 & 1,57 & 4,94 \\
+ & 1.000 & 0,0460 & 0,0941 & 0,0883 & 1,50 & 1,14 & 4,84 \\
+ & 5.000 & 0,0436 & 0,0963 & 0,0823 & 1,23 & 0,93 & 3,24 \\
+\midrule
+Uniforme & 50 & 0,0720 & 0,0341 & 0,0208 & 3,48 & 5,73 & 2,92 \\
+ & 200 & 0,0324 & 0,0006 & 0,0099 & 1,16 & 2,41 & 1,39 \\
+ & 1.000 & 0,0175 & 0,0026 & 0,0051 & 0,82 & 1,12 & 0,65 \\
+ & 5.000 & 0,0066 & 0,0013 & 0,0029 & 0,21 & 0,48 & 0,21 \\
+\midrule
+Lognormal & 50 & 0,0940 & 0,1238 & 0,0543 & 4,07 & 4,17 & 13,73 \\
+ & 200 & 0,0738 & 0,1584 & 0,0423 & 2,74 & 2,56 & 6,36 \\
+ & 1.000 & 0,0303 & 0,0481 & 0,0191 & 1,14 & 0,85 & 2,53 \\
+ & 5.000 & 0,0149 & 0,0149 & 0,0117 & 0,57 & 0,37 & 1,10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A leitura quantitativa desses resultados é dada pela taxa com que a distância KS decai com o tamanho amostral, obtida por regressão linear em escala logarítmica. O erro de um ajuste por momentos decompõe-se em duas parcelas: uma \textit{amostral}, decorrente da estimação dos quatro primeiros momentos a partir de uma amostra finita, que decai com a taxa teórica $N^{-1/2}$; e outra \textit{estrutural}, decorrente de a família GLD não conter exatamente a distribuição-alvo, que independe de $N$. A inclinação medida discrimina as duas.
+
+Para a Normal e a Uniforme obtiveram-se inclinações de $-0{,}52$ e $-0{,}50$, com $R^2 = 0{,}99$ em ambos os casos --- estatisticamente indistinguíveis da taxa teórica $-1/2$. O erro observado é, portanto, integralmente de natureza amostral, sem parcela estrutural detectável: a GLD representa essas duas distribuições com a precisão que os dados permitirem. Em termos absolutos, em $N = 5.000$ a distância KS cai a 0,0059 e 0,0066, respectivamente, com erros de quantil abaixo de 0,55\% em toda a faixa $P_5$--$P_{95}$. A Lognormal apresenta inclinação de $-0{,}42$, ligeiramente inferior, o que sinaliza uma pequena parcela não amostral, mas ainda converge de forma sustentada, alcançando 1,10\% no $P_{95}$. Esses três casos confirmam a capacidade da GLD de representar simultaneamente distribuições simétricas, assimétricas e de suporte compacto com um único conjunto de quatro parâmetros.
+
+\subsubsection{O limite estrutural da fam\'ilia GLD}
+
+O comportamento da distribuição de Gumbel merece destaque, e a Figura~\ref{fig:pyglam_convergence} o evidencia. Enquanto as demais distribuições decaem com inclinações entre $-0{,}42$ e $-0{,}52$, a curva da Gumbel estabiliza em torno de $\mathrm{KS} \approx 0{,}044$ a partir de $N = 200$: sua inclinação medida é de apenas $-0{,}12$, e o baixo coeficiente de determinação da regressão ($R^2 = 0{,}68$) confirma que o decaimento sequer segue uma lei de potência. Trata-se, portanto, de um patamar \textit{estrutural}, e não amostral: aumentar a amostra não reduz a discrepância porque a família GLD, com os parâmetros de forma ajustados, não representa exatamente a cauda exponencial da Gumbel.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.62\linewidth]{z_pyglam_convergence_pt.pdf}
+    \caption{Convergência da distância de Kolmogorov--Smirnov entre a GLD ajustada e a distribuição-alvo, em função do tamanho amostral. Eixos em escala logarítmica; cada ponto é a média de 20 repetições independentes.}
+    \label{fig:pyglam_convergence}
+\end{figure}
+
+A mesma leitura explica o comportamento do teste clássico de aderência. Nas 20 repetições, o teste KS de duas amostras não rejeitou a hipótese nula em nenhum caso para a Normal e para a Uniforme, em qualquer tamanho amostral. Para a Gumbel e a Lognormal, contudo, a taxa de rejeição a 5\% cresceu de 0\% em $N = 50$ para 30\% em $N = 5.000$. O aparente paradoxo --- ajustes que melhoram enquanto o teste rejeita mais --- é apenas o ganho de potência do teste: com amostras maiores, ele passa a detectar uma discrepância residual que permanece pequena em magnitude. \textcolor{red}{No Exemplo~\ref{subsec:exemplo1}, a comparação das distribuições é apresentada por métricas de distância e erros de quantis, sem uma decisão de teste de hipótese.}
+
+A origem desse limite é geométrica. Com $\lambda_3, \lambda_4 > 0$, a GLD-FKML tem suporte compacto, de modo que uma distribuição-alvo de suporte ilimitado é necessariamente aproximada por uma de caudas truncadas. Para a Gumbel ajustada em $N = 5.000$, por exemplo, obteve-se $\lambda_3 = 1{,}67$ e $\lambda_4 = 2{,}25$, com suporte $[-1{,}86;\, 34{,}42]$; já a Lognormal produziu $\lambda_4 = -0{,}04$, valor negativo que mantém a cauda direita ilimitada e explica sua convergência mais favorável. Essa constatação é relevante para a interpretação dos resultados de confiabilidade: a aproximação da GLD é excelente no corpo da distribuição e nos quantis usualmente empregados em decisões de manutenção, mas a acurácia na cauda extrema deve ser verificada caso a caso, e não presumida.
+
+% =====================================================================
+\subsection{Exemplo 1: verificação em problema de referência}
+\label{subsec:exemplo1}
+
+O problema de referência permite avaliar a representação da distribuição de resposta antes da aplicação ao concreto armado. Adota-se uma adaptação do exemplo de \textcite{pires2024}, na qual a margem de segurança depende da resistência $R$, da solicitação $S$ e das incertezas de modelo $Z_1$ e $Z_2$:
+\begin{equation}
+    g(R,S,t) = k_{\mathrm{fator}}(t)\frac{R}{Z_1} - SZ_2.
+    \label{eq:toy_problem_equation}
+\end{equation}
+A redução da resistência segue a expressão
+\begin{equation}
+    k_{\mathrm{fator}}(t) =
+    \begin{cases}
+        1 + (k_{\mathrm{final}}-1)\dfrac{t}{T_f}, & 0 \leq t < T_f, \\[10pt]
+        k_{\mathrm{final}},                        & t \geq T_f,
+    \end{cases}
+    \qquad t\text{ em anos},
+    \label{eq:k_factor_linear}
+\end{equation}
+com $k_{\mathrm{final}} = 0{,}5$ e $T_f = 100$ anos, de modo que a capacidade cai linearmente até metade do valor íntegro ao final do horizonte. Essa magnitude é compatível com uma deterioração severa, ainda que a lei de decaimento permaneça idealizada. A retenção do valor terminal para $t \geq T_f$ é uma salvaguarda: sem ela, a extrapolação linear cruzaria zero em $t = T_f/(1-k_{\mathrm{final}})$ e inverteria o sinal da resistência, produzindo distribuições de resposta degeneradas, sem interpretação física e não representáveis por uma GLD válida. As variáveis de entrada estão descritas na Tabela~\ref{tab:random_variables_parameters}. Esse exemplo representa uma perda idealizada de capacidade e serve à verificação do método. Sua lei de degradação não descreve os mecanismos de carbonatação ou corrosão do concreto armado.
+
+\begin{table}[H]
+\centering
+\caption{Variáveis do problema de referência.}
+\label{tab:random_variables_parameters}
+\begin{tabular}{lcccc}
+\toprule
+Variável & Símbolo & Distribuição & Média & Desvio padrão \\
+\midrule
+Resistência & $R$ & Normal & 5,00 & 0,80 \\
+Solicitação & $S$ & Normal & 2,00 & 0,60 \\
+Incerteza de modelo da resistência & $Z_1$ & Lognormal & 1,00 & 0,028 \\
+Incerteza de modelo da solicitação & $Z_2$ & Lognormal & 1,00 & 0,096 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Configuração das simulações, representação da GLD e ganho computacional}
+\label{subsub:ex1_speedup}
+
+A configuração atual utiliza $2.000$ pontos de projeto para treinamento e $500$ para validação, com $2.500$ realizações de $g$ geradas para cada par $(R,S)$ a partir das variáveis latentes. Os quatro parâmetros da GLD são ajustados às amostras pelo PyGLAM, e os metamodelos PCE são construídos separadamente em cada uma das $5$ idades igualmente espaçadas entre $0$ e $100$ anos. A qualidade desse ajuste, por parâmetro, é discutida na Seção~\ref{subsub:camada_temporal}, junto com o desempenho da camada temporal de aprendizado de máquina.
+
+O ganho computacional foi avaliado pela razão entre o tempo do procedimento de referência e o tempo de predição do emulador PCE para o mesmo conjunto de $2.000$ pontos de projeto, em cada uma das cinco idades:
+\begin{equation}
+    S_{\mathrm{comp}}(t) = \frac{T_{\mathrm{ref}}(t)}{T_{\mathrm{PCE}}(t)}.
+    \label{eq:ex1_speedup}
+\end{equation}
+O tempo $T_{\mathrm{ref}}$ soma a geração das amostras latentes, a avaliação do modelo numérico, a organização dos dados e o ajuste local da GLD. O tempo $T_{\mathrm{PCE}}$ corresponde à predição dos parâmetros para o lote de entradas, com o metamodelo já treinado e carregado. Portanto, a razão mede o ganho na obtenção dos parâmetros da distribuição em relação ao procedimento completo de referência, e não uma comparação com o tempo isolado de avaliação da função $g$.
+
+\begin{table}[H]
+\centering
+\caption{Tempos por lote de pontos de projeto e ganho computacional nas cinco idades avaliadas.}
+\label{tab:computational_time}
+\begin{tabular}{rrrr}
+\toprule
+Tempo (anos) & Referência (s) & Emulador PCE (s) & Ganho (vezes) \\
+\midrule
+0,00   & 936,209381 & 0,002231 & 419.549 \\
+25,00  & 954,884701 & 0,001499 & 637.069 \\
+50,00  & 905,878127 & 0,001637 & 553.220 \\
+75,00  & 870,398033 & 0,001492 & 583.323 \\
+100,00 & 798,989566 & 0,001436 & 556.504 \\
+\midrule
+Mediana & 905,878127 & 0,001499 & 556.504 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{0.92\linewidth}
+\footnotesize A última linha apresenta a mediana de cada coluna, estatística menos sensível ao valor mais baixo registrado em $t=0$. A mediana do ganho é a mediana das cinco razões registradas, calculada antes do arredondamento; não é a razão entre os tempos medianos.
+\end{minipage}
+\end{table}
+
+O procedimento de referência demandou, na mediana, $905{,}88$~s por idade, enquanto a predição pela PCE levou aproximadamente $1{,}50$~ms. A mediana dos ganhos foi de $5{,}57\times10^5$ vezes, com valores entre $4{,}20\times10^5$ e $6{,}37\times10^5$.
+
+Esses resultados mostram a redução do custo de consulta após a construção da PCE, o que favorece a avaliação repetida de cenários. O treinamento da PCE e o pós-processamento para amostragem, confiabilidade ou RUL não estão incluídos no tempo de predição. Além disso, o registro disponível contém uma cronometragem de predição por idade, sem repetições para estimar sua variabilidade. O ganho obtido caracteriza esse ensaio e não deve ser transferido diretamente para o modelo de durabilidade do concreto.
+
+\subsubsection{Camada temporal de aprendizado de máquina}
+\label{subsub:camada_temporal}
+
+A camada temporal utiliza as entradas $(R,S,t)$ para prever os parâmetros $\lambda_1$ e $\lambda_2$ de forma contínua no tempo, dispensando o uso de uma PCE independente para cada instante. Os parâmetros de forma $\lambda_3$ e $\lambda_4$ não são preditos por essa camada, nem pela PCE nas comparações apresentadas neste trabalho: como mostra a Tabela~\ref{tab:validation_results}, esses dois parâmetros controlam principalmente as caudas da GLD, variam pouco entre pontos de projeto e ao longo do tempo, e a PCE não os representa com precisão. Adotam-se, portanto, seus valores médios no conjunto de treinamento, $\lambda_3=0{,}142157$ e $\lambda_4=0{,}131525$, em toda comparação de distribuições apresentada neste trabalho.
+
+\begin{table}[H]
+\centering
+\caption{Erro quadrático médio (MSE) e coeficiente de determinação $R^2$ dos quatro parâmetros da GLD no conjunto de validação da PCE, por idade.}
+\label{tab:validation_results}
+\footnotesize
+\begin{tabular}{rrrrrrrrr}
+\toprule
+ & \multicolumn{4}{c}{MSE} & \multicolumn{4}{c}{$R^2$} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+Tempo (anos) & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ \\
+\midrule
+0,00   & 0,000032 & 0,036096 & 0,000452 & 0,000413 & 0,999969 & 0,979504 & 0,002202      & 0,100693 \\
+25,00  & 0,000032 & 0,051272 & 0,000454 & 0,000469 & 0,999965 & 0,976717 & 0,065788      & 0,002610 \\
+50,00  & 0,000026 & 0,049197 & 0,000438 & 0,000383 & 0,999967 & 0,984233 & 0,015658      & 0,079338 \\
+75,00  & 0,000025 & 0,056486 & 0,000400 & 0,000399 & 0,999962 & 0,986619 & $-0{,}001781$ & 0,060296 \\
+100,00 & 0,000022 & 0,063286 & 0,000419 & 0,000420 & 0,999960 & 0,989090 & $-0{,}018763$ & $-0{,}008939$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A predição de $\lambda_1$ tem $R^2$ acima de $0{,}9999$ em todas as idades, com MSE da ordem de $10^{-5}$, cerca de três ordens de grandeza menor que o de $\lambda_2$. Para $\lambda_2$, o $R^2$ fica entre $0{,}977$ e $0{,}989$, com leve melhora nas idades mais avançadas. Já $\lambda_3$ e $\lambda_4$ têm $R^2$ próximo de zero na maior parte da malha temporal, tornando-se negativo para $\lambda_3$ aos $75$ e $100$ anos e para $\lambda_4$ aos $100$ anos: nesses casos, a média do conjunto de validação prediz $g$ melhor que a própria PCE. Esse comportamento sustenta a escolha de um valor médio fixo para os dois parâmetros de forma, em vez de um metamodelo dedicado a cada um.
+
+A Tabela~\ref{tab:nn_validation} traz a mesma métrica para a rede neural global, treinada uma única vez sobre o conjunto agregado de todas as idades.
+
+\begin{table}[H]
+\centering
+\caption{Erro quadrático médio (MSE) e coeficiente de determinação $R^2$ de $\lambda_1$ e $\lambda_2$ no conjunto de validação da rede neural global.}
+\label{tab:nn_validation}
+\begin{tabular}{rrrr}
+\toprule
+MSE $\lambda_1$ & $R^2$ $\lambda_1$ & MSE $\lambda_2$ & $R^2$ $\lambda_2$ \\
+\midrule
+0,000164 & 0,99989 & 0,00205 & 0,999454 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{z_nn_pred_vs_true_pt.png}
+    \caption{Valor previsto versus valor real de $\lambda_1$ (esquerda) e $\lambda_2$ (direita) no conjunto de validação da rede neural global. A linha tracejada vermelha marca a identidade.}
+    \label{fig:nn_pred_vs_true}
+\end{figure}
+
+A rede neural reproduz $\lambda_1$ com qualidade equivalente à da PCE ($R^2>0{,}9998$) e supera a PCE na predição de $\lambda_2$ ($R^2=0{,}999454$, contra $0{,}977$--$0{,}989$ por idade na PCE), apesar de ser um único modelo treinado sobre todas as idades simultaneamente, sem a informação discreta de qual PCE usar em cada instante. A Figura~\ref{fig:nn_pred_vs_true} confirma essa leitura: os pontos se mantêm próximos à identidade em toda a faixa de valores, com dispersão um pouco maior em $\lambda_2$ nos valores mais altos. O resultado é compatível com $\lambda_2$ variar suavemente com $t$: a camada temporal aproveita essa suavidade para interpolar entre os instantes discretos da PCE, em vez de ajustar cada idade isoladamente.
+
+\subsubsection{Propagação de incerteza: PCE versus rede neural}
+\label{subsub:propagacao_incerteza}
+
+Esta seção compara diretamente a PCE e a rede neural quanto à propagação de incerteza de $g$, no mesmo ponto de projeto ($R=5{,}394$, $S=2{,}305$, pertencente ao conjunto de treinamento) e nas mesmas duas idades, $t=50$ e $t=100$ anos, com $\lambda_3=0{,}142157$ e $\lambda_4=0{,}131525$ fixados para os dois modelos. A densidade de referência é estimada por KDE sobre as amostras brutas de $g$ desse ponto, e comparada à GLD reconstruída a partir dos parâmetros emulados por cada modelo, pelas métricas da Seção~\ref{subsec:metricas}: divergência KL, estatística KS, distância de Wasserstein, $R^2$ entre densidades e erros relativos de quantil. Por se tratar de um único ponto de projeto, o resultado não generaliza o comportamento dos dois modelos no espaço $(R,S,t)$, mas fornece uma estimativa direta de como cada um se comporta nesse ponto específico.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{z_uncertainty_pce_nn_t50_t100_pt.png}
+    \caption{Densidades de referência e emuladas para $R=5{,}394$ e $S=2{,}305$, nas idades de $50$ e $100$ anos: PCE (esquerda) e rede neural (direita). A linha cheia representa a KDE das amostras do conjunto de dados e a linha tracejada representa a GLD emulada, com os parâmetros de forma fixados.}
+    \label{fig:uncertainty_pce_nn}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Métricas de propagação de incerteza para a PCE e para a rede neural, no mesmo ponto de projeto, em duas idades.}
+\label{tab:uncertainty_propagation}
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{PCE} & \multicolumn{2}{c}{Rede neural} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Métrica & $t=50$ & $t=100$ & $t=50$ & $t=100$ \\
+\midrule
+Divergência KL                 & 0,00374 & 0,00366 & 0,00351 & 0,00318 \\
+Estatística KS                 & 0,01840 & 0,01400 & 0,01800 & 0,01960 \\
+Distância de Wasserstein       & 0,00540 & 0,00701 & 0,00529 & 0,00740 \\
+$R^2$ entre densidades         & 0,99791 & 0,99753 & 0,99801 & 0,99551 \\
+Erro relativo em $P_5$ (\%)    & $-0{,}47$ & $+10{,}91$ & $-0{,}61$ & $-46{,}78$ \\
+Erro relativo em $P_{50}$ (\%) & $-0{,}16$ & $+0{,}32$  & $-0{,}16$ & $-2{,}05$ \\
+Erro relativo em $P_{95}$ (\%) & $+0{,}18$ & $+1{,}11$  & $+0{,}27$ & $-0{,}18$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Aos $50$ anos, PCE e rede neural têm desempenho equivalente e igualmente bom: divergência KL de $0{,}00374$ e $0{,}00351$, $R^2$ acima de $0{,}997$ para ambas, e erros de quantil abaixo de $1\%$ nos três percentis avaliados. As duas curvas praticamente se sobrepõem à KDE de referência na Figura~\ref{fig:uncertainty_pce_nn}.
+
+Aos $100$ anos, a divergência KL e o $R^2$ entre densidades ainda favorecem discretamente a rede neural ($0{,}00318$ e $0{,}99551$, contra $0{,}00366$ e $0{,}99753$ da PCE). Aqui o $R^2$ da PCE é o maior dos dois, o oposto do que ocorre na divergência KL, o que já sinaliza que essas duas métricas agregadas não contam a mesma história dos quantis. O erro relativo em $P_5$ dispara para os dois modelos, mas de forma assimétrica: $+10{,}91\%$ na PCE contra $-46{,}78\%$ na rede neural. Esse salto não indica necessariamente um colapso do ajuste: aos $100$ anos o percentil $P_5$ do conjunto de referência está próximo de zero (Figura~\ref{fig:uncertainty_pce_nn}, cauda inferior da distribuição à esquerda), de modo que um pequeno desvio absoluto do quantil emulado se traduz em um erro percentual muito maior que nas demais métricas. Ainda assim, a rede neural erra por uma margem consideravelmente maior que a PCE nesse ponto específico, o que é relevante porque a cauda inferior de $g$ é justamente a região que governa a probabilidade de falha.
+
+Em conjunto, os dois ensaios sugerem que a rede neural iguala ou supera a PCE na qualidade agregada da densidade (KL, $R^2$, Wasserstein), mas pode ser menos confiável que a PCE especificamente na cauda inferior em idades mais avançadas. Um único ponto de projeto não permite afirmar se isso é uma característica sistemática do modelo global ou uma particularidade deste ponto e desta idade. \falta{Repetir esta comparação em outros pontos de projeto e idades para verificar se a maior sensibilidade da rede neural na cauda inferior em $t=100$ é sistemática.}
+
+\subsubsection{Vida útil remanescente}
+
+Para este exemplo, adota-se um limiar de intervenção em $g=0{,}7$, definido apenas para fins de ilustração do método, sem correspondência com um critério normativo específico. O fim da vida útil é tomado como o primeiro instante em que $g$ cruza esse limiar, e não necessariamente $g=0$: na prática, uma intervenção de manutenção é programada enquanto ainda resta margem de segurança, não apenas quando o estado limite já foi atingido.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{z_rul_spaghetti_R5_S2_pt.png}
+        \caption{Trajetórias de $g(t)$.}
+        \label{fig:rul_spaghetti}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{2500_rul_samples_R5_S2_benchmark_g_pdfs_pt.png}
+        \caption{Densidade de $g$ em seis idades.}
+        \label{fig:rul_g_pdfs}
+    \end{subfigure}
+    \caption{Comportamento de $g(t)$ para $R=5{,}0$ e $S=2{,}0$ (valores médios das variáveis de entrada): (a) $300$ das $50.000$ trajetórias simuladas, com a média (vermelho); (b) densidade de $g$ em seis idades entre $0$ e $100$ anos. O limiar de intervenção $g=0{,}7$ é indicado em ambos os painéis (tracejado).}
+    \label{fig:rul_trajetorias}
+\end{figure}
+
+Cada trajetória do painel (a) é comonotônica: um único nível de quantil $u$ é sorteado por trajetória e mantido fixo ao longo do tempo, de modo que $g_i(t) = Q\!\left(u_i; \hat{\boldsymbol{\lambda}}(t)\right)$, o que garante trajetórias monotonicamente decrescentes, compatíveis com um processo de degradação. Amostrar cada instante de forma independente produziria, em vez disso, trajetórias que oscilam livremente. A dispersão entre trajetórias cresce com o tempo, refletindo o aumento da incerteza acumulada na predição de $\lambda_1$ e $\lambda_2$ pela camada temporal, e a média cruza o limiar por volta de $t=91$ anos. O painel (b) mostra a mesma degradação sob outro ângulo: a densidade de $g$ se desloca gradualmente para a esquerda, e por $t=100$ anos seu corpo já ultrapassou o limiar.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{2500_rul_samples_R5_S2_benchmark_rul_pdf_pt.png}
+        \caption{Tempo até o cruzamento, a partir de $t=0$.}
+        \label{fig:rul_pdf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{2500_rul_samples_R5_S2_benchmark_conditional_rul_t50_pt.png}
+        \caption{RUL condicionada à sobrevivência em $t=50$ anos.}
+        \label{fig:rul_conditional}
+    \end{subfigure}
+    \caption{Distribuição do tempo até o cruzamento do limiar $g=0{,}7$, para $R=5{,}0$ e $S=2{,}0$: (a) a partir de $t=0$; (b) vida útil remanescente condicionada à sobrevivência em $t=50$ anos, $\mathrm{RUL}=T-t_{\mathrm{insp}}$. Ambas as densidades são truncadas no maior valor alcançável dentro do horizonte simulado de $100$ anos.}
+    \label{fig:rul_distribuicoes}
+\end{figure}
+
+A distribuição do painel (a) tem média de $91{,}32$ anos, mediana de $92{,}18$ anos, desvio padrão de $7{,}13$ anos e $P_5=78{,}19$ anos, com $16{,}4\%$ das trajetórias censuradas em $t=100$ anos. O pico estreito junto a esse limite corresponde a essa censura, não a um comportamento intrínseco da distribuição. Como nenhuma trajetória cruza o limiar antes de $t=50$ anos (valor obtido por interpolação linear entre os instantes simulados, que não incluem $t=50$ diretamente), todas as $50.000$ sobrevivem até esse instante, e a RUL condicional do painel (b) é a mesma distribuição do painel (a), apenas deslocada em $50$ anos: média de $41{,}32$ anos, mediana de $42{,}18$ anos e $P_{95}=50{,}00$ anos, o próprio limite do horizonte alcançável a partir desse instante.
+
+% =====================================================================
+\subsection{Exemplo 2 --- RUL probabil\'istica de viga de concreto armado sob carbonata\c{c}\~ao}
+\label{subsec:exemplo2}
+% =====================================================================
+
+Verificado o arcabouço, aplica-se o emulador ao problema-alvo: a previsão da vida útil remanescente de uma viga de concreto armado sujeita à corrosão induzida por carbonatação, com a função de estado limite da Equação~\eqref{eq:funcao_g} e o modelo de carbonatação da Seção~\ref{subsec:modelo_possan}.
+
+\subsubsection{Defini\c{c}\~ao do problema}
+
+A viga analisada possui seção retangular com os parâmetros geométricos e mecânicos da Tabela~\ref{tab:viga_deterministico} e a caracterização probabilística das variáveis aleatórias da Tabela~\ref{tab:viga_va}. \falta{revisar/ajustar os valores determinísticos conforme o caso final simulado}
+
+\begin{table}[H]
+\centering
+\caption{Parâmetros determinísticos da viga analisada.}
+\label{tab:viga_deterministico}
+\begin{tabular}{l c c}
+\hline
+\textbf{Parâmetro} & \textbf{Símbolo} & \textbf{Valor} \\
+\hline
+Largura da seção & $b_w$ & \falta{ex.: 0,14 m} \\
+Altura total & $h$ & \falta{ex.: 0,40 m} \\
+Altura útil & $d = 0{,}90\,h$ & \faltanum \\
+Diâmetro nominal das barras & $d_{s0}$ & 12,5 mm \\
+Número de barras & $n_b$ & \faltanum \\
+Resistência característica do aço & $f_{yk}$ & 500 MPa \\
+Módulo de elasticidade do aço & $E_s$ & 200 GPa \\
+Horizonte de análise & $T_f$ & \falta{ex.: 100 anos} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Variáveis aleatórias do Exemplo 2. \falta{confirmar distribuições e parâmetros; sugestões baseadas em \textcite{jcss2001}}}
+\label{tab:viga_va}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Variável} & \textbf{Símbolo} & \textbf{Distribuição} & \textbf{Média} & \textbf{C.V.} \\
+\hline
+Resistência do concreto & $f_c$ & Lognormal & \falta{30 MPa} & \falta{0,15} \\
+Cobrimento nominal & $c_{\mathrm{nom}}$ & Normal & \falta{25 mm} & \falta{0,20} \\
+Coef. de carbonatação & $k$ & Lognormal & \falta{$k_{30} = 3{,}8$ mm/$\sqrt{\text{ano}}$} & \falta{0,30} \\
+Taxa de corrosão a 20$^\circ$C & $i_{\mathrm{corr},20}$ & Lognormal & \falta{0,431 $\mu$A/cm$^2$} & \falta{0,25} \\
+Temperatura ambiente & $T$ & Normal & \falta{23,6 $^\circ$C} & \falta{0,10} \\
+Momento das ações permanentes & $M_{Gk}$ & Normal & \falta{12,0 kN$\cdot$m} & \falta{0,10} \\
+Momento das ações variáveis & $M_{Qk}$ & Gumbel & \falta{8,0 kN$\cdot$m} & \falta{0,25} \\
+Incerteza de modelo (resistência) & $Z_R$ & Lognormal & 1,00 & \falta{0,05} \\
+\hline
+\end{tabular}
+\end{table}
+
+%\subsubsection{Treinamento do emulador}
+
+%O plano de experimentos foi gerado por LHS com $M = \falta{valor, ex.: 500}$ pontos no espaço das variáveis da %Tabela~\ref{tab:viga_va}, avaliados nos passos de tempo $\{t_1, \dots, t_{N_t}\} = \falta{ex.: 0, 10, 20, 30, 40, 50, 60, 70, 80 %anos}$, com $N = \falta{ex.: 2.000}$ réplicas das variáveis latentes por ponto. Os parâmetros locais %$\hat{\boldsymbol{\lambda}}^{(j,m)}$ foram ajustados via PyGLAM e a análise exploratória de sensibilidade \falta{confirmou/refutou} %a baixa variabilidade de $\lambda_3$ e $\lambda_4$ observada no Exemplo~1 \falta{reportar a decisão de treinamento adotada}. O %regressor temporal foi selecionado por comparação entre \falta{RNA, floresta aleatória e SVR}, com hiperparâmetros otimizados por %\falta{busca em grade / validação cruzada $k$-dobras}; a Tabela~\ref{tab:ex2_regressores} resume o desempenho.
+
+%\begin{table}[H]
+%\centering
+%\caption{Comparação de regressores para a camada temporal (Exemplo 2). \falta{preencher}}
+%\label{tab:ex2_regressores}
+%\begin{tabular}{lcccc}
+%\toprule
+%\textbf{Regressor} & \textbf{$R^2$ ($\lambda_1$)} & \textbf{$R^2$ ($\lambda_2$)} & \textbf{KS médio (anos não vistos)} & %\textbf{Tempo de treino (s)} \\
+%\midrule
+%Rede neural (MLP) & \faltanum & \faltanum & \faltanum & \faltanum \\
+%Floresta aleatória & \faltanum & \faltanum & \faltanum & \faltanum \\
+%SVR & \faltanum & \faltanum & \faltanum & \faltanum \\
+%\bottomrule
+%\end{tabular}
+%\end{table}
+
+\subsubsection{Treinamento do emulador}
+
+O plano de experimentos foi gerado por LHS com $M = {100}$ pontos no espaço das variáveis da Tabela~\ref{tab:viga_va}, avaliados nos passos de tempo 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150 anos, com $N = {1.000}$ réplicas das variáveis latentes por ponto. Os parâmetros locais $\hat{\boldsymbol{\lambda}}^{(j,m)}$ foram ajustados via PyGLAM, sendo o parâmetro de testes de 80\% dos dados para treinamento e 20\% para teste, e a análise exploratória de sensibilidade confirmou a baixa variabilidade de $\lambda_3$ e $\lambda_4$ observada no Exemplo~1. O regressor temporal foi selecionado por comparação entre Redes Neurais, Gradient Boosting, Floresta aleatória e Árvore de decisão com hiperparâmetros otimizados por validação cruzada $10$-dobras; a Tabela~\ref{tab:ex2_regressores} resume o desempenho.
+
+\begin{table}[H]
+\centering
+\caption{Comparação de regressores para a camada temporal (Exemplo 2).}
+\label{tab:ex2_regressores}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Regressor} & \textbf{$R^2$ ($\lambda_1$)} & \textbf{$R^2$ ($\lambda_2$)} & \textbf{Tempo de treino (s)} \\
+\midrule
+Rede neural (MLP) & 1.00 & 1.00 & 56.2 \\
+Floresta aleatória & 0.99 & 0.99 & 1.3 \\
+Gradient Boosting & 0.99 & 0.99 & 7.4 \\
+Árvore de Decisão & 0.98 & 0.97 & 0.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Valida\c{c}\~ao em instantes n\~ao vistos}
+
+O teste crítico da emulação temporal consiste em prever a distribuição de $g$ em anos \textit{deliberadamente excluídos do treinamento} --- adotaram-se $t^* = \falta{ex.: 35}$ e $t^* = \falta{ex.: 65}$ anos --- e compará-la ao Monte Carlo direto do simulador nesses instantes. A Figura~\ref{fig:ex2_anos_nao_vistos} sobrepõe as densidades emuladas e de referência, e a Tabela~\ref{tab:ex2_validacao} reporta as métricas da Seção~\ref{subsec:metricas}, com destaque para a cauda inferior ($g \leq 0$), região que governa a probabilidade de falha.
+
+\begin{figure}[H]
+    \centering
+    \falta{figura: PDFs emuladas vs.\ Monte Carlo nos anos não vistos (2 painéis), com a região $g \leq 0$ destacada}
+    \caption{Validação do emulador temporal em instantes não utilizados no treinamento: PDF emulada vs.\ Monte Carlo direto. \falta{inserir figura}}
+    \label{fig:ex2_anos_nao_vistos}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Métricas de validação do emulador em instantes não vistos (Exemplo 2). \falta{preencher}}
+\label{tab:ex2_validacao}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Instante} & \textbf{KS (valor-p)} & \textbf{Wasserstein} & \textbf{$D(p\|q)$} & \textbf{Erro $P_5$ (\%)} & \textbf{Erro em $p_f$ (\%)} \\
+\midrule
+$t^* = \faltanum$ anos & \faltanum & \faltanum & \faltanum & \faltanum & \faltanum \\
+$t^* = \faltanum$ anos & \faltanum & \faltanum & \faltanum & \faltanum & \faltanum \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Evolu\c{c}\~ao da confiabilidade e RUL probabil\'istica}
+
+A Figura~\ref{fig:ex2_pf_beta} apresenta a evolução de $p_f(t)$ e do índice de confiabilidade $\beta(t)$ ao longo do horizonte de análise, calculados pela Equação~\eqref{eq:pf_t} a custo desprezível, com pontos de verificação por Monte Carlo direto em \falta{2--3 anos-âncora} confirmando a acurácia. Observa-se \falta{descrever: instante de despassivação média, ponto em que $\beta$ cruza o alvo normativo, taxa de degradação}.
+
+\begin{figure}[H]
+    \centering
+    \falta{figura: $\beta(t)$ e $p_f(t)$ emulados (linha contínua) com marcadores de Monte Carlo nos anos-âncora; linha horizontal em $\beta_{\mathrm{alvo}} = 1{,}5$}
+    \caption{Evolução temporal do índice de confiabilidade e da probabilidade de falha (Exemplo 2). \falta{inserir figura}}
+    \label{fig:ex2_pf_beta}
+\end{figure}
+
+A partir das trajetórias contínuas de $\hat{g}$, obtêm-se a distribuição do tempo até a falha e a distribuição de RUL para o instante de inspeção $t_{\mathrm{insp}} = \falta{ex.: 40}$ anos (Figura~\ref{fig:ex2_rul}). As estatísticas-resumo constam da Tabela~\ref{tab:ex2_rul_stats}. \falta{repetir a análise para um segundo instante de inspeção (ex.: 20 anos) para mostrar a dependência da RUL em relação à idade da estrutura}
+
+\begin{figure}[H]
+    \centering
+    \falta{figura com 3 painéis lado a lado: (a) PDF de $g$ em $t_{\mathrm{insp}}$; (b) PDF do tempo até a falha; (c) PDF da RUL}
+    \caption{Resultados probabilísticos de RUL para a viga sob carbonatação. \falta{inserir figura}}
+    \label{fig:ex2_rul}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Estatísticas da distribuição de RUL (Exemplo 2, $t_{\mathrm{insp}} = \faltanum$ anos). \falta{preencher}}
+\label{tab:ex2_rul_stats}
+\begin{tabular}{lc}
+\hline
+\textbf{Estatística} & \textbf{Valor (anos)} \\
+\hline
+$\mathbb{E}[\mathrm{RUL}]$ & \faltanum \\
+Mediana & \faltanum \\
+$P_5$ & \faltanum \\
+VaR$_{5\%}$ & \faltanum \\
+CVaR$_{5\%}$ & \faltanum \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{An\'alise de sensibilidade e custo computacional}
+
+Os índices de Sobol de primeira ordem e totais, obtidos analiticamente dos coeficientes da PCE \parencite{sudret2008}, quantificam a contribuição de cada variável de entrada para a variância de $\lambda_1$ (locação de $g$) ao longo do tempo (Figura~\ref{fig:ex2_sobol}). \falta{descrever os resultados: espera-se dominância do cobrimento e do coeficiente de carbonatação na fase de iniciação, com crescimento da importância de $i_{\mathrm{corr}}$ na propagação}. Por fim, a Tabela~\ref{tab:ex2_custo} consolida o custo computacional: o orçamento total de avaliações do simulador para o treinamento foi de $M \times N \times N_t = \faltanum$ execuções, contra \falta{valor} execuções exigidas por Monte Carlo direto para a mesma acurácia em $p_f$ ao longo do horizonte, com tempo de predição \textit{online} de \falta{valor} segundos por cenário completo de RUL.
+
+\begin{figure}[H]
+    \centering
+    \falta{figura: índices de Sobol por variável, em barras, para 2--3 instantes (ex.: 20, 50, 80 anos)}
+    \caption{Índices de sensibilidade de Sobol das variáveis de entrada (Exemplo 2). \falta{inserir figura}}
+    \label{fig:ex2_sobol}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Custo computacional do Exemplo 2. \falta{preencher}}
+\label{tab:ex2_custo}
+\begin{tabular}{lcc}
+\toprule
+ & \textbf{Monte Carlo direto} & \textbf{Emulador} \\
+\midrule
+Avaliações do simulador & \faltanum & \faltanum \\
+Tempo total (s) & \faltanum & \faltanum \\
+Tempo de predição \textit{online} (s) & --- & \faltanum \\
+\textit{Speed-up} & \multicolumn{2}{c}{\faltanum$\times$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =====================================================================
+\subsection{Exemplo 3 --- Cen\'ario com interven\c{c}\~ao de manuten\c{c}\~ao}
+\label{subsec:exemplo3}
+% =====================================================================
+
+O terceiro exemplo demonstra a utilidade prática do emulador para o suporte à decisão de manutenção, retomando a viga do Exemplo~2 e introduzindo uma intervenção que recupera a margem de segurança, conforme o modelo da Seção~\ref{subsec:manutencao}.
+
+\subsubsection{Cen\'arios analisados}
+
+Consideram-se: (i) o cenário de referência sem manutenção (Exemplo~2); (ii) cenários com intervenção única em $t_{\mathrm{man}} \in \{\falta{ex.: 30, 40, 50}\}$ anos, com eficácia de reparo $\rho = \falta{ex.: 0{,}95}$ e coeficiente de carbonatação do material de reparo $k_{\mathrm{rep}} = \falta{valor/hipótese}$; e (iii) o cenário com intervenção no instante normativo $t_{\mathrm{man}}^{*}$ da Equação~\eqref{eq:t_man_otimo}, determinado diretamente da curva $\beta(t)$ emulada para $\beta_{\mathrm{alvo}} = 1{,}5$ \parencite{fib2006}. Destaca-se que a avaliação de cada cenário adicional exigiu apenas \falta{valor} segundos de pós-processamento do emulador, sem qualquer nova execução do simulador original --- precisamente o tipo de varredura de cenários que é intratável via Monte Carlo direto.
+
+\subsubsection{Trajet\'orias e ganho de vida \'util}
+
+A Figura~\ref{fig:ex3_dente_serra} apresenta a evolução da média e das bandas de credibilidade (quantis $P_5$--$P_{95}$) da margem de segurança para os cenários com e sem manutenção, evidenciando o característico formato dente de serra: a queda progressiva de $g$ até $t_{\mathrm{man}}$, a recuperação parcial promovida pelo reparo e o novo ciclo de degradação no material recomposto.
+
+\begin{figure}[H]
+    \centering
+    \falta{figura: trajetórias de $g(t)$ (média e banda $P_5$--$P_{95}$) com e sem manutenção, no mesmo eixo; marcar $t_{\mathrm{man}}$ e a linha $g=0$}
+    \caption{Evolução da margem de segurança com e sem intervenção de manutenção (formato dente de serra). \falta{inserir figura}}
+    \label{fig:ex3_dente_serra}
+\end{figure}
+
+A Figura~\ref{fig:ex3_rul_comparacao} compara as distribuições de RUL com e sem manutenção para o instante de inspeção $t_{\mathrm{insp}} = \falta{valor}$ anos, e a Tabela~\ref{tab:ex3_cenarios} consolida as estatísticas para todos os cenários, incluindo o ganho probabilístico de vida útil $\Delta\mathrm{RUL}$ (Eq.~\ref{eq:delta_rul}) e o efeito do instante de intervenção sobre as métricas de risco. \falta{descrever os resultados: espera-se que intervenções mais precoces produzam maior $\Delta$RUL esperado, mas com retornos decrescentes; comentar o deslocamento do VaR$_{5\%}$, que é a métrica de decisão conservadora}
+
+\begin{figure}[H]
+    \centering
+    \falta{figura: PDFs de RUL sobrepostas (sem manutenção vs.\ com manutenção em $t_{\mathrm{man}}^{*}$), com VaR$_{5\%}$ de cada cenário marcado}
+    \caption{Distribuições de RUL com e sem intervenção de manutenção. \falta{inserir figura}}
+    \label{fig:ex3_rul_comparacao}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Comparação dos cenários de manutenção (Exemplo 3). \falta{preencher}}
+\label{tab:ex3_cenarios}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Cenário} & $\mathbb{E}[\mathrm{RUL}]$ & VaR$_{5\%}$ & CVaR$_{5\%}$ & $\Delta\mathrm{RUL}$ médio & $t$ até $\beta_{\mathrm{alvo}}$ \\
+ & (anos) & (anos) & (anos) & (anos) & (anos) \\
+\midrule
+Sem manutenção & \faltanum & \faltanum & \faltanum & --- & \faltanum \\
+$t_{\mathrm{man}} = \faltanum$ & \faltanum & \faltanum & \faltanum & \faltanum & \faltanum \\
+$t_{\mathrm{man}} = \faltanum$ & \faltanum & \faltanum & \faltanum & \faltanum & \faltanum \\
+$t_{\mathrm{man}} = t_{\mathrm{man}}^{*} = \faltanum$ & \faltanum & \faltanum & \faltanum & \faltanum & \faltanum \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Discuss\~ao geral}
+
+\falta{síntese crítica dos três exemplos, cobrindo: (i) acurácia do emulador no problema real vs.\ benchmark; (ii) limitações observadas --- comportamento nas caudas extremas, hipótese de unimodalidade da GLD, validade da interpolação apenas DENTRO do horizonte treinado (não extrapolar além de $t_{N_t}$); (iii) sensibilidade dos resultados de manutenção às hipóteses de $\rho$ e $k_{\mathrm{rep}}$; (iv) comparação qualitativa com alternativas (SPCE, GP heteroscedástico, emulação direta de $\beta(t)$) e por que emular a distribuição completa agrega valor para RUL}

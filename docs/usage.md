@@ -36,6 +36,17 @@ installed.
 
 ## Typical run
 
+Atmospheric CO₂ is queried by calendar year and scenario, and returned in percent:
+
+```python
+from functions import co2_percentage_year
+
+co2 = co2_percentage_year(2000 + 100, "SSP2-4.5")  # structure built in 2000, age 100
+```
+
+The supported calendar interval is 1900–2100. Use the same `co2_scenario` in data
+generation and PCE training. Each scenario is saved under a distinct filename.
+
 Fitting a PCE surrogate at a single time step, on the durability track:
 
 ```python
@@ -53,6 +64,7 @@ result = fn.train_and_validate_pce_at_time(
     carb_model=carb_model,      # trained ML model with .predict and .feature_names_in_
     time_step=50.0,
     installation_year=1990,
+    co2_scenario="SSP2-4.5",
     cement_type=3,
     exposure_conditions=2,
     output_dir='durability_final',

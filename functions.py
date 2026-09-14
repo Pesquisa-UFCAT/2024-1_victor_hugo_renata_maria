@@ -1,6 +1,8 @@
 import os
 import time
 from pathlib import Path
+from functools import lru_cache
+from numbers import Real
 
 import numpy as np
 import pandas as pd
@@ -9,7 +11,7 @@ import seaborn as sns
 import pickle
 import dill
 from scipy.integrate import odeint, simpson
-from scipy.stats import ks_2samp, wasserstein_distance, gaussian_kde
+from scipy.stats import ks_2samp, wasserstein_distance
 from UQpy.distributions import Uniform, Normal, JointIndependent #, Lognormal
 from UQpy.distributions.collection.Lognormal import Lognormal
 from UQpy.surrogates import *
@@ -49,7 +51,7 @@ def generate_latent_variables_benchmark(n_latent_samples: int, z1_mean: float = 
     return z1_latent, z2_latent
 
 
-def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, time_step: float = 0.0, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, n_starts: int = 15, seed: int = 42, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, time_step: float = 0.0, n_latent_samples: int = 1000, k_factor_final: float = 0.3, t_final: float = 100.0, z1_std: float = 0.028, z2_std: float = 0.096, n_starts: int = 15, seed: int = 42, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     r"""Compute the emulator of the R/S benchmark state limit function.
 
     The state limit function is
@@ -67,7 +69,11 @@ def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, tim
 
         k(t) = 1 + (k_{final} - 1) \, \frac{t}{100}
 
-    shrinks the resistance linearly with time, reaching ``k_factor_final`` at :math:`t = 100`.
+    shrinks the resistance linearly with time, reaching ``k_factor_final`` at :math:`t = t_{final}`
+    and **holding it there** for :math:`t > t_{final}`. The clamp is not cosmetic: without it the
+    factor keeps falling past ``k_factor_final`` and crosses zero at
+    :math:`t = t_{final}/(1 - k_{final})`, which flips the sign of the resistance and produces
+    degenerate response distributions that no GLD can fit (lambda_2 comes back negative).
     Setting ``k_factor_final`` to 1.0 removes the time effect and leaves the plain
     :math:`g = R/z_1 - S z_2`.
 
@@ -75,7 +81,8 @@ def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, tim
     :param names_x_variables: Names of the two design variables, used as the identifying columns of the output
     :param time_step: Time step of the analysis, feeding the degradation factor k(t)
     :param n_latent_samples: Number of latent samples per design sample
-    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
+    :param k_factor_final: Value of the degradation factor at t = t_final, held constant afterwards. Use 1.0 for no time effect
+    :param t_final: Time at which the degradation factor reaches k_factor_final (years)
     :param z1_std: Standard deviation of the resistance latent multiplier
     :param z2_std: Standard deviation of the load latent multiplier
     :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit; each restart begins from a
@@ -93,7 +100,7 @@ def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, tim
     # =========================
     # 0. Degradation factor
     # =========================
-    k_factor = 1 + (k_factor_final - 1) * time_step / 100
+    k_factor = k_factor_final if time_step >= t_final else 1 + (k_factor_final - 1) * time_step / t_final
 
     for i in range(x.shape[0]):
         # Wall time spent on this design point, used later to measure the emulator speed-up
@@ -174,7 +181,7 @@ def emulator_function_time_benchmark(x: np.ndarray, names_x_variables: list, tim
     return df_full, df_unique
 
 
-def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, time_step: float, n_latent_samples: int = 1000, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, time_step: float, n_latent_samples: int = 1000, k_factor_final: float = 0.3, t_final: float = 100.0, z1_std: float = 0.028, z2_std: float = 0.096, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
     """Run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.
 
     This is the only stage that draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_benchmark`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.
@@ -185,7 +192,8 @@ def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, t
     :param x_val: Independent design samples used to later validate the PCE, shape (n_samples_validation, 2)
     :param time_step: Time step of the analysis, feeding the degradation factor k(t)
     :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix
-    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
+    :param k_factor_final: Value of the degradation factor at t = t_final, held constant afterwards. Use 1.0 for no time effect
+    :param t_final: Time at which the degradation factor reaches k_factor_final (years)
     :param z1_std: Standard deviation of the resistance latent multiplier
     :param z2_std: Standard deviation of the load latent multiplier
     :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit, passed through to
@@ -200,7 +208,7 @@ def generate_dataset_at_time_benchmark(x_train: np.ndarray, x_val: np.ndarray, t
 
     out_dir     = Path(output_dir)
     tag         = f'{time_step}_benchmark'
-    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples, k_factor_final=k_factor_final, z1_std=z1_std, z2_std=z2_std, n_starts=n_starts, seed=seed, verbose=False)
+    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples, k_factor_final=k_factor_final, t_final=t_final, z1_std=z1_std, z2_std=z2_std, n_starts=n_starts, seed=seed, verbose=False)
 
     if verbose:
         print(f'\n{"-"*40}')
@@ -311,134 +319,47 @@ def train_and_validate_pce_from_dataset_benchmark(df_unique_train: pd.DataFrame,
            }
 
 
-def _gld_pdf_benchmark(lambdas: np.ndarray, x_vals: np.ndarray, n_reference: int = 20001) -> np.ndarray:
-    r"""Density of an FKML generalized lambda distribution at arbitrary points, without pyGLAM's slow ``pdf``.
-
-    The FKML GLD is defined by its quantile function, so its density is only analytic *at* a
-    quantile: with :math:`Q(u) = \lambda_1 + \lambda_2^{-1}[(u^{\lambda_3}-1)/\lambda_3 -
-    ((1-u)^{\lambda_4}-1)/\lambda_4]`, the density there is
-    :math:`f(Q(u)) = \lambda_2 / [u^{\lambda_3-1} + (1-u)^{\lambda_4-1}]`. Evaluating at an
-    arbitrary :math:`x` instead needs :math:`u = Q^{-1}(x)`, which is what makes
-    `pyglam.GlamFKML.pdf` expensive (~0.6 ms per point).
-
-    Since :math:`Q` is monotonic and cheap, this tabulates :math:`(Q(u), f(Q(u)))` once on a dense
-    `n_reference` grid and interpolates — same values to ~1e-10 relative error, but fast enough to
-    sweep thousands of design points. Outside the distribution's support the density is 0.
-
-    :param lambdas: GLD parameters (lambda 1-4, in order)
-    :param x_vals: Points to evaluate the density at
-    :param n_reference: Size of the internal quantile table used for the inversion
-
-    :return: Density at each of `x_vals`
-    """
-
-    l1, l2, l3, l4 = (float(v) for v in lambdas)
-
-    # Uniform in u, plus geometric clustering at both ends: Q(u) moves fastest in the tails, so a
-    # purely uniform table interpolates them badly (a few % error near the extremes).
-    u_tail   = np.geomspace(1e-12, 0.5, n_reference // 2)
-    u_ref    = np.unique(np.clip(np.concatenate([np.linspace(0.0, 1.0, n_reference), u_tail, 1.0 - u_tail]), 1e-12, 1 - 1e-12))
-    x_ref    = l1 + (1.0 / l2) * ((u_ref ** l3 - 1.0) / l3 - ((1.0 - u_ref) ** l4 - 1.0) / l4)
-    dens_ref = l2 / (u_ref ** (l3 - 1.0) + (1.0 - u_ref) ** (l4 - 1.0))
-
-    return np.interp(x_vals, x_ref, dens_ref, left=0.0, right=0.0)
-
-
 def _compare_gld_to_raw_benchmark(g_real: np.ndarray, lambda_pred: np.ndarray, n_grid: int = 400, random_state: int | np.random.Generator | None = 42) -> dict:
     r"""Score a predicted GLD directly against the raw Monte Carlo :math:`g` samples.
 
     Shared numerical core of `validate_pce_kl_divergence_benchmark` and
-    `validate_nn_kl_divergence_benchmark`. The reference side is the raw data itself — a Gaussian
-    KDE of `g_real` — not a GLD fitted to it, so the score measures only the surrogate's error and
-    does not fold in the GLD-fitting error of pyGLAM on top of it.
+    `validate_nn_kl_divergence_benchmark`. The reference side is the raw data itself, not a GLD
+    fitted to it, so the score measures only the surrogate's error and does not fold in the
+    GLD-fitting error of pyGLAM on top of it. The predicted side is a fresh sample drawn from the
+    surrogate's GLD, and `pyglam.Performance` does the scoring: it estimates a Gaussian KDE of each
+    sample on a shared grid spanning the raw data's own range, integrates the KL divergence and
+    :math:`R^2` over it, and computes the KS / Wasserstein / percentile diagnostics from the two
+    samples directly.
 
-    The KL divergence and :math:`R^2` are integrated on a grid spanning the raw data's own range. If
-    the predicted GLD's support does not cover that range its density is clipped to a floor there,
-    which makes the KL divergence large — that is the intended reading: the surrogate puts almost no
-    probability where real data actually lives.
+    Both sides therefore go through the same KDE. If the predicted GLD puts almost no probability
+    where the real data lives, its density is floored at `Performance`'s `eps` there, which makes the
+    KL divergence large — that is the intended reading.
 
-    A surrogate can also predict :math:`\\lambda_2 \\le 0`, which is not a valid GLD at all (the
-    quantile function stops being increasing, and `pyglam` returns empty samples). That happens at a
-    handful of extreme design points at late ages. Those are scored as NaN rather than raised, so a
-    sweep over the whole dataset still completes and the failures show up as gaps in the maps.
+    A surrogate can also predict :math:`\lambda_2 \le 0`, which is not a valid GLD at all (the
+    quantile function stops being increasing). That happens at a handful of extreme design points at
+    late ages. Those are handed to `Performance` as an empty predicted sample, so they come back as
+    NaN instead of raising: a sweep over the whole dataset still completes and the failures show up
+    as gaps in the maps.
 
     :param g_real: Raw Monte Carlo g samples for one design point
     :param lambda_pred: The GLD being scored (lambda 1-4, in order)
     :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
-    :param random_state: Seed, NumPy Generator or None passed to pyGLAM's `rvs`. pyGLAM's `rvs` now
-        draws true random samples instead of the old deterministic quantile grid, so a fixed seed (the
-        default) keeps this diagnostic reproducible; pass a shared `np.random.Generator` to draw a
-        different sample per call while keeping a whole sweep reproducible from one seed
+    :param random_state: Seed, NumPy Generator or None passed to pyGLAM's `rvs`. pyGLAM's `rvs`
+        draws true random samples, so a fixed seed (the default) keeps this diagnostic reproducible;
+        pass a shared `np.random.Generator` to draw a different sample per call while keeping a whole
+        sweep reproducible from one seed
 
-    :return: Dictionary with the KL divergence, KS statistic, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the shared grid, both densities, and the fresh sample drawn from the predicted GLD
+    :return: Dictionary with the KL divergence, KS statistic and p-value, Wasserstein distance, R² between the two densities, relative errors at P5/P50/P95, the shared grid, both densities, and the fresh sample drawn from the predicted GLD
     """
 
     g_real = np.asarray(g_real, dtype=float)
-    x_vals = np.linspace(g_real.min(), g_real.max(), n_grid)
-    p_real = gaussian_kde(g_real)(x_vals)
+    g_pred = glam.GlamFKML(*lambda_pred).rvs(size=len(g_real), random_state=random_state) if float(lambda_pred[1]) > 0.0 else np.array([])
 
-    if float(lambda_pred[1]) <= 0.0:
-        return {
-                 'kl_divergence':  np.nan,
-                 'ks_statistic':   np.nan,
-                 'wasserstein':    np.nan,
-                 'r2_pdf':         np.nan,
-                 'rel_err_p5':     np.nan,
-                 'rel_err_p50':    np.nan,
-                 'rel_err_p95':    np.nan,
-                 'x_grid':         x_vals,
-                 'pdf_real':       p_real / simpson(p_real, x_vals),
-                 'pdf_pred':       np.full_like(x_vals, np.nan),
-                 'g_pred_samples': np.array([]),
-               }
+    result                   = glam.Performance(n_grid=n_grid).performance(g_real, g_pred)
+    result['pdf_real']       = result.pop('pdf_true')
+    result['g_pred_samples'] = g_pred
 
-    pred_dist = glam.GlamFKML(*lambda_pred)
-
-    # =========================
-    # 1. KL divergence and R²: KDE of the raw data vs. the predicted GLD's own density
-    # =========================
-    p = p_real
-    q = np.nan_to_num(_gld_pdf_benchmark(lambda_pred, x_vals), nan=0.0, posinf=0.0, neginf=0.0)
-
-    eps = 1e-12
-    p = np.clip(p, eps, None)
-    q = np.clip(q, eps, None)
-    p = p / simpson(p, x_vals)
-    q = q / simpson(q, x_vals)
-
-    kl_divergence = max(float(simpson(p * np.log(p / q), x_vals)), 0.0)
-
-    ss_res = np.sum((p - q) ** 2)
-    ss_tot = np.sum((p - p.mean()) ** 2)
-    r2_pdf = float(np.clip(1 - ss_res / ss_tot, -1, 1)) if ss_tot > 1e-14 else np.nan
-
-    # =========================
-    # 2. Sample-based diagnostics: raw Monte Carlo g vs. a fresh sample from the predicted GLD
-    # =========================
-    g_pred = pred_dist.rvs(size=len(g_real), random_state=random_state)
-
-    ks_statistic = float(ks_2samp(g_real, g_pred).statistic)
-    w1_distance  = float(wasserstein_distance(g_real, g_pred))
-
-    def _relative_error(model, real, tol=1e-5):
-        return float(model - real) if abs(real) < tol else float((model - real) / abs(real))
-
-    p5_real, p50_real, p95_real = np.percentile(g_real, [5, 50, 95])
-    p5_pred, p50_pred, p95_pred = np.percentile(g_pred, [5, 50, 95])
-
-    return {
-             'kl_divergence':  kl_divergence,
-             'ks_statistic':   ks_statistic,
-             'wasserstein':    w1_distance,
-             'r2_pdf':         r2_pdf,
-             'rel_err_p5':     _relative_error(p5_pred, p5_real),
-             'rel_err_p50':    _relative_error(p50_pred, p50_real),
-             'rel_err_p95':    _relative_error(p95_pred, p95_real),
-             'x_grid':         x_vals,
-             'pdf_real':       p,
-             'pdf_pred':       q,
-             'g_pred_samples': g_pred,
-           }
+    return result
 
 
 def validate_pce_kl_divergence_benchmark(pce_metamodel: Any, r: float, s: float, g_real: np.ndarray, lambda3: float, lambda4: float, n_grid: int = 400, random_state: int | np.random.Generator | None = 42) -> dict:
@@ -527,23 +448,30 @@ def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd
     :param lambda3: Fixed lambda 3 to pair with the PCE's lambda 1 / lambda 2
     :param lambda4: Fixed lambda 4 to pair with the PCE's lambda 1 / lambda 2
     :param n_grid: Number of grid points used to numerically integrate the KL divergence and R²
-    :param max_points: Score only the first `max_points` design points. None scores all of them
-    :param random_state: Seed for the pyGLAM samples drawn at every design point. A single
-        `np.random.Generator` is seeded once from it and advanced across the sweep, so each design
-        point gets an independent draw while the whole sweep stays reproducible from one seed
+    :param max_points: Score only `max_points` design points, drawn at random from the ones present.
+        None scores all of them. Scoring one point costs roughly 45 ms at `n_latent_samples=2500` and
+        `n_grid=400`, so a full 2000-point sweep runs for about a minute and a half per time step;
+        `max_points=10` turns that into a fraction of a second, for a thinned-out map to iterate on
+    :param random_state: Seed for the whole sweep. A single `np.random.Generator` is seeded once from
+        it, draws the `max_points` subsample, and is then advanced across the sweep, so each design
+        point gets an independent pyGLAM draw while the whole sweep stays reproducible from one seed
     :param verbose: Whether to print progress
 
     :return: One row per design point, with `r`, `s`, `Time (years)` and the seven statistics
     """
 
+    rng     = np.random.default_rng(random_state)
     grouped = list(df_full.groupby(['r', 's'], sort=False))
-    if max_points is not None:
-        grouped = grouped[:max_points]
+
+    # Thin the sweep at random rather than by taking the first rows: the design points are drawn
+    # i.i.d., so the two coincide today, but a subsample keeps meaning "a smaller version of the same
+    # map" if `df_full` ever arrives sorted or on a grid. Kept in dataset order for a readable frame.
+    if max_points is not None and max_points < len(grouped):
+        grouped = [grouped[i] for i in np.sort(rng.choice(len(grouped), size=max_points, replace=False))]
 
     if verbose:
         print(f'  t = {time_step:.2f} years: scoring {len(grouped)} design points')
 
-    rng  = np.random.default_rng(random_state)
     rows = []
     for (r, s), group in grouped:
         stats_ = validate_pce_kl_divergence_benchmark(
@@ -577,7 +505,7 @@ def validate_pce_kl_divergence_dataset_benchmark(pce_metamodel: Any, df_full: pd
     return df_out
 
 
-def generate_nn_dataset_benchmark(pce_metamodels: list, times: np.ndarray, joint: Any, n_points: int = 5000, n_lambdas: int = 4, n_latent_samples: int = 1000, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def generate_nn_dataset_benchmark(pce_metamodels: list, times: np.ndarray, joint: Any, n_points: int = 5000, n_lambdas: int = 4, lambda3_fixed: float | None = None, lambda4_fixed: float | None = None, n_latent_samples: int = 1000, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
     """Build the (R, S, t) -> lambda dataset used to train a single global NN surrogate, by querying the per-time-step PCE metamodels instead of re-running the stochastic emulator.
 
     Companion of `train_and_validate_pce_from_dataset_benchmark`: reuses its fitted `pce_metamodel` (one per time step, already fit and validated against the emulator) as a cheap oracle — `pce_metamodel.predict(x)` costs microseconds, versus the emulator's per-point GLAM fit over `n_latent_samples` draws. That lets `n_points` be drawn far denser than the emulator dataset each PCE was itself trained on, at no extra Monte Carlo cost. This distills the `len(times)` separate per-time-step PCEs into training data for a single, continuous-in-t model.
@@ -589,6 +517,8 @@ def generate_nn_dataset_benchmark(pce_metamodels: list, times: np.ndarray, joint
     :param joint: UQpy JointIndependent distribution of R and S, used to draw the query points fed to each PCE
     :param n_points: Number of (R, S) query points drawn per time step
     :param n_lambdas: Number of GLD lambdas predicted by the PCE
+    :param lambda3_fixed: If given, overrides the PCE's predicted `lambda 3` column with this fixed value for every row (the PCE's own lambda 3 / lambda 4 fits are consistently poor, see `validate_pce_kl_divergence_benchmark`). If None, keeps the PCE prediction
+    :param lambda4_fixed: If given, overrides the PCE's predicted `lambda 4` column with this fixed value for every row. If None, keeps the PCE prediction
     :param n_latent_samples: Number of latent samples used to fit `pce_metamodels`. Only used for the filename prefix, to match `train_and_validate_pce_from_dataset_benchmark`
     :param output_dir: Directory where the .pkl artefact is written
     :param save: Whether to write the .pkl artefact to disk
@@ -604,6 +534,10 @@ def generate_nn_dataset_benchmark(pce_metamodels: list, times: np.ndarray, joint
         print(f'\n{"-"*40}')
         print(f'GENERATING NN DATASET FROM {len(times)} PCE MODELS')
         print(f'{"-"*40}')
+        if lambda3_fixed is not None:
+            print(f'  lambda 3 fixed at {lambda3_fixed:.4f}')
+        if lambda4_fixed is not None:
+            print(f'  lambda 4 fixed at {lambda4_fixed:.4f}')
 
     # =========================
     # 1. Query each time step's PCE at fresh (r, s) points
@@ -616,6 +550,10 @@ def generate_nn_dataset_benchmark(pce_metamodels: list, times: np.ndarray, joint
         df = pd.DataFrame(x, columns=['r', 's'])
         df.insert(2, 'Time (years)', t)
         df[lambda_cols] = y_pred
+        if lambda3_fixed is not None and 'lambda 3' in lambda_cols:
+            df['lambda 3'] = lambda3_fixed
+        if lambda4_fixed is not None and 'lambda 4' in lambda_cols:
+            df['lambda 4'] = lambda4_fixed
         dfs.append(df)
 
         if verbose:
@@ -756,10 +694,10 @@ def generate_rul_dataset_benchmark(r: float, s: float, times: np.ndarray, n_late
     :param lambda3_fixed: Fixed value for lambda 3. If None, uses the mean over the NN training dataset
     :param lambda4_fixed: Fixed value for lambda 4. If None, uses the mean over the NN training dataset
     :param n_glam_samples: Number of Monte Carlo samples drawn from the GLD at each time step
-    :param random_state: Seed for the GLD Monte Carlo draws. pyGLAM's `rvs` now draws true random
-        samples instead of the old deterministic quantile grid, so a single `np.random.Generator` is
-        seeded once from this and advanced across time steps, keeping the whole spaghetti/RUL sweep
-        reproducible from one seed
+    :param random_state: Seed passed unchanged to `GlamFKML.rvs` at every time step. An integer seed
+        makes `rvs` reseed a fresh generator on every call, so the same integer reproduces the same
+        underlying uniform draws at each time step, making every row of `samples` a genuine sample
+        path rather than independent draws per column
     :param input_dir: Directory the NN artefacts (and, if needed, the NN training dataset) are read from
     :param output_dir: Directory where the .pkl artefacts are written
     :param save: Whether to write the .pkl artefacts to disk
@@ -814,11 +752,26 @@ def generate_rul_dataset_benchmark(r: float, s: float, times: np.ndarray, n_late
     # =========================
     # 4. GLD Monte Carlo samples of g at each time step
     # =========================
-    rng     = np.random.default_rng(random_state)
+    # Sampled via GlamFKML.rvs, with the SAME `random_state` passed at every time step — NOT one
+    # independent draw per time step. `GlamFKML.rvs` reseeds a fresh generator from an integer seed on
+    # every call, so passing the same integer here reproduces the identical underlying uniform draws
+    # at each time step, exactly as if a single uniform vector had been reused across columns.
+    # The rows of `samples` are read downstream as sample *paths*: `compute_rul_benchmark` walks each
+    # row looking for the first down-crossing, which only means anything if the row is a trajectory.
+    # Drawing each column independently destroys the dependence across time and leaves roughly 90% of
+    # the rows non-monotonic, which is impossible for a monotonically degrading process and biases the
+    # time-to-threshold towards later, non-conservative values.
+    #
+    # Holding the quantile level fixed makes every path comonotonic, hence monotonic whenever the
+    # marginals shift monotonically in time. Checked against the analytical benchmark (paths built by
+    # freezing z1 and z2 instead), this construction reproduces the reference mean and P5 of the
+    # time-to-threshold to within 0.1 year. `quantile_trim=0.0` keeps the tails: `rvs` trims 0.1% from
+    # each tail by default, which would otherwise censor exactly the extreme behaviour this benchmark
+    # is meant to capture.
     samples = np.empty((n_glam_samples, len(times)))
     for i, row in lambda_df.iterrows():
-        gld           = glam.GlamFKML(lam1=row['lambda 1'], lam2=row['lambda 2'], lam3=row['lambda 3'], lam4=row['lambda 4'])
-        samples[:, i] = gld.rvs(size=n_glam_samples, random_state=rng)
+        model         = glam.GlamFKML(row['lambda 1'], row['lambda 2'], row['lambda 3'], row['lambda 4'])
+        samples[:, i] = model.rvs(size=n_glam_samples, quantile_trim=0.0, random_state=random_state)
         if verbose:
             print(f'  t = {row["Time (years)"]:.1f}: lambda 1 = {row["lambda 1"]:.3f}, lambda 2 = {row["lambda 2"]:.3f}, '
                   f'sample mean = {samples[:, i].mean():.3f}, sample std = {samples[:, i].std():.3f}')
@@ -879,73 +832,190 @@ def compute_rul_benchmark(samples: np.ndarray, times: np.ndarray, threshold: flo
 # DURABILITY PIPELINE (real problem) — used by durability_final
 # =============================================================================
 
-def co2_percentage_1900_1950(year: int) -> float:
-    """CO2 atmospheric concentration (%) for historical period 1900–1950. Based on a linear approximation of the upward trend during this period.
+CO2_SCENARIOS = ("SSP1-2.6", "SSP2-4.5", "SSP5-8.5")
 
-    :param year: Calendar year (1900 <= year <= 1950)
 
-    :return: CO2 concentration in percentage (ppm / 10000)
+def _co2_scenario_name(scenario: str) -> str:
+    """Accept canonical SSP names or compact names such as ``ssp245``."""
+    if isinstance(scenario, str):
+        key = scenario.strip().upper().replace("-", "").replace(".", "")
+        for name in CO2_SCENARIOS:
+            if key == name.replace("-", "").replace(".", ""):
+                return name
+    raise ValueError(f"Unknown CO2 scenario {scenario!r}. Choose one of {CO2_SCENARIOS}.")
+
+
+@lru_cache(maxsize=1)
+def _co2_concentrations() -> pd.DataFrame:
+    """Read the versioned annual table once, independently of the working directory."""
+    return pd.read_csv(Path(__file__).resolve().parent / "data/co2/co2_concentrations_1900_2100.csv")
+
+
+def co2_percentage_year(year: float, scenario: str = "SSP2-4.5") -> float:
+    """Return annual global atmospheric CO2 concentration in percent (ppm / 10000).
+
+    Uses the CMIP6 historical series through 2014 and published SSP concentrations
+    from 2015 through 2100 (Meinshausen et al., 2017 and 2020). All scenarios share
+    the historical period. Fractional years are linearly interpolated between
+    annual values; years outside the available range raise ``ValueError``.
+    This is atmospheric concentration, not carbon consumption or CO2 emissions.
+
+    :param year: Calendar year between 1900 and 2100, inclusive
+    :param scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5;
+        compact names such as ``ssp245`` are also accepted
+    :return: CO2 concentration in percent, e.g. about 0.0602782 for 2100 / SSP2-4.5
+
+    Example::
+
+        co2 = co2_percentage_year(2050, "SSP2-4.5")  # about 0.0506875 (%)
+    """
+    scenario = _co2_scenario_name(scenario)
+    if isinstance(year, (bool, np.bool_)) or not isinstance(year, Real) or not np.isfinite(year) or not 1900 <= year <= 2100:
+        raise ValueError("Year must be a finite number between 1900 and 2100 (inclusive).")
+    data = _co2_concentrations()
+    return float(np.interp(year, data["year"], data[scenario]) / 10000.0)
+
+
+# Possan et al. (2016) carbonation model coefficients, Table 3a — one entry per cement type,
+# keyed by the `cement_type` encoding used throughout this pipeline.
+POSSAN_CEMENT_COEFFICIENTS = {
+                                 0: {'name': 'CP II Z',  'k_c': 23.66, 'k_fc': 1.50, 'k_ad': 0.32, 'k_co_2': 15.50, 'k_rh': 1300.0},
+                                 1: {'name': 'CP V-ARI', 'k_c': 19.80, 'k_fc': 1.70, 'k_ad': 0.24, 'k_co_2': 18.00, 'k_rh': 1300.0},
+                                 2: {'name': 'CP IV',    'k_c': 33.27, 'k_fc': 1.70, 'k_ad': 0.32, 'k_co_2': 15.50, 'k_rh': 1000.0},
+                                 3: {'name': 'CP II F',  'k_c': 21.68, 'k_fc': 1.50, 'k_ad': 0.24, 'k_co_2': 18.00, 'k_rh': 1100.0},
+                                 4: {'name': 'CP III',   'k_c': 30.50, 'k_fc': 1.70, 'k_ad': 0.32, 'k_co_2': 15.50, 'k_rh': 1300.0},
+                                 5: {'name': 'CP II E',  'k_c': 22.48, 'k_fc': 1.50, 'k_ad': 0.32, 'k_co_2': 15.50, 'k_rh': 1300.0},
+                                 6: {'name': 'CP I',     'k_c': 19.80, 'k_fc': 1.70, 'k_ad': 0.24, 'k_co_2': 18.00, 'k_rh': 1300.0},
+                             }
+
+# Possan et al. (2016) carbonation model coefficients, Table 3b — exposure condition factor,
+# keyed by the `exposure_conditions` encoding used throughout this pipeline.
+POSSAN_EXPOSURE_COEFFICIENTS = {
+                                   0: {'name': 'PIA — internal, protected from rain', 'k_ce': 1.30},
+                                   1: {'name': 'UEA — external, exposed to rain',     'k_ce': 0.65},
+                                   2: {'name': 'PEA — external, protected from rain', 'k_ce': 1.00},
+                               }
+
+
+def possan_coefficients(cement_type: int = 3, exposure_conditions: int = 2) -> dict:
+    """Looks up the six Possan et al. (2016) model coefficients for a given cement type and exposure condition, combining Tables 3a and 3b.
+
+    :param cement_type: Type of cement (0: CP II Z, 1: CP V-ARI, 2: CP IV, 3: CP II F, 4: CP III, 5: CP II E, 6: CP I)
+    :param exposure_conditions: Exposure conditions (0: PIA internal protected, 1: UEA external unprotected, 2: PEA external protected)
+
+    :return: Dictionary with the coefficients k_c, k_fc, k_ad, k_co_2, k_rh and k_ce, plus the descriptive names
     """
 
-    if not 1900 <= year <= 1950:
-        raise ValueError("Year must be between 1900 and 1950 for this function.")
+    if cement_type not in POSSAN_CEMENT_COEFFICIENTS:
+        raise ValueError(f"Unknown cement_type {cement_type}. Valid values: {sorted(POSSAN_CEMENT_COEFFICIENTS)}")
+    if exposure_conditions not in POSSAN_EXPOSURE_COEFFICIENTS:
+        raise ValueError(f"Unknown exposure_conditions {exposure_conditions}. Valid values: {sorted(POSSAN_EXPOSURE_COEFFICIENTS)}")
 
-    co2_ppm = 296.0 + 0.30 * (year - 1900)
-    return co2_ppm / 1e4
+    cement   = POSSAN_CEMENT_COEFFICIENTS[cement_type]
+    exposure = POSSAN_EXPOSURE_COEFFICIENTS[exposure_conditions]
+
+    return {
+               'k_c':           cement['k_c'],
+               'k_fc':          cement['k_fc'],
+               'k_ad':          cement['k_ad'],
+               'k_co_2':        cement['k_co_2'],
+               'k_rh':          cement['k_rh'],
+               'k_ce':          exposure['k_ce'],
+               'cement_name':   cement['name'],
+               'exposure_name': exposure['name'],
+           }
 
 
-def co2_percentage_1950_2000(year: int) -> float:
-    """CO2 atmospheric concentration (%) for historical period 1950–2000. Based on a linear approximation of the accelerating upward trend.
+def carbonation_depth_possan(f_ck: np.ndarray | float, t: np.ndarray | float, ur: np.ndarray | float, co_2: np.ndarray | float, k_c: float, k_fc: float, k_ad: float, k_co_2: float, k_rh: float, k_ce: float, ad: np.ndarray | float = 0.0) -> np.ndarray | float:
+    r"""Carbonation depth of concrete according to the model of Possan et al. (2016), https://doi.org/10.1007/s41024-016-0010-9.
 
-    :param year: Calendar year (1950 <= year <= 2000)
+    .. math::
 
-    :return: CO2 concentration in percentage (ppm / 10000)
+        y(t) = k_c \left(\frac{20}{f_{ck}}\right)^{k_{fc}} \left(\frac{t}{20}\right)^{1/2}
+               \exp\left[\frac{k_{ad}\,ad^{3/2}}{40 + f_{ck}}
+                       + \frac{k_{CO_2}\sqrt{CO_2}}{60 + f_{ck}}
+                       - \frac{k_{UR}(UR - 0.58)^2}{100 + f_{ck}}\right] k_{ce}
+
+    Fully vectorized: every physical argument accepts a scalar or a numpy array, and broadcasting
+    rules apply. This is the closed-form simulator of the durability pipeline — it replaces the
+    surrogate ML model used previously, so the emulator is trained against the mechanistic model
+    itself rather than against an approximation of it.
+
+    Unit conventions, which differ from the original single-point implementation:
+
+    - the result is returned in **millimetres**, matching the concrete cover used elsewhere in this
+      pipeline (`g = cover - carbonation depth` is therefore a mm - mm difference);
+    - `ur` is a **fraction** in [0, 1] (0.70 for 70% RH), not a percentage. The quadratic term peaks
+      at UR = 0.58, i.e. carbonation is fastest around 58% relative humidity. Passing a percentage
+      here silently produces a meaningless depth, so values above 1.5 raise.
+
+    The caller is responsible for keeping `f_ck` strictly positive and `ur` within physical bounds
+    after any latent perturbation, as `emulator_function_time_durability` already does by clipping.
+
+    .. note::
+
+        The synthetic dataset behind the previously used ML surrogate was generated with
+        ``ad = 10`` (%). Calling this function with the default ``ad = 0`` reproduces neither that
+        dataset nor the earlier durability results: depths come out roughly 1.6 mm shallower.
+        Pass ``ad=10.0`` to stay consistent with the existing pipeline. Checked against the
+        surrogate over the full input box: bias +0.05 mm, standard deviation 0.30 mm,
+        R2 = 0.999 at ``ad = 10``, against bias +1.64 mm and R2 = 0.978 at ``ad = 0``.
+
+    :param f_ck: Characteristic compressive strength of the concrete (MPa)
+    :param t: Age of the structure (years)
+    :param ur: Mean relative humidity, as a fraction in [0, 1]
+    :param co_2: Atmospheric CO2 concentration (%)
+    :param k_c: Factor related to the cement type (Table 3a)
+    :param k_fc: Factor related to the compressive strength of the concrete (Table 3a)
+    :param k_ad: Factor related to the pozzolanic additions of the concrete (Table 3a)
+    :param k_co_2: Factor related to the CO2 concentration of the environment (Table 3a)
+    :param k_rh: Factor related to the relative humidity (Table 3a)
+    :param k_ce: Factor related to the exposure condition of the structure (Table 3b)
+    :param ad: Pozzolanic material in the concrete, relative to the cement mass (%)
+
+    :return: Carbonation depth (mm)
     """
 
-    if not 1950 <= year <= 2000:
-        raise ValueError("Year must be between 1950 and 2000 for this function.")
+    f_ck = np.asarray(f_ck, dtype=float)
+    t    = np.asarray(t, dtype=float)
+    ur   = np.asarray(ur, dtype=float)
+    co_2 = np.asarray(co_2, dtype=float)
+    ad   = np.asarray(ad, dtype=float)
 
-    co2_ppm = 311.0 + 1.16 * (year - 1950)
-    return co2_ppm / 1e4
+    if np.any(ur > 1.5):
+        raise ValueError("`ur` must be a fraction in [0, 1] (0.70 for 70% RH), not a percentage.")
+
+    aux_1  = k_c * (20.0 / f_ck) ** k_fc
+    aux_2  = (t / 20.0) ** 0.5
+    aux_31 = (k_ad * ad ** 1.5) / (40.0 + f_ck)
+    aux_32 = (k_co_2 * co_2 ** 0.5) / (60.0 + f_ck)
+    aux_33 = (k_rh * (ur - 0.58) ** 2) / (100.0 + f_ck)
+    y_carb = aux_1 * aux_2 * np.exp(aux_31 + aux_32 - aux_33) * k_ce
+
+    return y_carb
 
 
-def co2_percentage_pos2000(year: int) -> float:
-    """CO2 atmospheric concentration (%) for post-2000 period. Captures the non-linear (quadratic) acceleration in CO2 buildup observed in recent decades.
+def carbonation_depth_possan_by_type(f_ck: np.ndarray | float, t: np.ndarray | float, ur: np.ndarray | float, co_2: np.ndarray | float, cement_type: int = 3, exposure_conditions: int = 2, ad: np.ndarray | float = 0.0) -> np.ndarray | float:
+    """Convenience wrapper around `carbonation_depth_possan` that looks the six model coefficients up from the cement type and exposure condition, using the integer encodings adopted throughout this pipeline.
 
-    :param year: Calendar year (>= 2000)
+    :param f_ck: Characteristic compressive strength of the concrete (MPa)
+    :param t: Age of the structure (years)
+    :param ur: Mean relative humidity, as a fraction in [0, 1]
+    :param co_2: Atmospheric CO2 concentration (%)
+    :param cement_type: Type of cement (0: CP II Z, 1: CP V-ARI, 2: CP IV, 3: CP II F, 4: CP III, 5: CP II E, 6: CP I)
+    :param exposure_conditions: Exposure conditions (0: PIA internal protected, 1: UEA external unprotected, 2: PEA external protected)
+    :param ad: Pozzolanic material in the concrete, relative to the cement mass (%)
 
-    :return: CO2 concentration in percentage (ppm / 10000)
+    :return: Carbonation depth (mm)
     """
 
-    if year < 2000:
-        raise ValueError("Year must be >= 2000 for this function.")
+    coefficients = possan_coefficients(cement_type=cement_type, exposure_conditions=exposure_conditions)
 
-    t  = year - 2000
-    C0 = 369.0   # ppm in 2000 (approximate observed value)
-    a  = 1.85    # ppm/year (linear component)
-    b  = 0.018   # ppm/year² (quadratic component)
-    co2_ppm = C0 + a * t + b * t**2
-
-    return co2_ppm / 1e4
-
-
-def co2_percentage_year(year: int) -> float:
-    """Global average atmospheric CO2 concentration (%) valid from 1900 onwards. Routes the calculation to the correct historical formula based on the year.
-
-    :param year: Calendar year (>= 1900)
-
-    :return: CO2 concentration in percentage (ppm / 10000)
-    """
-
-    if year < 1900:
-        raise ValueError(f"Year must be >= 1900. Received: {year}")
-
-    if year <= 1950:
-        return co2_percentage_1900_1950(year)
-    elif 1950 < year <= 2000:
-        return co2_percentage_1950_2000(year)
-    else:
-        return co2_percentage_pos2000(year)
+    return carbonation_depth_possan(
+                                       f_ck=f_ck, t=t, ur=ur, co_2=co_2, ad=ad,
+                                       k_c=coefficients['k_c'], k_fc=coefficients['k_fc'], k_ad=coefficients['k_ad'],
+                                       k_co_2=coefficients['k_co_2'], k_rh=coefficients['k_rh'], k_ce=coefficients['k_ce'],
+                                   )
 
 
 def generate_latent_variables(n_latent_samples: int, mean: float = 1.0, cov: float = 0.02) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -988,7 +1058,7 @@ def _interp_profile_at(calendar_years: np.ndarray, depths: np.ndarray, year_quer
     return depths[:, k] + frac * (depths[:, k + 1] - depths[:, k])
 
 
-def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, verbose: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, carb_model: Any, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, time_step: float = 0.0, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, verbose: bool = False, co2_scenario: str = "SSP2-4.5") -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections.
 
     :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit; each restart begins from a
@@ -996,8 +1066,14 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ca
         settling in a poor local minimum (the failure mode that produced bad lambda 2 fits)
     :param seed: Seed used by pyGLAM to draw extra multi-start points once `n_starts` exceeds its
         fixed shape grid, for reproducible fits
+    :param co2_scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5
     """
 
+    co2_scenario = _co2_scenario_name(co2_scenario)
+    co2_percentage_year(installation_year, co2_scenario)
+    if not isinstance(time_step, Real) or not np.isfinite(time_step) or not 0 <= time_step <= 150:
+        raise ValueError("time_step must be between 0 and 150 years.")
+    co2_percentage_year(installation_year + time_step, co2_scenario)
     dfs = []
     start_year = installation_year
     year_query = start_year + time_step
@@ -1007,10 +1083,10 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ca
     # =========================
     lifetime_full  = 150
     grid_step      = 10
-    grid_max       = min(lifetime_full, grid_step * (int(np.ceil(max(time_step, 0) / grid_step)) + 1))
-    years          = np.arange(0, grid_max + 1, grid_step)
+    grid_max       = min(lifetime_full, 2100 - start_year, grid_step * (int(np.ceil(max(time_step, 0) / grid_step)) + 1))
+    years          = np.unique(np.append(np.arange(0, grid_max, grid_step), grid_max))
     calendar_years = start_year + years
-    co2_values     = np.array([co2_percentage_year(y) for y in calendar_years])
+    co2_values     = np.array([co2_percentage_year(y, co2_scenario) for y in calendar_years])
     n_grid         = len(years)
 
     for i in range(x.shape[0]):
@@ -1120,15 +1196,18 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ca
                     df_full[id_columns + ['lambda 1', 'lambda 2', 'lambda 3', 'lambda 4', 'Processing time (s)']].drop_duplicates(subset=id_columns).reset_index(drop=True)
                  )
 
+    for frame in (df_full, df_unique):
+        frame.attrs["co2_scenario"] = co2_scenario
+        frame.attrs["co2_source"] = "Meinshausen2017_2020"
     return df_full, df_unique
 
 
-def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True, co2_scenario: str = "SSP2-4.5") -> dict:
     """Stage 1 of the split durability pipeline: run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.
 
     This is the only stage that runs `carb_model.predict`, draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_durability`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.
 
-    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<split>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>.pkl` naming convention, where `<split>` is `train` or `val`.
+    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<split>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>_co2_<scenario>.pkl` naming convention, where `<split>` is `train` or `val`.
 
     :param x_train: Design samples used to later train the PCE, shape (n_samples, 3) as [fck, rh, cover]
     :param x_val: Independent design samples used to later validate the PCE, shape (n_samples_validation, 3)
@@ -1146,12 +1225,14 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
     :param verbose: Whether to print the progress of each split
 
     :return: Dictionary with the full/unique dataframes for the train and validation splits, the total emulator wall time, and the paths written
+    :param co2_scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5
     """
 
+    co2_scenario = _co2_scenario_name(co2_scenario)
     out_dir     = Path(output_dir)
-    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}'
+    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}_co2_{co2_scenario}'
     emulator_kw = dict(names_x_variables=["fck", "rh", "cov"], carb_model=carb_model, cement_type=cement_type,
-                       installation_year=installation_year, exposure_conditions=exposure_conditions,
+                       installation_year=installation_year, exposure_conditions=exposure_conditions, co2_scenario=co2_scenario,
                        time_step=time_step, n_latent_samples=n_latent_samples, n_starts=n_starts, seed=seed, verbose=False)
 
     if verbose:
@@ -1160,7 +1241,7 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
         print(f'{"-"*40}')
 
     paths           = {}
-    result          = {'time_step': time_step, 'paths': paths}
+    result          = {'time_step': time_step, 'co2_scenario': co2_scenario, 'paths': paths}
     emulator_time_s = 0.0
     for split, x in (('train', x_train), ('val', x_val)):
         df_full, df_unique = emulator_function_time_durability(x=x, **emulator_kw)
@@ -1184,12 +1265,12 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
     return result
 
 
-def train_and_validate_pce_from_dataset_durability(df_unique_train: pd.DataFrame, df_unique_val: pd.DataFrame, joint: Any, time_step: float, installation_year: int = 1990, cement_type: int = 3, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_lambdas: int = 4, max_degree: int = 3, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def train_and_validate_pce_from_dataset_durability(df_unique_train: pd.DataFrame, df_unique_val: pd.DataFrame, joint: Any, time_step: float, installation_year: int = 1990, cement_type: int = 3, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_lambdas: int = 4, max_degree: int = 3, output_dir: str | Path = '.', save: bool = True, verbose: bool = True, co2_scenario: str = "SSP2-4.5") -> dict:
     """Stage 2 of the split durability pipeline: fit a PCE metamodel to a previously generated lambda dataset and validate it. Makes no emulator calls and draws no latent samples.
 
     Companion of `generate_dataset_at_time_durability`: takes its saved `dataset_unique` outputs (train and validation splits) and performs the PCE fit and scoring that `train_and_validate_pce_at_time` used to do inline with the data generation.
 
-    Artefacts are written to `output_dir` with the same `<n_latent_samples>_<kind>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>.pkl` naming convention as `train_and_validate_pce_at_time`, so downstream notebooks that only read the PCE metamodel don't need to change.
+    Artefacts are written to `output_dir` with the same `<n_latent_samples>_<kind>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>_co2_<scenario>.pkl` naming convention as `train_and_validate_pce_at_time`, so each scenario has separate dataset and metamodel files.
 
     :param df_unique_train: `dataset_unique_train` dataframe, as saved by `generate_dataset_at_time_durability`
     :param df_unique_val: `dataset_unique_val` dataframe, as saved by `generate_dataset_at_time_durability`
@@ -1206,11 +1287,16 @@ def train_and_validate_pce_from_dataset_durability(df_unique_train: pd.DataFrame
     :param verbose: Whether to print the progress of each stage
 
     :return: Dictionary with the fitted PCE and the validation statistics
+    :param co2_scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5
     """
 
+    co2_scenario = _co2_scenario_name(co2_scenario)
     out_dir     = Path(output_dir)
+    for frame in (df_unique_train, df_unique_val):
+        if frame.attrs.get("co2_scenario") != co2_scenario or frame.attrs.get("co2_source") != "Meinshausen2017_2020":
+            raise ValueError("Dataset CO2 metadata does not match. Regenerate the dataset with the selected SSP scenario.")
     lambda_cols = [f'lambda {i}' for i in range(1, n_lambdas + 1)]
-    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}'
+    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}_co2_{co2_scenario}'
     id_columns  = ['fck', 'rh', 'cov']
 
     if verbose:
@@ -1267,10 +1353,206 @@ def train_and_validate_pce_from_dataset_durability(df_unique_train: pd.DataFrame
 
 
 # =============================================================================
+# PYGLAM VERIFICATION — GLD fitted to reference distributions, used by 00_pyglam_test
+# =============================================================================
+
+
+def gld_quantile_at_u(lambdas: np.ndarray | list, u: np.ndarray | float) -> np.ndarray:
+    r"""Quantile function of the FKML-parameterized GLD, evaluated in closed form.
+
+    .. math::
+
+        Q(u) = \lambda_1 + \frac{1}{\lambda_2}\left(\frac{u^{\lambda_3}-1}{\lambda_3}
+               - \frac{(1-u)^{\lambda_4}-1}{\lambda_4}\right)
+
+    Equivalent to `pyglam.GlamFKML.ppf`, but without its numerical root-finding, which makes
+    it usable on large grids and as an exact inverse-transform sampler.
+
+    :param lambdas: The four GLD parameters, ordered as lambda_1 to lambda_4
+    :param u: Cumulative probability (or array of probabilities) in (0, 1)
+
+    :return: Quantile of the GLD at u
+    """
+
+    l1, l2, l3, l4 = lambdas
+
+    return l1 + ((u ** l3 - 1.0) / l3 - ((1.0 - u) ** l4 - 1.0) / l4) / l2
+
+
+def gld_density_at_u(lambdas: np.ndarray | list, u: np.ndarray | float) -> np.ndarray:
+    r"""Density of the FKML-parameterized GLD at the point x = Q(u), in closed form.
+
+    Since the GLD is defined by its quantile function, its density satisfies
+    :math:`q(Q(u)) = 1/Q'(u)` with
+    :math:`Q'(u) = \left[u^{\lambda_3-1} + (1-u)^{\lambda_4-1}\right]/\lambda_2`. Evaluating it
+    this way avoids the CDF inversion that `pyglam.GlamFKML.pdf` performs internally — a
+    round trip whose numerical error is large enough to turn a well-fitted Kullback--Leibler
+    integral slightly negative.
+
+    :param lambdas: The four GLD parameters, ordered as lambda_1 to lambda_4
+    :param u: Cumulative probability (or array of probabilities) in (0, 1)
+
+    :return: Density of the GLD at x = Q(u)
+    """
+
+    _, l2, l3, l4 = lambdas
+
+    return l2 / (u ** (l3 - 1.0) + (1.0 - u) ** (l4 - 1.0))
+
+
+def gld_support(lambdas: np.ndarray | list, eps: float = 1e-12) -> tuple[float, float]:
+    """Endpoints of the support of a fitted GLD, finite whenever lambda_3 > 0 and lambda_4 > 0.
+
+    :param lambdas: The four GLD parameters, ordered as lambda_1 to lambda_4
+    :param eps: Offset from 0 and 1 used to evaluate the endpoints
+
+    :return: Lower and upper endpoints of the support
+    """
+
+    return float(gld_quantile_at_u(lambdas, eps)), float(gld_quantile_at_u(lambdas, 1.0 - eps))
+
+
+def fit_gld_to_sample(sample: np.ndarray, n_starts: int = 15, seed: int = 42) -> np.ndarray:
+    """Fit the four GLD parameters to a sample by the method of moments, via pyGLAM.
+
+    :param sample: Sample the GLD is fitted to
+    :param n_starts: Number of pyGLAM multi-start attempts
+    :param seed: Seed used by pyGLAM's multi-start
+
+    :return: The four fitted GLD parameters, ordered as lambda_1 to lambda_4
+    """
+
+    sol = glam.GlamFKML().fit_lambdas(np.asarray(sample, dtype=float), method='least_squares',
+                                      n_starts=n_starts, seed=seed)
+
+    return np.asarray(sol.x, dtype=float)
+
+
+def kl_divergence_gld(dist: Any, lambdas: np.ndarray | list, n_grid: int = 20001, eps: float = 1e-9) -> float:
+    r"""Kullback--Leibler divergence :math:`D(q\|p)` of a fitted GLD q from an analytical target p.
+
+    This is the only finite direction here: in the FKML parameterization with
+    :math:`\lambda_3, \lambda_4 > 0` the GLD has compact support, whereas the Normal, Gumbel and
+    Lognormal targets do not — so :math:`D(p\|q)` diverges by construction. The integral is taken
+    in cumulative-probability space (:math:`x = Q(u)`, :math:`\mathrm{d}u = q(x)\,\mathrm{d}x`),
+    which sidesteps having to locate the endpoints of the support:
+
+    .. math::
+
+        D(q\|p) = \mathbb{E}_q\!\left[\log \frac{q}{p}\right]
+                = \int_0^1 \log \frac{q(Q(u))}{p(Q(u))}\,\mathrm{d}u
+
+    :param dist: Frozen `scipy.stats` distribution playing the role of the target p
+    :param lambdas: The four fitted GLD parameters
+    :param n_grid: Number of quadrature points in u
+    :param eps: Offset from 0 and 1, keeping the integrable endpoint singularities finite
+
+    :return: Kullback--Leibler divergence, in nats
+    """
+
+    u = np.linspace(eps, 1.0 - eps, n_grid)
+    q = gld_density_at_u(lambdas, u)
+    p = dist.pdf(gld_quantile_at_u(lambdas, u))
+    m = np.isfinite(q) & np.isfinite(p) & (q > 1e-300) & (p > 1e-300)
+
+    return float(simpson(np.log(q[m] / p[m]), x=u[m]))
+
+
+def ks_distance_to_target(dist: Any, lambdas: np.ndarray | list, n_grid: int = 20001, eps: float = 1e-9) -> float:
+    """Kolmogorov--Smirnov distance between the fitted GLD CDF and the analytical target CDF.
+
+    Unlike a two-sample test, this is a deterministic measure of how well the GLD *family*
+    approximates the target, free of sampling noise. Walking the support through the GLD's own
+    quantile function makes the statistic ``sup_u |u - F_target(Q(u))|``, since the GLD CDF at
+    ``x = Q(u)`` is exactly ``u``.
+
+    :param dist: Frozen `scipy.stats` distribution playing the role of the target
+    :param lambdas: The four fitted GLD parameters
+    :param n_grid: Number of points spanning the support
+    :param eps: Offset from 0 and 1
+
+    :return: Supremum of the absolute difference between the two CDFs
+    """
+
+    u = np.linspace(eps, 1.0 - eps, n_grid)
+
+    return float(np.nanmax(np.abs(u - dist.cdf(gld_quantile_at_u(lambdas, u)))))
+
+
+def evaluate_gld_fit(name: str, dist: Any, n: int, seed: int = 42, n_starts: int = 15, n_ref: int = 20000) -> dict:
+    """Draw one sample from a target distribution, fit a GLD to it and score the fit.
+
+    :param name: Label of the target distribution, carried through to the results table
+    :param dist: Frozen `scipy.stats` distribution to sample from and compare against
+    :param n: Sample size
+    :param seed: Seed of the sample and of pyGLAM's multi-start
+    :param n_starts: Number of pyGLAM multi-start attempts
+    :param n_ref: Size of the GLD sample used for the two-sample tests
+
+    :return: Dictionary with the fitted lambdas, goodness-of-fit metrics and support endpoints
+    """
+
+    rng     = np.random.default_rng(seed)
+    sample  = dist.rvs(size=n, random_state=rng)
+    lambdas = fit_gld_to_sample(sample, n_starts=n_starts, seed=seed)
+
+    quantiles = np.array([0.05, 0.50, 0.95])
+    q_target  = dist.ppf(quantiles)
+    q_gld     = gld_quantile_at_u(lambdas, quantiles)
+    spread    = dist.ppf(0.95) - dist.ppf(0.05)
+    err_q     = np.abs(q_gld - q_target) / spread * 100.0
+
+    # inverse-transform sampling in closed form: exact, and far cheaper than GlamFKML.rvs
+    gld_sample = gld_quantile_at_u(lambdas, rng.uniform(1e-9, 1.0 - 1e-9, size=max(n, n_ref)))
+    ks_two     = ks_2samp(sample, gld_sample)
+    support    = gld_support(lambdas)
+
+    return {'Distribution': name, 'N': n,
+            'lambda 1': lambdas[0], 'lambda 2': lambdas[1], 'lambda 3': lambdas[2], 'lambda 4': lambdas[3],
+            'KS': ks_distance_to_target(dist, lambdas),
+            'KS 2-sample': ks_two.statistic, 'p-value': ks_two.pvalue,
+            'KL': kl_divergence_gld(dist, lambdas),
+            'Wasserstein': float(wasserstein_distance(sample, gld_sample)),
+            'err P5 (%)': err_q[0], 'err P50 (%)': err_q[1], 'err P95 (%)': err_q[2],
+            'support min': support[0], 'support max': support[1]}
+
+
+def study_gld_fits(targets: dict, sizes: tuple, n_rep: int = 20, n_starts: int = 15, base_seed: int = 0, verbose: bool = True) -> pd.DataFrame:
+    """Repeat `evaluate_gld_fit` over independent samples for every (distribution, sample size) cell.
+
+    Replication matters here: a single fit at N = 50 is dominated by sampling noise, so the
+    convergence of the method of moments only becomes legible in the average over replicates.
+
+    :param targets: Mapping from label to frozen `scipy.stats` distribution
+    :param sizes: Sample sizes to sweep
+    :param n_rep: Number of independent replicates per cell
+    :param n_starts: Number of pyGLAM multi-start attempts per fit
+    :param base_seed: Base seed; each replicate offsets it
+    :param verbose: Whether to report progress per distribution
+
+    :return: DataFrame with one row per replicate
+    """
+
+    rows = []
+    for name, dist in targets.items():
+        if verbose:
+            print(f'  {name} ...', end='', flush=True)
+        for n in sizes:
+            for r in range(n_rep):
+                row = evaluate_gld_fit(name, dist, n, seed=base_seed + 1000 * r + n, n_starts=n_starts)
+                row['rep'] = r
+                rows.append(row)
+        if verbose:
+            print(' done')
+
+    return pd.DataFrame(rows)
+
+
+# =============================================================================
 # LEGACY / UNUSED — not called by any current *_final notebook, kept for reference
 # =============================================================================
 
-def carbonation_profile(model_: Any, lifetime: float, fc: float, rh: float, cement_type: int, exposure: int, start_year: int) -> pd.DataFrame:
+def carbonation_profile(model_: Any, lifetime: float, fc: float, rh: float, cement_type: int, exposure: int, start_year: int, co2_scenario: str = "SSP2-4.5") -> pd.DataFrame:
     """Generate carbonation profile starting at a given calendar year.
 
     :param model_: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.
@@ -1282,16 +1564,22 @@ def carbonation_profile(model_: Any, lifetime: float, fc: float, rh: float, ceme
     :param start_year: Calendar year of installation
 
     :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)
+    :param co2_scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5
     """
 
-    # Time steps
-    years = np.arange(0, lifetime + 1,10)
+    co2_scenario = _co2_scenario_name(co2_scenario)
+    co2_percentage_year(start_year, co2_scenario)
+    if not isinstance(lifetime, Real) or not np.isfinite(lifetime) or lifetime < 0:
+        raise ValueError("lifetime must be a finite nonnegative number of years.")
+    co2_percentage_year(start_year + lifetime, co2_scenario)
+    # Include the requested endpoint without querying CO2 beyond 2100.
+    years = np.unique(np.append(np.arange(0, lifetime, 10), lifetime))
 
     # Romain calendar
     calendar_years = start_year + years
 
-    # CO2 emission
-    co2_values = [co2_percentage_year(y) for y in calendar_years]
+    # Atmospheric CO2 concentration
+    co2_values = [co2_percentage_year(y, co2_scenario) for y in calendar_years]
 
     # Carbonation AI model and profile
     df      = pd.DataFrame({'t (years)': years, 'CO2 (%)': co2_values, 'fc (MPa)': [fc]*len(years), 'RH (%)': [rh]*len(years), 'Type of cement': [cement_type]*len(years), 'Exposure conditions': [exposure]*len(years)})
@@ -1300,6 +1588,7 @@ def carbonation_profile(model_: Any, lifetime: float, fc: float, rh: float, ceme
     profile = pd.DataFrame({'calendar year': calendar_years, 't (years)': years, 'CO2 (%)': co2_values, 'carbonation depth (mm)': depth})
     profile['carbonation depth (mm)'] = profile['carbonation depth (mm)'].cummax()
 
+    profile.attrs["co2_scenario"] = co2_scenario
     return profile
 
 
@@ -1318,7 +1607,7 @@ def carbonation_depth_at_time(profile: pd.DataFrame, t_query: float) -> float:
     return float(np.interp(t_query, t, depth))
 
 
-def train_and_validate_pce_at_time_benchmark(x_train: np.ndarray, joint: Any, time_step: float, n_latent_samples: int = 1000, n_samples_validation: int = 250, n_lambdas: int = 4, max_degree: int = 3, k_factor_final: float = 0.3, z1_std: float = 0.028, z2_std: float = 0.096, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def train_and_validate_pce_at_time_benchmark(x_train: np.ndarray, joint: Any, time_step: float, n_latent_samples: int = 1000, n_samples_validation: int = 250, n_lambdas: int = 4, max_degree: int = 3, k_factor_final: float = 0.3, t_final: float = 100.0, z1_std: float = 0.028, z2_std: float = 0.096, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
     """Build the R/S benchmark dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.
 
     Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<time_step>_benchmark.pkl` naming convention.
@@ -1330,7 +1619,8 @@ def train_and_validate_pce_at_time_benchmark(x_train: np.ndarray, joint: Any, ti
     :param n_samples_validation: Number of independent samples drawn from `joint` to validate the PCE
     :param n_lambdas: Number of GLD lambdas predicted by the PCE
     :param max_degree: Maximum total degree of the polynomial basis
-    :param k_factor_final: Value of the degradation factor at t = 100. Use 1.0 for no time effect
+    :param k_factor_final: Value of the degradation factor at t = t_final, held constant afterwards. Use 1.0 for no time effect
+    :param t_final: Time at which the degradation factor reaches k_factor_final (years)
     :param z1_std: Standard deviation of the resistance latent multiplier
     :param z2_std: Standard deviation of the load latent multiplier
     :param output_dir: Directory where the .pkl artefacts are written
@@ -1343,7 +1633,7 @@ def train_and_validate_pce_at_time_benchmark(x_train: np.ndarray, joint: Any, ti
     out_dir     = Path(output_dir)
     lambda_cols = [f'lambda {i}' for i in range(1, n_lambdas + 1)]
     tag         = f'{time_step}_benchmark'
-    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples, k_factor_final=k_factor_final, z1_std=z1_std, z2_std=z2_std, verbose=False)
+    emulator_kw = dict(names_x_variables=["r", "s"], time_step=time_step, n_latent_samples=n_latent_samples, k_factor_final=k_factor_final, t_final=t_final, z1_std=z1_std, z2_std=z2_std, verbose=False)
 
     if verbose:
         print(f'\n{"-"*40}')
@@ -1416,12 +1706,12 @@ def train_and_validate_pce_at_time_benchmark(x_train: np.ndarray, joint: Any, ti
            }
 
 
-def train_and_validate_pce_at_time(x_train: np.ndarray, joint: Any, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_samples_validation: int = 250, n_lambdas: int = 4, max_degree: int = 3, output_dir: str | Path = '.', save: bool = True, verbose: bool = True) -> dict:
+def train_and_validate_pce_at_time(x_train: np.ndarray, joint: Any, carb_model: Any, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, n_latent_samples: int = 1000, n_samples_validation: int = 250, n_lambdas: int = 4, max_degree: int = 3, output_dir: str | Path = '.', save: bool = True, verbose: bool = True, co2_scenario: str = "SSP2-4.5") -> dict:
     """Build the durability emulator dataset at a single time step, fit a PCE metamodel to the GLD lambdas, and validate it on a fresh sample.
 
     Runs the three stages of one time step of the dataset pipeline: (1) evaluates `emulator_function_time_durability` on the design samples to obtain the lambdas, (2) fits a PCE of `max_degree` mapping design variables to lambdas, and (3) re-evaluates the emulator on an independent validation sample to score the PCE with MSE and R2 per lambda.
 
-    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>.pkl` naming convention, which is what the downstream notebooks expect.
+    Artefacts are written to `output_dir` with the `<n_latent_samples>_<kind>_<time_step>_install_<year>_cement_<type>_exposure_<exposure>_co2_<scenario>.pkl` naming convention, which is what the downstream notebooks expect.
 
     :param x_train: Design samples used to train the PCE, shape (n_samples, 3) as [fck, rh, cover]
     :param joint: UQpy JointIndependent distribution of the design variables, used for the polynomial basis and to draw the validation samples
@@ -1439,13 +1729,15 @@ def train_and_validate_pce_at_time(x_train: np.ndarray, joint: Any, carb_model: 
     :param verbose: Whether to print the progress of each stage
 
     :return: Dictionary with the emulator dataframes, the fitted PCE, the validation statistics, and the paths written
+    :param co2_scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5
     """
 
+    co2_scenario = _co2_scenario_name(co2_scenario)
     out_dir     = Path(output_dir)
     lambda_cols = [f'lambda {i}' for i in range(1, n_lambdas + 1)]
-    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}'
+    tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}_co2_{co2_scenario}'
     emulator_kw = dict(names_x_variables=["fck", "rh", "cov"], carb_model=carb_model, cement_type=cement_type,
-                       installation_year=installation_year, exposure_conditions=exposure_conditions,
+                       installation_year=installation_year, exposure_conditions=exposure_conditions, co2_scenario=co2_scenario,
                        time_step=time_step, n_latent_samples=n_latent_samples, verbose=False)
 
     if verbose:

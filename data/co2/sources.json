@@ -1,0 +1,28 @@
+{
+  "source_url": "https://gmd.copernicus.org/articles/13/3571/2020/gmd-13-3571-2020-supplement.zip",
+  "source_archive_sha256": "8e4faf1cddee2e5a3adb6a35204db79560ebef69a40b0853d979922e5b13f6f2",
+  "csv_sha256": "3bad49505916d2720e6b990e319ffde881af55fdb02cf4e1bbcda59dfd13267c",
+  "workbook": "SUPPLEMENT_DataTables_Meinshausen_6May2020.xlsx",
+  "historical_sheet": "T2 - History Year 1750 to 2014",
+  "scenario_sheets": {
+    "SSP1-2.6": "T4 -  SSP1-2.6 ",
+    "SSP2-4.5": "T5 - SSP2-4.5 ",
+    "SSP5-8.5": "T11 - SSP5-8.5 "
+  },
+  "historical_doi": "10.5194/gmd-10-2057-2017",
+  "scenario_doi": "10.5194/gmd-13-3571-2020",
+  "variable": "CO2",
+  "unit": "ppm",
+  "region": "World",
+  "frequency": "annual mean",
+  "historical_years": [
+    1900,
+    2014
+  ],
+  "scenario_years": [
+    2015,
+    2100
+  ],
+  "license": "CC BY-SA 4.0 (dataset; see article Data availability)",
+  "processing": "Extracted annual values, rounded to 9 decimal places in ppm. No fitting, bias adjustment or extrapolation. Scenario sheets describe 2015–2016 as observation based."
+}

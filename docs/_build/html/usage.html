@@ -265,6 +265,14 @@ installed.</p>
 </section>
 <section id="typical-run">
 <h2>Typical run<a class="headerlink" href="#typical-run" title="Link to this heading">¶</a></h2>
+<p>Atmospheric CO₂ is queried by calendar year and scenario, and returned in percent:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">co2_percentage_year</span>
+
+<span class="n">co2</span> <span class="o">=</span> <span class="n">co2_percentage_year</span><span class="p">(</span><span class="mi">2000</span> <span class="o">+</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"SSP2-4.5"</span><span class="p">)</span>  <span class="c1"># structure built in 2000, age 100</span>
+</pre></div>
+</div>
+<p>The supported calendar interval is 1900–2100. Use the same <code class="docutils literal notranslate"><span class="pre">co2_scenario</span></code> in data
+generation and PCE training. Each scenario is saved under a distinct filename.</p>
 <p>Fitting a PCE surrogate at a single time step, on the durability track:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">UQpy.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Uniform</span><span class="p">,</span> <span class="n">JointIndependent</span>
@@ -280,6 +288,7 @@ installed.</p>
     <span class="n">carb_model</span><span class="o">=</span><span class="n">carb_model</span><span class="p">,</span>      <span class="c1"># trained ML model with .predict and .feature_names_in_</span>
     <span class="n">time_step</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
     <span class="n">installation_year</span><span class="o">=</span><span class="mi">1990</span><span class="p">,</span>
+    <span class="n">co2_scenario</span><span class="o">=</span><span class="s2">"SSP2-4.5"</span><span class="p">,</span>
     <span class="n">cement_type</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="n">exposure_conditions</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
     <span class="n">output_dir</span><span class="o">=</span><span class="s1">'durability_final'</span><span class="p">,</span>

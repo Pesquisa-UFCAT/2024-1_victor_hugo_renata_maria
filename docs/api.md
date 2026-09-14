@@ -12,16 +12,23 @@ docstrings themselves, need no such wrapper.
 
 ## Atmospheric CO{sub}`2` model
 
-Piecewise historical model of the global average CO{sub}`2` concentration, expressed
-as a percentage (ppm / 10000). {func}`co2_percentage_year` is the entry point; the
-period-specific functions are exposed because the carbonation profile calls them
-directly.
+Annual global CO{sub}`2` concentration from the published CMIP6 historical series
+(1900–2014) and SSP1-2.6, SSP2-4.5 or SSP5-8.5 (2015–2100), expressed as a
+percentage (ppm / 10000). The default scenario is SSP2-4.5. Fractional years are
+linearly interpolated; extrapolation is rejected. The versioned local table and
+its provenance live in `data/co2/`. No network connection is needed.
+
+```python
+co2_percentage_year(2050, "SSP2-4.5")  # approximately 0.0506875 (%)
+co2_percentage_year(2100, "SSP5-8.5")  # approximately 0.1135210 (%)
+```
+
+Pass `co2_scenario="SSP1-2.6"` (or another supported scenario) to the durability
+generation, profile and training functions. Output filenames include the scenario;
+datasets produced with the old polynomial must be regenerated before training.
 
 ```{eval-rst}
 .. autofunction:: co2_percentage_year
-.. autofunction:: co2_percentage_1900_1950
-.. autofunction:: co2_percentage_1950_2000
-.. autofunction:: co2_percentage_pos2000
 ```
 
 ## Carbonation profile

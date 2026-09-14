@@ -1,0 +1,73 @@
+\section*{Nomenclatura}
+\addcontentsline{toc}{section}{Nomenclatura}
+
+% Nomenclatura construida a partir dos simbolos usados no texto.
+% Revisar/complementar conforme as secoes forem finalizadas.
+
+\noindent\textbf{Modelos físicos --- carbonatação e corrosão}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$y(t)$        \> Profundidade da frente de carbonatação no instante $t$ (mm) \\
+$k$           \> Coeficiente de carbonatação (mm/$\sqrt{\text{ano}}$) \\
+$CO_2$        \> Concentração volumétrica de CO$_2$ no ambiente (\%) \\
+$ad$          \> Teor de adição pozolânica em relação à massa de cimento (\%) \\
+$k_c,\,k_{fc},\,k_{ad}$ \> Coeficientes do modelo de carbonatação: cimento, resistência e adições \\
+$k_{CO_2},\,k_{UR},\,k_{ce}$ \> Coeficientes do modelo de carbonatação: CO$_2$, umidade e exposição \\
+$c_{\mathrm{nom}}$ \> Cobrimento nominal da armadura (mm) \\
+$t_{\mathrm{ini}}$ \> Instante de inicia\c{c}\~ao da corrosão (anos) \\
+$t_{\mathrm{corr}}$ \> Per\'iodo de propaga\c{c}\~ao, $t_{\mathrm{corr}} = t - t_{\mathrm{ini}}$ (anos) \\
+$f_c$         \> Resist\^encia \`a compress\~ao do concreto (MPa) \\
+$UR$          \> Umidade relativa do ar (\%) \\
+$i_{\mathrm{corr}}$ \> Densidade de corrente de corrosão ($\mu$A/cm$^2$) \\
+$d_{s0},\,d_s(t)$ \> Di\^ametro inicial e residual das barras (mm) \\
+$A_s(t)$      \> \'Area efetiva de armadura no instante $t$ (mm$^2$) \\
+$C_f$         \> Coeficiente redutor de ader\^encia a\c{c}o--concreto
+\end{tabbing}
+
+ \noindent\textbf{Resistência e estado limite}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$M_{Rd,0}$              \> Momento resistente da seção íntegra (kN$\cdot$m) \\
+$M_{Rd,\mathrm{cor}}(t)$ \> Momento resistente degradado no instante $t$ (kN$\cdot$m) \\
+$M_S$                   \> Momento solicitante característico total (kN$\cdot$m) \\
+$g(\mathbf{X},t)$       \> Função de estado limite (margem de segurança) \\
+$\mathbf{X}$            \> Vetor de variáveis aleatórias de entrada \\
+$T(\mathbf{x})$         \> Tempo até a falha (anos)
+\end{tabbing}
+
+\noindent\textbf{Emulador estocástico}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$\mathcal{M}_S$ \> Simulador estocástico \\
+$Q(u)$        \> Função quantílica da Distribui\c{c}\~ao Lambda Generalizada \\
+$\boldsymbol{\lambda}=\{\lambda_1,\dots,\lambda_4\}$ \> Par\^ametros da GLD (loca\c{c}\~ao, escala, forma) \\
+$\Psi_{\boldsymbol{\alpha}}$ \> Polin\^omios ortonormais multivariados da PCE \\
+$a_{i,\boldsymbol{\alpha}}$ \> Coeficientes da PCE \\
+$\mathcal{M}_{ML}$ \> Regressor de aprendizado de máquina (camada temporal) \\
+$M,\,N,\,N_t$ \> Número de pontos do DoE, réplicas e passos de tempo
+\end{tabbing}
+
+\noindent\textbf{Confiabilidade, RUL e risco}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+$p_f(t)$      \> Probabilidade de falha dependente do tempo \\
+$\beta(t)$    \> Índice de confiabilidade generalizado \\
+$R(t)$        \> Função de confiabilidade (probabilidade de sobrevivência) \\
+$\mathrm{RUL}(t_{\mathrm{insp}})$ \> Vida útil remanescente condicionada \`a inspeção \\
+$\mathrm{VaR}_\alpha$ \> \textit{Value-at-Risk} ao nível $\alpha$ \\
+$\mathrm{CVaR}_\alpha$ \> \textit{Conditional Value-at-Risk} ao nível $\alpha$
+\end{tabbing}
+
+\noindent\textbf{Siglas}
+\begin{tabbing}
+$T(\mathbf{x})$\qquad\qquad \= \kill
+RUL \> \textit{Remaining Useful Life} (vida útil remanescente) \\
+GLD \> Distribui\c{c}\~ao Lambda Generalizada \\
+GLaM \> \textit{Generalized Lambda Model} \\
+PCE \> Expansão em Caos Polinomial \\
+ML \> Aprendizado de Máquina (\textit{Machine Learning}) \\
+RNA \> Rede Neural Artificial \\
+MoM \> M\'etodo dos Momentos \\
+LHS \> Amostragem por Hipercubo Latino \\
+KS / AD \> Testes de Kolmogorov--Smirnov / Anderson--Darling
+\end{tabbing}
