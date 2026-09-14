@@ -38,7 +38,6 @@ that profile at an arbitrary year.
 
 ```{eval-rst}
 .. autofunction:: carbonation_profile
-.. autofunction:: carbonation_depth_at_time
 .. autofunction:: _interp_profile_at
 ```
 
@@ -62,15 +61,6 @@ per-design-point `Processing time (s)`.
 ```{eval-rst}
 .. autofunction:: emulator_function_time_durability
 .. autofunction:: emulator_function_time_benchmark
-```
-
-## One-shot pipeline
-
-Data generation, PCE fit and validation in a single call, for one time step.
-
-```{eval-rst}
-.. autofunction:: train_and_validate_pce_at_time
-.. autofunction:: train_and_validate_pce_at_time_benchmark
 ```
 
 ## Split pipeline
