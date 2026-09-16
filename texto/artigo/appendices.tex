@@ -12,6 +12,31 @@
 \renewcommand{\thesection}{Ap\^endice \Alph{section}}
 \renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
 
+%--- Apêndice A: procedimento correspondente aos notebooks atuais ---%
+\section{Verificação da margem de durabilidade em uma idade}
+\label{app:exemplo_passo}
+
+Este apêndice explicita a sequência de cálculo de uma resposta do Exemplo~2. Considera-se o ponto nominal $f_c=25$~MPa, $UR=55\%$ e $c_{\mathrm{nom}}=25$~mm, com início da exposição em 1980, cimento CP~II~F, exposição externa protegida, $ad=0\%$ e cenário SSP2-4.5. Para uma realização latente $i$, calculam-se
+\begin{equation}
+    f_{c,i}^{\ast}=25\,\omega_{f_c,i},\qquad
+    UR_i^{\ast}=0{,}55\,\omega_{UR,i},\qquad
+    c_i=25\,\omega_{c,i}.
+\end{equation}
+A umidade é expressa como fração no modelo, enquanto $f_c$ e $c$ permanecem em MPa e mm. Para cada idade da malha auxiliar de dez anos, obtém-se a concentração no ano-calendário correspondente e avalia-se a Equação~\eqref{eq:y}. O máximo acumulado dessas profundidades define $\tilde{y}_i(t)$ nos pontos da malha.
+
+Para uma consulta aos 25 anos, correspondente a 2005, o simulador interpola entre as profundidades acumuladas aos 20 e 30 anos:
+\begin{equation}
+    y_i(25)=\tilde{y}_i(20)+\frac{25-20}{30-20}
+    \left[\tilde{y}_i(30)-\tilde{y}_i(20)\right],\qquad
+    g_i(25)=c_i-y_i(25).
+\end{equation}
+O resultado é uma margem em milímetros. Um valor $g_i(25)\leq0$ identifica que a frente alcançou a armadura. Para a política principal, $g_i(25)\leq5$~mm identifica que o critério preventivo já foi atingido nessa idade, dada a monotonicidade do simulador.
+
+Repetindo esse procedimento para as $2.500$ réplicas de um mesmo ponto, obtém-se a amostra condicional de $g$ à qual a GLD é ajustada. A repetição para os pontos de treinamento e de validação produz os conjuntos usados na construção das PCEs. Este cálculo pertence à geração dos dados de referência; a etapa posterior de vida remanescente utiliza as distribuições previstas pelas redes.
+
+% Material anterior de flexão preservado apenas como rascunho; não integra
+% o simulador de despassivação nem o texto compilado deste artigo.
+\iffalse
 %--- Apendice A ---%
 \section{Exemplo de verifica\c{c}\~ao para um passo de tempo}
 \label{app:exemplo_passo}
@@ -80,10 +105,12 @@ g(40) = M_{Rd,\mathrm{cor}}(40) - M_S = 30{,}39 - 20{,}0 = 10{,}39~\text{kN}\cdo
 
 O resultado positivo indica que, aos 40 anos, mesmo considerando a corrosão, a seção ainda possui capacidade resistente superior às solicitações atuantes. Este cálculo é repetido para todos os instantes da simulação e para todas as amostras estocásticas, constituindo o simulador cujo custo o emulador da Seção~\ref{sec:emuladores} busca contornar.
 
+\fi
+
 %--- Apendice B (opcional) ---%
 \section{Material suplementar}
 \label{app:suplementar}
 
-\falta{candidatos a material suplementar/apêndice: (i) métricas complementares de validação da PCE nos 10 instantes da Tabela~\ref{tab:validation_results}; (ii) equações dos três trechos da regressão por partes do CO$_2$; (iii) hiperparâmetros finais da RNA}
+\falta{Incorporar os diagnósticos complementares das cinco idades de treinamento, a identificação dos pontos usados nas comparações distribucionais, os descartes da base temporal e os resultados de verificação da resolução e da monotonicidade das trajetórias.}
 
 \end{appendices}

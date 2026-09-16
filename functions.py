@@ -1,4 +1,3 @@
-import os
 import time
 from pathlib import Path
 from functools import lru_cache
@@ -6,26 +5,14 @@ from numbers import Real
 
 import numpy as np
 import pandas as pd
-from typing import Optional, Any
-import seaborn as sns
-import pickle
+from typing import Any
 import dill
-from scipy.integrate import odeint, simpson
-from scipy.stats import ks_2samp, wasserstein_distance
-from UQpy.distributions import Uniform, Normal, JointIndependent #, Lognormal
-from UQpy.distributions.collection.Lognormal import Lognormal
 from UQpy.surrogates import *
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPRegressor
-from scipy.optimize import minimize
-import matplotlib.pyplot as plt
 import scipy.stats as stats
-from multiprocessing import Pool, cpu_count
-from scipy.interpolate import interp1d
-import scipy as sc
-import joblib
 import pyglam as glam
 
 
@@ -1018,20 +1005,49 @@ def carbonation_depth_possan_by_type(f_ck: np.ndarray | float, t: np.ndarray | f
                                    )
 
 
-def generate_latent_variables(n_latent_samples: int, mean: float = 1.0, cov: float = 0.02) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Generates the latent multipliers related to the beam problem. All three follow a normal distribution with the same mean and coefficient of variation.
+def generate_latent_variables(n_latent_samples: int, mean: float = 1.0, cov: float = 0.02, rh_base: float | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    r"""Generates the latent multipliers related to the durability problem, all with mean `mean` and coefficient of variation `cov`, but not all from the same family.
+
+    A plain ``Normal(mean, cov*mean)`` multiplier, as used previously, has unbounded support: at the
+    low coefficients of variation this pipeline started with (~2%) that is harmless, but raising `cov`
+    to more realistic execution-variability levels (concrete cover/strength CoVs of 15-30%+ are
+    routinely reported in the literature) makes it cross zero often enough to matter. The multiplier
+    was then hard-clipped at the physical bound downstream (`emulator_function_time_durability`), which
+    does not truncate the distribution — it piles the clipped probability mass into a delta spike
+    exactly at the bound. pyGLAM's GLD is a continuous quantile family, so it cannot represent that
+    spike; fitting one to a sample that has it is exactly the failure mode that produced bad lambda 2
+    fits. Two families avoid the spike instead of hiding it downstream:
+
+    - **fck and cover** have a physical floor at zero but no physical ceiling here, so their
+      multipliers are drawn **Lognormal** — the standard choice for resistance-like variables in
+      structural reliability (JCSS Probabilistic Model Code; Ang & Tang) — with support
+      :math:`(0, \infty)`, so they can never go negative and the downstream clip becomes a no-op;
+    - **RH** has a physical floor *and* ceiling (0-100%), so its multiplier is drawn from a
+      **Normal truncated** to keep :math:`\text{rh\_base} \times \text{rh\_latent}` inside
+      :math:`[0, 100]` exactly — truncation renormalizes the density near the bound instead of
+      spiking it there. Without `rh_base` (caller doesn't know the design point's nominal RH yet)
+      only the lower tail is truncated at zero.
 
     :param n_latent_samples: Number of latent samples to generate
     :param mean: Mean of the latent multipliers
     :param cov: Coefficient of variation of the latent multipliers
+    :param rh_base: Nominal (pre-latent) RH of the design point being sampled, used to place the
+        upper truncation bound for `rh_latent` at ``100 / rh_base``. `None` skips the upper bound
+        (left-truncated at zero only)
 
     :return: Sampled multipliers for relative humidity, concrete compressive strength, and concrete cover
     """
 
-    scale      = cov * mean
-    cov_latent = np.random.normal(loc=mean, scale=scale, size=n_latent_samples)
-    rh_latent  = np.random.normal(loc=mean, scale=scale, size=n_latent_samples)
-    fck_latent = np.random.normal(loc=mean, scale=scale, size=n_latent_samples)
+    scale = cov * mean
+
+    sigma_ln   = np.sqrt(np.log(1.0 + cov ** 2))
+    mu_ln      = np.log(mean) - sigma_ln ** 2 / 2.0
+    fck_latent = np.random.lognormal(mean=mu_ln, sigma=sigma_ln, size=n_latent_samples)
+    cov_latent = np.random.lognormal(mean=mu_ln, sigma=sigma_ln, size=n_latent_samples)
+
+    a = (0.0 - mean) / scale
+    b = (100.0 / rh_base - mean) / scale if rh_base is not None else np.inf
+    rh_latent = stats.truncnorm.rvs(a, b, loc=mean, scale=scale, size=n_latent_samples)
 
     return rh_latent, fck_latent, cov_latent
 
@@ -1058,7 +1074,7 @@ def _interp_profile_at(calendar_years: np.ndarray, depths: np.ndarray, year_quer
     return depths[:, k] + frac * (depths[:, k + 1] - depths[:, k])
 
 
-def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, ad: float = 10.0, time_step: float = 0.0, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, verbose: bool = False, co2_scenario: str = "SSP2-4.5") -> tuple[pd.DataFrame, pd.DataFrame]:
+def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, ad: float = 10.0, time_step: float = 0.0, n_latent_samples: int = 1000, latent_cov: float = 0.02, n_starts: int = 15, seed: int = 42, verbose: bool = False, co2_scenario: str = "SSP2-4.5") -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute the emulator of carbonation depth for durability analysis of reinforced concrete sections.
 
     The simulator is the closed-form Possan et al. (2016) carbonation model
@@ -1072,6 +1088,10 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ce
     :param seed: Seed used by pyGLAM to draw extra multi-start points once `n_starts` exceeds its
         fixed shape grid, for reproducible fits
     :param co2_scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5
+    :param latent_cov: Coefficient of variation of the RH/fck/cover latent multipliers, passed
+        through to `generate_latent_variables`. The 2% default is very low for real execution
+        variability (concrete cover/strength CoVs of 15-30%+ are routinely reported in the
+        literature); raise it here for a more realistic — and more conservative — Pf/RUL estimate
     """
 
     co2_scenario = _co2_scenario_name(co2_scenario)
@@ -1108,7 +1128,7 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ce
         # =========================
         # 2. Generate latent variables (humidity uncertainty)
         # =========================
-        rh_latent, fck_latent, cov_latent = generate_latent_variables(n_latent_samples)
+        rh_latent, fck_latent, cov_latent = generate_latent_variables(n_latent_samples, cov=latent_cov, rh_base=base_rh)
 
         # =========================
         # 3. Carbonation analysis for each latent humidity, fck and cover sample.
@@ -1205,7 +1225,7 @@ def emulator_function_time_durability(x: np.ndarray, names_x_variables: list, ce
     return df_full, df_unique
 
 
-def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, ad: float = 10.0, n_latent_samples: int = 1000, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True, co2_scenario: str = "SSP2-4.5") -> dict:
+def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, time_step: float, cement_type: int = 3, installation_year: int = 1990, exposure_conditions: int = 2, ad: float = 10.0, n_latent_samples: int = 1000, latent_cov: float = 0.02, n_starts: int = 15, seed: int = 42, output_dir: str | Path = '.', save: bool = True, verbose: bool = True, co2_scenario: str = "SSP2-4.5") -> dict:
     """Stage 1 of the split durability pipeline: run the emulator on the training and validation design samples at a single time step, and save both datasets to disk.
 
     This is the only stage that evaluates the Possan carbonation model, draws latent samples and fits the GLD — the expensive part that `Processing time (s)` measures. Splitting it from the PCE fit (`train_and_validate_pce_from_dataset_durability`) lets the dataset be generated once, in its own notebook, and the PCE refit or re-validated later without repeating any simulation.
@@ -1221,6 +1241,8 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
     :param ad: Pozzolanic material in the concrete, relative to the cement mass (%), passed through
         to `emulator_function_time_durability`
     :param n_latent_samples: Number of latent samples per design sample. Also used as the filename prefix
+    :param latent_cov: Coefficient of variation of the RH/fck/cover latent multipliers, passed
+        through to `emulator_function_time_durability`
     :param n_starts: Number of pyGLAM multi-start attempts per GLAM fit, passed through to
         `emulator_function_time_durability`
     :param seed: Seed used by pyGLAM's multi-start, passed through to `emulator_function_time_durability`
@@ -1237,7 +1259,8 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
     tag         = f'{time_step}_install_{installation_year}_cement_{cement_type}_exposure_{exposure_conditions}_co2_{co2_scenario}'
     emulator_kw = dict(names_x_variables=["fck", "rh", "cov"], cement_type=cement_type,
                        installation_year=installation_year, exposure_conditions=exposure_conditions, co2_scenario=co2_scenario,
-                       ad=ad, time_step=time_step, n_latent_samples=n_latent_samples, n_starts=n_starts, seed=seed, verbose=False)
+                       ad=ad, time_step=time_step, n_latent_samples=n_latent_samples, latent_cov=latent_cov,
+                       n_starts=n_starts, seed=seed, verbose=False)
 
     if verbose:
         print(f'\n{"-"*40}')
@@ -1798,7 +1821,7 @@ def generate_rul_dataset_durability(fck: float, rh: float, cov: float, times: np
 
 
 # =============================================================================
-# PYGLAM VERIFICATION — GLD fitted to reference distributions, used by 00_pyglam_test
+# GLD-FKML CORE
 # =============================================================================
 
 
@@ -1822,217 +1845,3 @@ def gld_quantile_at_u(lambdas: np.ndarray | list, u: np.ndarray | float) -> np.n
     l1, l2, l3, l4 = lambdas
 
     return l1 + ((u ** l3 - 1.0) / l3 - ((1.0 - u) ** l4 - 1.0) / l4) / l2
-
-
-def gld_density_at_u(lambdas: np.ndarray | list, u: np.ndarray | float) -> np.ndarray:
-    r"""Density of the FKML-parameterized GLD at the point x = Q(u), in closed form.
-
-    Since the GLD is defined by its quantile function, its density satisfies
-    :math:`q(Q(u)) = 1/Q'(u)` with
-    :math:`Q'(u) = \left[u^{\lambda_3-1} + (1-u)^{\lambda_4-1}\right]/\lambda_2`. Evaluating it
-    this way avoids the CDF inversion that `pyglam.GlamFKML.pdf` performs internally — a
-    round trip whose numerical error is large enough to turn a well-fitted Kullback--Leibler
-    integral slightly negative.
-
-    :param lambdas: The four GLD parameters, ordered as lambda_1 to lambda_4
-    :param u: Cumulative probability (or array of probabilities) in (0, 1)
-
-    :return: Density of the GLD at x = Q(u)
-    """
-
-    _, l2, l3, l4 = lambdas
-
-    return l2 / (u ** (l3 - 1.0) + (1.0 - u) ** (l4 - 1.0))
-
-
-def gld_support(lambdas: np.ndarray | list, eps: float = 1e-12) -> tuple[float, float]:
-    """Endpoints of the support of a fitted GLD, finite whenever lambda_3 > 0 and lambda_4 > 0.
-
-    :param lambdas: The four GLD parameters, ordered as lambda_1 to lambda_4
-    :param eps: Offset from 0 and 1 used to evaluate the endpoints
-
-    :return: Lower and upper endpoints of the support
-    """
-
-    return float(gld_quantile_at_u(lambdas, eps)), float(gld_quantile_at_u(lambdas, 1.0 - eps))
-
-
-def fit_gld_to_sample(sample: np.ndarray, n_starts: int = 15, seed: int = 42) -> np.ndarray:
-    """Fit the four GLD parameters to a sample by the method of moments, via pyGLAM.
-
-    :param sample: Sample the GLD is fitted to
-    :param n_starts: Number of pyGLAM multi-start attempts
-    :param seed: Seed used by pyGLAM's multi-start
-
-    :return: The four fitted GLD parameters, ordered as lambda_1 to lambda_4
-    """
-
-    sol = glam.GlamFKML().fit_lambdas(np.asarray(sample, dtype=float), method='least_squares',
-                                      n_starts=n_starts, seed=seed)
-
-    return np.asarray(sol.x, dtype=float)
-
-
-def kl_divergence_gld(dist: Any, lambdas: np.ndarray | list, n_grid: int = 20001, eps: float = 1e-9) -> float:
-    r"""Kullback--Leibler divergence :math:`D(q\|p)` of a fitted GLD q from an analytical target p.
-
-    This is the only finite direction here: in the FKML parameterization with
-    :math:`\lambda_3, \lambda_4 > 0` the GLD has compact support, whereas the Normal, Gumbel and
-    Lognormal targets do not — so :math:`D(p\|q)` diverges by construction. The integral is taken
-    in cumulative-probability space (:math:`x = Q(u)`, :math:`\mathrm{d}u = q(x)\,\mathrm{d}x`),
-    which sidesteps having to locate the endpoints of the support:
-
-    .. math::
-
-        D(q\|p) = \mathbb{E}_q\!\left[\log \frac{q}{p}\right]
-                = \int_0^1 \log \frac{q(Q(u))}{p(Q(u))}\,\mathrm{d}u
-
-    :param dist: Frozen `scipy.stats` distribution playing the role of the target p
-    :param lambdas: The four fitted GLD parameters
-    :param n_grid: Number of quadrature points in u
-    :param eps: Offset from 0 and 1, keeping the integrable endpoint singularities finite
-
-    :return: Kullback--Leibler divergence, in nats
-    """
-
-    u = np.linspace(eps, 1.0 - eps, n_grid)
-    q = gld_density_at_u(lambdas, u)
-    p = dist.pdf(gld_quantile_at_u(lambdas, u))
-    m = np.isfinite(q) & np.isfinite(p) & (q > 1e-300) & (p > 1e-300)
-
-    return float(simpson(np.log(q[m] / p[m]), x=u[m]))
-
-
-def ks_distance_to_target(dist: Any, lambdas: np.ndarray | list, n_grid: int = 20001, eps: float = 1e-9) -> float:
-    """Kolmogorov--Smirnov distance between the fitted GLD CDF and the analytical target CDF.
-
-    Unlike a two-sample test, this is a deterministic measure of how well the GLD *family*
-    approximates the target, free of sampling noise. Walking the support through the GLD's own
-    quantile function makes the statistic ``sup_u |u - F_target(Q(u))|``, since the GLD CDF at
-    ``x = Q(u)`` is exactly ``u``.
-
-    :param dist: Frozen `scipy.stats` distribution playing the role of the target
-    :param lambdas: The four fitted GLD parameters
-    :param n_grid: Number of points spanning the support
-    :param eps: Offset from 0 and 1
-
-    :return: Supremum of the absolute difference between the two CDFs
-    """
-
-    u = np.linspace(eps, 1.0 - eps, n_grid)
-
-    return float(np.nanmax(np.abs(u - dist.cdf(gld_quantile_at_u(lambdas, u)))))
-
-
-def evaluate_gld_fit(name: str, dist: Any, n: int, seed: int = 42, n_starts: int = 15, n_ref: int = 20000) -> dict:
-    """Draw one sample from a target distribution, fit a GLD to it and score the fit.
-
-    :param name: Label of the target distribution, carried through to the results table
-    :param dist: Frozen `scipy.stats` distribution to sample from and compare against
-    :param n: Sample size
-    :param seed: Seed of the sample and of pyGLAM's multi-start
-    :param n_starts: Number of pyGLAM multi-start attempts
-    :param n_ref: Size of the GLD sample used for the two-sample tests
-
-    :return: Dictionary with the fitted lambdas, goodness-of-fit metrics and support endpoints
-    """
-
-    rng     = np.random.default_rng(seed)
-    sample  = dist.rvs(size=n, random_state=rng)
-    lambdas = fit_gld_to_sample(sample, n_starts=n_starts, seed=seed)
-
-    quantiles = np.array([0.05, 0.50, 0.95])
-    q_target  = dist.ppf(quantiles)
-    q_gld     = gld_quantile_at_u(lambdas, quantiles)
-    spread    = dist.ppf(0.95) - dist.ppf(0.05)
-    err_q     = np.abs(q_gld - q_target) / spread * 100.0
-
-    # inverse-transform sampling in closed form: exact, and far cheaper than GlamFKML.rvs
-    gld_sample = gld_quantile_at_u(lambdas, rng.uniform(1e-9, 1.0 - 1e-9, size=max(n, n_ref)))
-    ks_two     = ks_2samp(sample, gld_sample)
-    support    = gld_support(lambdas)
-
-    return {'Distribution': name, 'N': n,
-            'lambda 1': lambdas[0], 'lambda 2': lambdas[1], 'lambda 3': lambdas[2], 'lambda 4': lambdas[3],
-            'KS': ks_distance_to_target(dist, lambdas),
-            'KS 2-sample': ks_two.statistic, 'p-value': ks_two.pvalue,
-            'KL': kl_divergence_gld(dist, lambdas),
-            'Wasserstein': float(wasserstein_distance(sample, gld_sample)),
-            'err P5 (%)': err_q[0], 'err P50 (%)': err_q[1], 'err P95 (%)': err_q[2],
-            'support min': support[0], 'support max': support[1]}
-
-
-def study_gld_fits(targets: dict, sizes: tuple, n_rep: int = 20, n_starts: int = 15, base_seed: int = 0, verbose: bool = True) -> pd.DataFrame:
-    """Repeat `evaluate_gld_fit` over independent samples for every (distribution, sample size) cell.
-
-    Replication matters here: a single fit at N = 50 is dominated by sampling noise, so the
-    convergence of the method of moments only becomes legible in the average over replicates.
-
-    :param targets: Mapping from label to frozen `scipy.stats` distribution
-    :param sizes: Sample sizes to sweep
-    :param n_rep: Number of independent replicates per cell
-    :param n_starts: Number of pyGLAM multi-start attempts per fit
-    :param base_seed: Base seed; each replicate offsets it
-    :param verbose: Whether to report progress per distribution
-
-    :return: DataFrame with one row per replicate
-    """
-
-    rows = []
-    for name, dist in targets.items():
-        if verbose:
-            print(f'  {name} ...', end='', flush=True)
-        for n in sizes:
-            for r in range(n_rep):
-                row = evaluate_gld_fit(name, dist, n, seed=base_seed + 1000 * r + n, n_starts=n_starts)
-                row['rep'] = r
-                rows.append(row)
-        if verbose:
-            print(' done')
-
-    return pd.DataFrame(rows)
-
-
-# =============================================================================
-# LEGACY / UNUSED — not called by any current *_final notebook, kept for reference
-# =============================================================================
-
-def carbonation_profile(model_: Any, lifetime: float, fc: float, rh: float, cement_type: int, exposure: int, start_year: int, co2_scenario: str = "SSP2-4.5") -> pd.DataFrame:
-    """Generate carbonation profile starting at a given calendar year.
-
-    :param model_: trained ML model for carbonation depth prediction, which should have a method .predict() and an attribute .feature_names_in_ that contains the names of the features used for training.
-    :param lifetime: Design life of the structure [years]
-    :param fc: Concrete compressive strength [MPa]
-    :param rh: Relative humidity [%]
-    :param cement_type: Type of cement (0: CPII Z, 1: CPV-ARI, 2: CPIV, 3: CPII F, 4: CPIII, 5: CPII E)
-    :param exposure: Exposure conditions (0: PIA [Internal Protected], 1: UEA [External Unprotected], 2: PEA [External Protected])
-    :param start_year: Calendar year of installation
-
-    :return: DataFrame with columns C02 concentration (%), compressive strength (MPa), relative humidity (%), type of cement, exposure conditions, year, and carbonation depth (mm)
-    :param co2_scenario: SSP1-2.6, SSP2-4.5 (default), or SSP5-8.5
-    """
-
-    co2_scenario = _co2_scenario_name(co2_scenario)
-    co2_percentage_year(start_year, co2_scenario)
-    if not isinstance(lifetime, Real) or not np.isfinite(lifetime) or lifetime < 0:
-        raise ValueError("lifetime must be a finite nonnegative number of years.")
-    co2_percentage_year(start_year + lifetime, co2_scenario)
-    # Include the requested endpoint without querying CO2 beyond 2100.
-    years = np.unique(np.append(np.arange(0, lifetime, 10), lifetime))
-
-    # Romain calendar
-    calendar_years = start_year + years
-
-    # Atmospheric CO2 concentration
-    co2_values = [co2_percentage_year(y, co2_scenario) for y in calendar_years]
-
-    # Carbonation AI model and profile
-    df      = pd.DataFrame({'t (years)': years, 'CO2 (%)': co2_values, 'fc (MPa)': [fc]*len(years), 'RH (%)': [rh]*len(years), 'Type of cement': [cement_type]*len(years), 'Exposure conditions': [exposure]*len(years)})
-    df      = df[model_.feature_names_in_]
-    depth   = model_.predict(df)
-    profile = pd.DataFrame({'calendar year': calendar_years, 't (years)': years, 'CO2 (%)': co2_values, 'carbonation depth (mm)': depth})
-    profile['carbonation depth (mm)'] = profile['carbonation depth (mm)'].cummax()
-
-    profile.attrs["co2_scenario"] = co2_scenario
-    return profile
-

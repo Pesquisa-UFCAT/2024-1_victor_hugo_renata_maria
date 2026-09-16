@@ -23,6 +23,7 @@ dependencies = [
     "pyglam",
     "scikit-learn",
     "setuptools<81",
+    "torch==2.2.2",
 ]
 
 [dependency-groups]
@@ -32,3 +33,15 @@ docs = [
     "myst-parser",
     "sphinx-copybutton",
 ]
+
+# UQpy imports torch even for the NumPy-based PCE pipeline. Use the CPU
+# build on Linux x86_64: the CUDA build crashed during import on this host.
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

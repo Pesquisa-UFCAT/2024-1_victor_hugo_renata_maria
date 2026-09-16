@@ -46,6 +46,28 @@ This is the same command whether `uv.lock` already exists (it's committed to thi
 
 The project pins `setuptools<81` because `UQpy 4.2.1` still imports `pkg_resources`. Newer `setuptools` versions may remove that module.
 
+### Kernel exits while importing libraries on Linux
+
+UQpy imports PyTorch internally, including when the notebook only uses PCE.
+On this Linux x86_64 environment, importing the CUDA build of PyTorch 2.2.2
+caused a native segmentation fault before any dataset was loaded. The CPU build
+of the same version passed the import check. The project therefore selects
+`torch==2.2.2+cpu` on Linux x86_64 through the
+[official PyTorch CPU index](https://pytorch.org/get-started/previous-versions/#v222).
+The PCE and scikit-learn networks in these notebooks run on CPU.
+
+After updating the project, apply the locked environment and restart the
+notebook kernel before running its cells from the beginning:
+
+```bash
+uv sync --locked
+uv run --locked python -X faulthandler -c "import torch; import functions; print(torch.__version__)"
+```
+
+On Linux x86_64, the version printed should be `2.2.2+cpu`. This environment
+repair does not require regenerating the datasets from notebook 1. The
+`pkg_resources` deprecation warning is separate from the native crash.
+
 ## 4. Activate the Environment
 
 You don't strictly need to activate the environment — `uv run <command>` (see step 6) uses it automatically. Activating is convenient for interactive work (e.g. a plain Python shell).
