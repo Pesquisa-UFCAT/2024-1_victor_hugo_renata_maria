@@ -16,6 +16,33 @@ import scipy.stats as stats
 import pyglam as glam
 
 
+def load_pkl(path: str | Path) -> Any:
+    """Load a dill/pickle file, printing its full path before opening it."""
+    path = Path(path).resolve()
+    print(f'[PKL] Carregando: {path}', flush=True)
+    with path.open('rb') as file:
+        data = dill.load(file)
+    print(f'[PKL] Carregado: {path}', flush=True)
+    return data
+
+
+def save_pkl(data: Any, path: str | Path) -> None:
+    """Save with dill and report the full path only after the file is closed."""
+    path = Path(path).resolve()
+    with path.open('wb') as file:
+        dill.dump(data, file)
+    print(f'[PKL] Salvo: {path}', flush=True)
+
+
+def save_figure(fig: Any, path: str | Path, **kwargs: Any) -> None:
+    """Save a figure and print its full path; forward options to savefig."""
+    path = Path(path).resolve()
+    if not path.suffix and not kwargs.get('format'):
+        path = path.with_suffix(f'.{fig.canvas.get_default_filetype()}')
+    fig.savefig(path, **kwargs)
+    print(f'[FIGURA] Salva: {path}', flush=True)
+
+
 # =============================================================================
 # BENCHMARK PIPELINE (R/S problem) — used by benchmark
 # =============================================================================
@@ -1281,8 +1308,7 @@ def generate_dataset_at_time_durability(x_train: np.ndarray, x_val: np.ndarray, 
             for kind, frame in (('dataset_full', df_full), ('dataset_unique', df_unique)):
                 key         = f'{kind}_{split}'
                 paths[key]  = out_dir / f'{n_latent_samples}_{kind}_{split}_{tag}.pkl'
-                with open(paths[key], 'wb') as f:
-                    dill.dump(frame, f)
+                save_pkl(frame, paths[key])
 
         if verbose:
             print(f'  {split}: {len(x)} design points, {df_unique["Processing time (s)"].sum():.2f} s total')
@@ -1345,8 +1371,7 @@ def train_and_validate_pce_from_dataset_durability(df_unique_train: pd.DataFrame
     if save:
         out_dir.mkdir(parents=True, exist_ok=True)
         paths['pce_metamodel'] = out_dir / f'{n_latent_samples}_pce_metamodel_{tag}.pkl'
-        with open(paths['pce_metamodel'], 'wb') as f:
-            dill.dump(pce_metamodel, f)
+        save_pkl(pce_metamodel, paths['pce_metamodel'])
         if verbose:
             print('1. PCE training dataset has been saved!')
 
@@ -1366,8 +1391,7 @@ def train_and_validate_pce_from_dataset_durability(df_unique_train: pd.DataFrame
 
     if save:
         paths['pce_validation_stats'] = out_dir / f'{n_latent_samples}_pce_validation_stats_{tag}.pkl'
-        with open(paths['pce_validation_stats'], 'wb') as f:
-            dill.dump(statistics_, f)
+        save_pkl(statistics_, paths['pce_validation_stats'])
         if verbose:
             print('2. PCE statistcs has been saved!')
 
@@ -1578,8 +1602,7 @@ def generate_nn_dataset_durability(pce_metamodels: list, times: np.ndarray, join
     if save:
         out_dir.mkdir(parents=True, exist_ok=True)
         paths['dataset_nn'] = out_dir / f'{n_latent_samples}_dataset_nn_durability_{tag}.pkl'
-        with open(paths['dataset_nn'], 'wb') as f:
-            dill.dump(df_nn, f)
+        save_pkl(df_nn, paths['dataset_nn'])
         if verbose:
             print('The NN dataset has been saved!')
 
@@ -1678,16 +1701,13 @@ def train_and_validate_nn_lambda_durability(df_nn: pd.DataFrame, feature_cols: l
         for target, model in models.items():
             key = target.replace(' ', '_')
             paths[key] = out_dir / f'{n_latent_samples}_nn_{key}_model_durability_{tag}.pkl'
-            with open(paths[key], 'wb') as f:
-                dill.dump(model, f)
+            save_pkl(model, paths[key])
 
         paths['scaler'] = out_dir / f'{n_latent_samples}_nn_scaler_durability_{tag}.pkl'
-        with open(paths['scaler'], 'wb') as f:
-            dill.dump(scaler, f)
+        save_pkl(scaler, paths['scaler'])
 
         paths['nn_validation_stats'] = out_dir / f'{n_latent_samples}_nn_validation_stats_durability_{tag}.pkl'
-        with open(paths['nn_validation_stats'], 'wb') as f:
-            dill.dump(statistics_, f)
+        save_pkl(statistics_, paths['nn_validation_stats'])
 
         if verbose:
             print('The NN models, scaler and validation stats have been saved!')
@@ -1750,19 +1770,15 @@ def generate_rul_dataset_durability(fck: float, rh: float, cov: float, times: np
     # =========================
     # 1. Load the trained NN (lambda 1, lambda 2) and its scaler
     # =========================
-    with open(in_dir / f'{n_latent_samples}_nn_lambda_1_model_durability_{tag}.pkl', 'rb') as f:
-        model_l1 = dill.load(f)
-    with open(in_dir / f'{n_latent_samples}_nn_lambda_2_model_durability_{tag}.pkl', 'rb') as f:
-        model_l2 = dill.load(f)
-    with open(in_dir / f'{n_latent_samples}_nn_scaler_durability_{tag}.pkl', 'rb') as f:
-        scaler = dill.load(f)
+    model_l1 = load_pkl(in_dir / f'{n_latent_samples}_nn_lambda_1_model_durability_{tag}.pkl')
+    model_l2 = load_pkl(in_dir / f'{n_latent_samples}_nn_lambda_2_model_durability_{tag}.pkl')
+    scaler = load_pkl(in_dir / f'{n_latent_samples}_nn_scaler_durability_{tag}.pkl')
 
     # =========================
     # 2. Default lambda 3 / lambda 4, if not given
     # =========================
     if lambda3_fixed is None or lambda4_fixed is None:
-        with open(in_dir / f'{n_latent_samples}_dataset_nn_durability_{tag}.pkl', 'rb') as f:
-            df_nn = dill.load(f)
+        df_nn = load_pkl(in_dir / f'{n_latent_samples}_dataset_nn_durability_{tag}.pkl')
         if lambda3_fixed is None:
             lambda3_fixed = float(df_nn['lambda 3'].mean())
         if lambda4_fixed is None:
@@ -1799,11 +1815,9 @@ def generate_rul_dataset_durability(fck: float, rh: float, cov: float, times: np
         out_dir.mkdir(parents=True, exist_ok=True)
         rul_tag = f'fck{fck:g}_rh{rh:g}_cov{cov:g}_durability'
         paths['lambda_df'] = out_dir / f'{n_latent_samples}_rul_lambdas_{rul_tag}.pkl'
-        with open(paths['lambda_df'], 'wb') as f:
-            dill.dump(lambda_df, f)
+        save_pkl(lambda_df, paths['lambda_df'])
         paths['samples'] = out_dir / f'{n_latent_samples}_rul_samples_{rul_tag}.pkl'
-        with open(paths['samples'], 'wb') as f:
-            dill.dump(samples, f)
+        save_pkl(samples, paths['samples'])
         if verbose:
             print('The RUL lambda dataframe and Monte Carlo samples have been saved!')
 
