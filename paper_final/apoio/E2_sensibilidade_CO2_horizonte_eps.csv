@@ -1,0 +1,25 @@
+hipotese,beta_alvo,variante,p_star,dt,Lambda,maxPf,n_reparos
+"base: 2000, CO2 const. pós-2100",sem restrição,condicao,0.01,10,1.0596686826023158,0.04525,2.94165
+"base: 2000, CO2 const. pós-2100",sem restrição,modelo,0.43,15,1.04764565732862,0.6617,2.0
+"base: 2000, CO2 const. pós-2100",1.3,condicao,0.01,10,1.0596686826023158,0.04525,2.94165
+"base: 2000, CO2 const. pós-2100",1.3,modelo,0.01,10,1.0956088080584292,0.05355,5.0
+CO2 linear pós-2100,sem restrição,condicao,0.01,10,1.0596708247967257,0.04525,2.94505
+CO2 linear pós-2100,sem restrição,modelo,0.43,15,1.0476462591295523,0.6617,2.0
+CO2 linear pós-2100,1.3,condicao,0.01,10,1.0596708247967257,0.04525,2.94505
+CO2 linear pós-2100,1.3,modelo,0.01,10,1.095608954571757,0.05355,5.0
+construção 1950 (série completa),sem restrição,condicao,0.01,10,1.0590593401501338,0.04365,2.9302
+construção 1950 (série completa),sem restrição,modelo,0.42,15,1.047380642187077,0.65525,2.0
+construção 1950 (série completa),1.3,condicao,0.01,10,1.0590593401501338,0.04365,2.9302
+construção 1950 (série completa),1.3,modelo,0.01,10,1.0953695129174508,0.05225,5.0
+"construção 2000, T_SL=100",sem restrição,condicao,0.01,10,1.0589796387343053,0.04525,2.04805
+"construção 2000, T_SL=100",sem restrição,modelo,0.43,15,1.0469432230673381,0.6617,1.0
+"construção 2000, T_SL=100",1.3,condicao,0.01,10,1.0589796387343053,0.04525,2.04805
+"construção 2000, T_SL=100",1.3,modelo,0.01,10,1.094919337138096,0.05355,4.0
+eps=5 mm,sem restrição,condicao,0.3,10,1.0595976968063163,0.0514,2.86285
+eps=5 mm,sem restrição,modelo,0.41,15,1.0653795646467086,0.4318,2.0
+eps=5 mm,1.3,condicao,0.3,10,1.0595976968063163,0.0514,2.86285
+eps=5 mm,1.3,modelo,0.03,10,1.0956088080584292,0.05355,5.0
+eps=10 mm,sem restrição,condicao,0.45,20,1.0676376874188949,0.21505,3.308
+eps=10 mm,sem restrição,modelo,0.2,20,1.0764175274362697,0.21505,4.0
+eps=10 mm,1.3,condicao,0.45,10,1.071514228261035,0.0263,4.31815
+eps=10 mm,1.3,modelo,0.2,10,1.0956088080584292,0.05355,5.0
