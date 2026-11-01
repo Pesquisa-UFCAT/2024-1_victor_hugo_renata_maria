@@ -168,7 +168,7 @@ Valores abaixo de 0,001 (positivos ou negativos) são ruído de amostragem das 4
 
 **Saída esperada** ([passo7_sensibilidade.csv](saida_referencia/passo7_sensibilidade.csv)):
 
-- A idade ótima fica entre **15 e 25 anos** nas 15 combinações fisicamente consistentes desta varredura (18 no total, emulador de g). Na varredura anterior por MC direto com y e c separados ([bench_sensibilidade.csv](C:/Users/Storm/.claude-science/orgs/4f502a69-7cb9-4430-95d9-22d1f1625710/artifacts/proj_aa9f76ff3f27/3fbb1769-47fc-4efd-abef-ba1d3e24f7f3/v952a9443_bench_sensibilidade.csv), 21 combinações consistentes, incluindo λ_dep = 0,0123), a faixa foi **15–30 anos**; o 30 aparece na razão 2 com λ_dep = 0,0123. É mais cedo quanto mais caro é o corretivo: 20–25 anos (razão 2), 20 anos (razão 4), 15 anos (razão 8).
+- A idade ótima fica entre **15 e 25 anos** nas 15 combinações fisicamente consistentes desta varredura (18 no total, emulador de g). Na varredura anterior por MC direto com y e c separados ([bench_sensibilidade.csv](apoio/bench_sensibilidade.csv), 21 combinações consistentes, incluindo λ_dep = 0,0123), a faixa foi **15–30 anos**; o 30 aparece na razão 2 com λ_dep = 0,0123. É mais cedo quanto mais caro é o corretivo: 20–25 anos (razão 2), 20 anos (razão 4), 15 anos (razão 8).
 - Erro de medida maior derruba o VoI. Na razão 4 e λ_dep = 0,02, o VoI máximo cai de 0,0219 para 0,0151 quando σ_g passa de 1,5 para 5 mm, e a janela em que a inspeção se paga encolhe de 15–50 para 20–35 anos.
 - As 3 combinações com razão 8 e λ_dep = 0,02 têm `consistente = False`, porque o limite físico é 0,0246. **Não as use no paper**; elas ficam na tabela só como aviso.
 
