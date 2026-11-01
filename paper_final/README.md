@@ -10,4 +10,4 @@ Pastas:
 
 - `saida_referencia/` — saída esperada do script (log, CSVs, figura de trabalho), para conferir a execução.
 - `apoio/` — documentos e resultados anteriores: plano de redação, revisão bibliográfica integrada, benchmark por MC direto (`bench_voi.py` e resultados) e protótipos E1–E4.
-  Os scripts de `apoio/` (`bench_voi.py`, `e_common.py`, `e_sim.py`) esperam uma pasta `inputs/` com `possan_standalone.py` e a série de CO₂; servem como registro, não precisam ser rodados.
+  Os scripts de `apoio/` (`bench_voi.py`, `e_common.py`, `e_sim.py`) usam `apoio/inputs/` (`possan_standalone.py` e a série de CO₂); para rodá-los, entre em `apoio/`. Servem como registro, não precisam ser rodados.

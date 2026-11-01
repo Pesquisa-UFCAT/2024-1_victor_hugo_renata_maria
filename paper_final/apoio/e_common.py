@@ -1,8 +1,8 @@
 
 import numpy as np, pandas as pd, importlib.util
 from scipy import stats
-_P = r"C:/Users/Storm/.claude-science/orgs/4f502a69-7cb9-4430-95d9-22d1f1625710/artifacts/proj_aa9f76ff3f27/a67b681a-2562-44c7-853b-380585de4543/v47848def_possan_standalone.py"
-_C = r"C:/Users/Storm/.claude-science/orgs/4f502a69-7cb9-4430-95d9-22d1f1625710/artifacts/proj_aa9f76ff3f27/9a0d88ec-61a7-4a80-914a-64290a8aa27f/v8178a99a_co2_concentrations_1900_2100.csv"
+_P = str(__import__("pathlib").Path(__file__).resolve().parent / "inputs" / "possan_standalone.py")
+_C = str(__import__("pathlib").Path(__file__).resolve().parent / "inputs" / "co2_concentrations_1900_2100.csv")
 spec = importlib.util.spec_from_file_location("possan_standalone", _P); ps = importlib.util.module_from_spec(spec); spec.loader.exec_module(ps)
 CO2DF = ps.load_co2(_C)
 COEF = ps.possan_coefficients(3, 2)

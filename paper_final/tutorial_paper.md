@@ -1,6 +1,6 @@
 # Tutorial do paper final — "Quando vale a pena inspecionar?"
 
-Roteiro para escrever o paper final da dissertação do Victor, em fases, com o que fazer, o que entregar e como saber que a fase terminou. O benchmark numérico tem tutorial próprio: [tutorial_benchmark.md](C:/Users/Storm/.claude-science/orgs/4f502a69-7cb9-4430-95d9-22d1f1625710/artifacts/proj_aa9f76ff3f27/57146a92-6097-466c-a438-b4b01a5fe7dd/v92a49361_tutorial_benchmark.md) e o script [tutorial_benchmark_g.py](tutorial_benchmark_g.py).
+Roteiro para escrever o paper final da dissertação do Victor, em fases, com o que fazer, o que entregar e como saber que a fase terminou. O benchmark numérico tem tutorial próprio: [tutorial_benchmark.md](tutorial_benchmark.md) e o script [tutorial_benchmark_g.py](tutorial_benchmark_g.py).
 
 ---
 
@@ -190,7 +190,7 @@ As figuras finais devem ter rótulos em inglês, unidades nos eixos e painéis (
 
 ## 7. Material de apoio
 
-- [tutorial_benchmark.md](C:/Users/Storm/.claude-science/orgs/4f502a69-7cb9-4430-95d9-22d1f1625710/artifacts/proj_aa9f76ff3f27/57146a92-6097-466c-a438-b4b01a5fe7dd/v92a49361_tutorial_benchmark.md) — o passo a passo numérico.
+- [tutorial_benchmark.md](tutorial_benchmark.md) — o passo a passo numérico.
 - [tutorial_benchmark_g.py](tutorial_benchmark_g.py) — o script.
 - [plano_redacao_paper_final.md](apoio/plano_redacao_paper_final.md) — posicionamento frente aos concorrentes e parágrafo de lacuna.
 - [revisao_bibliografica_integrada.md](apoio/revisao_bibliografica_integrada.md) — revisão com 461 estudos.
