@@ -1,0 +1,46 @@
+\begin{frame}{Carbonation and the Safety Margin}
+
+\begin{columns}[c,onlytextwidth]
+
+\column{0.42\textwidth}
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[scale=0.8]
+  \fill[gray!20] (0,0) rectangle (4,4);
+  \fill[orange!35] (0,2.6) rectangle (4,4);
+  \draw[thick] (0,0) rectangle (4,4);
+  \foreach \x in {0.6,1.6,2.6,3.4}
+    \draw[-{Stealth},thick,blue!70!black] (\x,4.6) -- (\x,4.05);
+  \node[blue!70!black] at (2,4.9) {\small CO$_2$};
+  \draw[very thick,orange!80!black,dashed] (0,2.6) -- (4,2.6);
+  \fill[black!70] (2,1.3) circle (0.3);
+  \draw[densely dotted] (0,1.6) -- (4,1.6);
+  \draw[{Stealth}-{Stealth}] (-0.3,4) -- node[left] {$y(t)$} (-0.3,2.6);
+  \draw[{Stealth}-{Stealth}] (-1.3,4) -- node[left] {$c$} (-1.3,1.6);
+  \draw[{Stealth}-{Stealth},red!70!black,thick] (4.3,2.6) -- node[right] {$g(t)$} (4.3,1.6);
+  \node at (2,0.45) {\scriptsize rebar};
+  \node at (2,3.3) {\scriptsize carbonated};
+\end{tikzpicture}%
+}
+
+\column{0.54\textwidth}
+\justifying
+CO$_2$ penetrates the concrete and lowers its pH. When the carbonation front reaches the rebar, the steel loses its protection (\emph{depassivation}).
+
+\vspace{0.3cm}
+
+\begin{exampleblock}{Safety margin = distance to the rebar}
+\[
+  g(t) = c - y(t)
+\]
+$c$: cover \quad $y(t)$: carbonation depth\\[2pt]
+Depassivation: \; $g(t) \le 0$
+\end{exampleblock}
+
+\vspace{0.2cm}
+
+{\small $g$ can be measured in the field (mm).}
+
+\end{columns}
+
+\end{frame}

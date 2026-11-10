@@ -1,0 +1,6 @@
+\babel@toc {english}{}\relax 
+\beamer@sectionintoc {1}{About Me}{3}{0}{1}
+\beamer@sectionintoc {2}{The maintenance problem}{4}{0}{2}
+\beamer@sectionintoc {3}{Emulator}{7}{0}{3}
+\beamer@sectionintoc {4}{Optimization formulation}{9}{0}{4}
+\beamer@sectionintoc {5}{References}{16}{0}{5}

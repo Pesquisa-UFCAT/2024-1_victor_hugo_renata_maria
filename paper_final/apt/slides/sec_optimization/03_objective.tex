@@ -1,0 +1,31 @@
+\begin{frame}{Objective Function}
+
+\justifying
+
+\begin{exampleblock}{Expected life-cycle cost over $T = 100$ years}
+\[
+  C_T(g_\mathrm{lim}) = \underbrace{c_\mathrm{rep}\, N_\mathrm{rep}(g_\mathrm{lim})}_{\text{planned repairs}}
+  + \underbrace{c_\mathrm{fail}\, \mathbb{E}\left[N_\mathrm{fail}(g_\mathrm{lim})\right]}_{\text{failures in service}}
+\]
+\end{exampleblock}
+
+\vspace{0.2cm}
+
+\begin{itemize}
+  \item $N_\mathrm{rep}$: number of planned repairs (known once $g_\mathrm{lim}$ is fixed).
+  \item $N_\mathrm{fail}$: times the \emph{real} margin reaches $g(t) = 0$ before the planned repair (random, from the emulator cloud).
+  \item A failure in service triggers a corrective repair and the element restarts.
+  \item Costs relative to $C_0$, the construction cost of the element.
+\end{itemize}
+
+\vspace{0.1cm}
+
+\centering
+\begin{tabular}{@{}llc@{}}
+\toprule
+\textbf{Cost} & \textbf{Meaning} & \textbf{Initial value} \\ \midrule
+$c_\mathrm{rep}$ & planned (preventive) repair & $0.10\, C_0$ \\
+$c_\mathrm{fail}$ & corrective repair + indirect costs & $0.50\, C_0$ \\ \bottomrule
+\end{tabular}
+
+\end{frame}

@@ -1,0 +1,26 @@
+\begin{frame}{Why Use an Emulator Here?}
+
+\justifying
+
+Evaluating \emph{one} maintenance plan means simulating thousands of elements over 100 years, with repairs. The optimizer tests \emph{many} plans.
+
+\vspace{0.3cm}
+
+\begin{alertblock}{Without emulator}
+\justifying
+The physical model is called for every policy $\times$ every element $\times$ every repair cycle.
+\end{alertblock}
+
+\vspace{0.2cm}
+
+\begin{exampleblock}{With emulator}
+\justifying
+The distribution of $g(t)$ is computed \textbf{once} per material (original concrete and repair mortar). All policies reuse it.
+\end{exampleblock}
+
+\vspace{0.3cm}
+
+\raggedright
+The same workflow applies to expensive models (finite elements, PDE solvers), where direct Monte Carlo is not feasible.
+
+\end{frame}

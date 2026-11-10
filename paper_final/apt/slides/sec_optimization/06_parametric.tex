@@ -1,0 +1,45 @@
+\begin{frame}{Planned Parametric Study}
+
+\justifying
+
+\textbf{Main study: how much does a failure cost?}
+
+\vspace{0.15cm}
+
+\centering
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+ & \textbf{low} & \textbf{base} & \multicolumn{2}{c}{\textbf{high}} & \textbf{extreme} \\ \midrule
+$c_\mathrm{fail}$ & $0.3\, C_0$ & $0.5\, C_0$ & $1.0\, C_0$ & $2.0\, C_0$ & $20\, C_0$ \\
+$c_\mathrm{fail} / c_\mathrm{rep}$ & 3 & 5 & 10 & 20 & 200 \\ \bottomrule
+\end{tabular}
+
+{\scriptsize $c_\mathrm{rep} = 0.10\, C_0$ fixed.}
+
+\vspace{0.3cm}
+
+\raggedright
+\begin{columns}[T,onlytextwidth]
+  \column{0.48\textwidth}
+  \textbf{We will show}
+  \begin{itemize}
+    \item Total cost $C_T(g_\mathrm{lim})$, one curve per $c_\mathrm{fail}$
+    \item Optimal $g^{\ast}_\mathrm{lim}$ vs. $c_\mathrm{fail}/c_\mathrm{rep}$
+    \item At the optimum: $N_\mathrm{rep}$, $\mathbb{E}[N_\mathrm{fail}]$ and the repair schedule
+  \end{itemize}
+
+  \column{0.48\textwidth}
+  \textbf{Secondary studies}
+  \begin{itemize}
+    \item Cover $c$: 20, 25, 30, 40 mm
+    \item Concrete strength $f_c$: 25, 35, 50 MPa
+    \item Humidity $RH$: 55\%, 75\%
+    \item Design quantile of $g_d$: 5\%, 50\%
+  \end{itemize}
+\end{columns}
+
+\vspace{0.2cm}
+
+{\small Expected: the higher the failure cost, the larger $g^{\ast}_\mathrm{lim}$ and the more planned repairs.}
+
+\end{frame}

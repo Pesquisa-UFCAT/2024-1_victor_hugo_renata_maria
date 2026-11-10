@@ -1,0 +1,73 @@
+\begin{frame}{Maintenance Plan at the Design Stage}
+
+\begin{columns}[c,onlytextwidth]
+
+\column{0.56\textwidth}
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}
+\begin{axis}[
+  width=7.2cm, height=5.4cm,
+  xlabel={Age $t$ (years)}, ylabel={Design margin $g_{d}(t)$ (mm)},
+  xmin=0, xmax=100, ymin=-14, ymax=30,
+  xtick={0,20,40,60,80,100},
+  label style={font=\scriptsize}, tick label style={font=\scriptsize},
+  clip=false,
+]
+  % no maintenance (original concrete)
+  \addplot[domain=0:27, samples=60, gray, dashed] {25 - 5.9*sqrt(x)};
+  % cycle 1: original concrete (reaches g_lim = 6 mm at t = 10.4 years)
+  \addplot[domain=0:10.4, samples=60, blue!70!black, very thick] {25 - 5.9*sqrt(x)};
+  % cycles 2+: repair mortar (reaches g_lim after 19.5 years)
+  \addplot[domain=10.4:29.9, samples=50, blue!70!black, very thick] {25 - 4.3*sqrt(max(x-10.4,0))};
+  \addplot[domain=29.9:49.4, samples=50, blue!70!black, very thick] {25 - 4.3*sqrt(max(x-29.9,0))};
+  \addplot[domain=49.4:68.9, samples=50, blue!70!black, very thick] {25 - 4.3*sqrt(max(x-49.4,0))};
+  \addplot[domain=68.9:88.4, samples=50, blue!70!black, very thick] {25 - 4.3*sqrt(max(x-68.9,0))};
+  \addplot[domain=88.4:100, samples=40, blue!70!black, very thick] {25 - 4.3*sqrt(max(x-88.4,0))};
+  % repairs
+  \addplot[blue!70!black, densely dotted] coordinates {(10.4,6) (10.4,25)};
+  \addplot[blue!70!black, densely dotted] coordinates {(29.9,6) (29.9,25)};
+  \addplot[blue!70!black, densely dotted] coordinates {(49.4,6) (49.4,25)};
+  \addplot[blue!70!black, densely dotted] coordinates {(68.9,6) (68.9,25)};
+  \addplot[blue!70!black, densely dotted] coordinates {(88.4,6) (88.4,25)};
+  % threshold and limit state
+  \addplot[red!70!black, thick, dashed] coordinates {(0,6) (100,6)};
+  \addplot[black, thin] coordinates {(0,0) (100,0)};
+  \node[font=\scriptsize, red!70!black, anchor=west] at (axis cs:101,6) {$g_\mathrm{lim}$};
+  \node[font=\scriptsize, anchor=west] at (axis cs:101,0) {$g = 0$};
+  % intervals
+  \draw[{Stealth}-{Stealth}] (axis cs:0,-10) -- node[above, font=\scriptsize] {$\Delta t_1$} (axis cs:10.4,-10);
+  \draw[{Stealth}-{Stealth}] (axis cs:10.4,-10) -- node[above, font=\scriptsize] {$\Delta t_2$} (axis cs:29.9,-10);
+  \draw[{Stealth}-{Stealth}] (axis cs:29.9,-10) -- node[above, font=\scriptsize] {$\Delta t_2$} (axis cs:49.4,-10);
+  \draw[{Stealth}-{Stealth}] (axis cs:49.4,-10) -- node[above, font=\scriptsize] {$\Delta t_2$} (axis cs:68.9,-10);
+  \draw[{Stealth}-{Stealth}] (axis cs:68.9,-10) -- node[above, font=\scriptsize] {$\Delta t_2$} (axis cs:88.4,-10);
+\end{axis}
+\end{tikzpicture}%
+}
+
+{\scriptsize Illustrative: $c = 25$~mm, $g_\mathrm{lim} = 6$~mm. Gray dashed: no maintenance.}
+
+\column{0.41\textwidth}
+\raggedright
+Design stage: nothing to inspect yet, but we \textbf{know the model}.
+
+\vspace{0.2cm}
+
+\textbf{Rule}\\
+Repair when the design margin $g_d(t)$ reaches $g_\mathrm{lim}$.
+
+\vspace{0.2cm}
+
+\begin{exampleblock}{Design margin}
+\raggedright
+$g_d(t)$: 5\% quantile of the emulator cloud (characteristic value).
+\end{exampleblock}
+
+\vspace{0.1cm}
+
+{\small $\Delta t_1$: original concrete.\\
+$\Delta t_2$: repair mortar (different carbonation rate).}
+
+\end{columns}
+
+\end{frame}

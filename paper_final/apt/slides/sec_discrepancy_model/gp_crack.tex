@@ -1,0 +1,27 @@
+\begin{frame}{Enrichment for Crack Models}
+
+\justifying
+
+\textbf{How are we resolving this issue?}
+
+Employing Genetic Programming to predict the discrepancy between experimental data and analytical model predictions.
+
+\vspace{0.15cm}
+
+\begin{block}{Discrepancy modeling}
+\justifying 
+Model calibration finds optimal parameters $\boldsymbol{\theta}^{\ast}$ that minimize differences between observed data $\mathbf{d}$ and model predictions $\mathbf{q}(\boldsymbol{\theta})$. However, measurement noise $\varepsilon_i$ and model-form uncertainty (structural inadequacy) prevent perfect matching. Following \cite{brynjarsdottir_learning_2014}, we incorporate an explicit discrepancy term $\delta(\boldsymbol{\theta}, \epsilon_i)$ to account for missing physics or scale effects.
+\end{block}
+
+\vspace{0.20cm}
+
+\textbf{Discrepancy equation}
+
+\vspace{0.2cm}
+
+\begin{equation}
+    \label{eq:discrepancy_model}
+    d_i = q_i(\boldsymbol{\theta}) + \delta(\boldsymbol{\theta}, \epsilon_i) + \varepsilon_i'
+\end{equation}
+
+\end{frame}

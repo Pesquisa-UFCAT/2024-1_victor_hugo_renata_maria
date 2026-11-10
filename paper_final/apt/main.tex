@@ -1,0 +1,110 @@
+\documentclass{beamer}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{amsmath, amssymb}
+\usepackage{ragged2e}
+\usepackage[T1]{fontenc}
+\DeclareUnicodeCharacter{02BC}{'} % Define o caractere U+02BC como apóstrofo
+
+\pgfplotsset{compat=1.16}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, patterns, decorations.pathreplacing, calc}
+
+\mode<presentation>{\usetheme{default}\usecolortheme{default}\usefonttheme{default}}
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{navigation symbols}{}
+
+% --- Custom blocks ---
+% Alert blocks (RED) → problems, limitations, warnings
+\setbeamercolor{block title alerted}{bg=red!70!black, fg=white}
+\setbeamercolor{block body alerted}{bg=red!10, fg=black}
+
+% Example blocks (BLUE) → definitions, models
+\setbeamercolor{block title example}{bg=blue!70!black, fg=white}
+\setbeamercolor{block body example}{bg=blue!10, fg=black}
+
+% Standard blocks (GRAY) → neutral content
+\setbeamercolor{block title}{bg=gray!70, fg=white}
+\setbeamercolor{block body}{bg=gray!10, fg=black}
+
+% --- Placeholder for numbers still to be filled in ---
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[#1]}}}
+
+% --- Footer ---
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.8\paperwidth,ht=2.5ex,dp=1.125ex,left]{author in head/foot}%
+      \hspace{0.3cm}\insertshortauthor%
+      \hspace{0.4cm}--\hspace{0.4cm}%
+      \insertsection
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.2\paperwidth,ht=2.5ex,dp=1.125ex,right]{date in head/foot}%
+      \insertframenumber{} / \inserttotalframenumber\hspace{0.3cm}
+    \end{beamercolorbox}%
+  }%
+  \vskip0pt%
+}
+
+% --- Title ---
+\title{\textbf{When to Repair? Emulator-Based Maintenance Optimization of Reinforced Concrete Under Carbonation}}
+    % TODO: add co-authors (e.g., Victor Hugo, Renata, Maria)
+    \author[W. M. Pereira Jr.]{\textbf{Prof. Wanderlei Malaquias Pereira Junior}}
+    \institute{Federal University of Catalão \\ University of Minnesota}
+\date{\today}
+
+
+\begin{document}
+
+% --- Slides ---
+\input{slides/01_title}
+\input{slides/02_outline}
+\section{About Me}
+    \input{slides/03_about_me}
+\section{The maintenance problem}
+    \input{slides/sec_maintenance/01_motivation}
+    \input{slides/sec_maintenance/02_carbonation}
+    \input{slides/sec_maintenance/03_uncertainty}
+\section{Emulator}
+    \input{slides/sec_emulator/01_what_is}
+    \input{slides/sec_emulator/02_why_emulator}
+\section{Optimization formulation}
+    \input{slides/sec_optimization/01_policy}
+    \input{slides/sec_optimization/02_variables}
+    \input{slides/sec_optimization/03_objective}
+    \input{slides/sec_optimization/04_tradeoff}
+    \input{slides/sec_optimization/05_problem}
+    \input{slides/sec_optimization/06_parametric}
+    \input{slides/sec_optimization/07_discussion}
+
+% --- Old talk (kept for reference) ---
+% \section{Research project}
+%     \input{slides/sec_research_proj/04_dig_models}
+% \section{Low-fidelity prototypes}
+%     \input{slides/sec_low_fidelity_proto/questions}
+%     \input{slides/sec_low_fidelity_proto/chlorid_ingress}
+%     \input{slides/sec_low_fidelity_proto/steps}
+%     \input{slides/sec_low_fidelity_proto/ddpm}
+%     \input{slides/sec_low_fidelity_proto/calibration}
+% \section{Improve analytical models}
+%     \input{slides/sec_discrepancy_model/questions}
+%     \input{slides/sec_discrepancy_model/gp_crack}
+%     \input{slides/sec_discrepancy_model/gp_results}
+
+\section{References}
+
+\begin{frame}[allowframebreaks]{References}
+\tiny
+\bibliography{references}
+\bibliographystyle{apalike}
+\end{frame}
+
+\input{slides/99_thank_you}
+
+\end{document}

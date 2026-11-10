@@ -1,0 +1,28 @@
+\begin{frame}{Optimization Problem}
+
+\justifying
+
+\begin{exampleblock}{Formulation}
+\[
+\begin{aligned}
+  \min_{g_\mathrm{lim}} \quad & c_\mathrm{rep}\, N_\mathrm{rep}(g_\mathrm{lim})
+  + c_\mathrm{fail}\, \mathbb{E}\left[N_\mathrm{fail}(g_\mathrm{lim})\right] \\[6pt]
+  \text{subject to} \quad & 0 \le g_\mathrm{lim} \le c_\mathrm{nom}
+\end{aligned}
+\]
+\end{exampleblock}
+
+\vspace{0.3cm}
+
+\textbf{How each evaluation works}
+\begin{enumerate}
+  \item Build the schedule $t_1, t_2, \dots$ from the design margin $g_d(t)$ and $g_\mathrm{lim}$.
+  \item Simulate many virtual elements from the emulator cloud over 100 years with this schedule.
+  \item Count the failures in service and average them: $\mathbb{E}[N_\mathrm{fail}]$.
+\end{enumerate}
+
+\vspace{0.2cm}
+
+{\small One variable: a simple scan over $g_\mathrm{lim}$ is enough to find the optimum.}
+
+\end{frame}

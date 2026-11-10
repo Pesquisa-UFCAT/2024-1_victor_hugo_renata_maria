@@ -1,0 +1,34 @@
+\begin{frame}{Cellular Automata for Chloride Ingress}
+
+\justifying
+
+\textbf{Step 1: Aggregate Dataset Generation}
+
+A DDPM is employed to generate a synthetic
+aggregate dataset, capturing variability in size, shape, and spatial distribution
+consistent with meso-scale representations of concrete.
+
+\vspace{0.15cm}
+
+\textbf{Step 2: Patch Construction}
+
+The generated aggregates are assembled into spatial patches, which serve as the
+computational domain for subsequent modeling of transport phenomena and material
+deterioration.
+
+\vspace{0.15cm}
+
+\textbf{Step 3: Model Calibration}
+
+The model is calibrated using the DE algorithm,
+based on experimental chloride ingress data reported by \cite{DU201487}.
+
+\vspace{0.15cm}
+
+\textbf{Step 4: Numerical Simulation}
+
+Simulations are performed on a concrete prism with dimensions
+$75 \times 75$~mm to evaluate the chloride penetration front,
+considering a concrete cover depth of 30~mm.
+
+\end{frame}

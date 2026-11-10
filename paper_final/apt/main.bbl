@@ -1,0 +1,14 @@
+\begin{thebibliography}{}
+
+\bibitem[Kennedy and O'Hagan, 2001]{kennedy_bayesian_2001}
+Kennedy, M.~C. and O'Hagan, A. (2001).
+\newblock Bayesian calibration of computer models.
+\newblock {\em Journal of the Royal Statistical Society: Series B (Statistical
+  Methodology)}, 63(3):425--464.
+
+\bibitem[Sacks et~al., 1989]{sacks_design_1989}
+Sacks, J., Welch, W.~J., Mitchell, T.~J., and Wynn, H.~P. (1989).
+\newblock Design and analysis of computer experiments.
+\newblock {\em Statistical Science}, 4(4):409--423.
+
+\end{thebibliography}

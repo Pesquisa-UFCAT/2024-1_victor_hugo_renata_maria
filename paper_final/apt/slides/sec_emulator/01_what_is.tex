@@ -1,0 +1,35 @@
+\begin{frame}{What Is an Emulator?}
+
+\justifying
+
+\begin{exampleblock}{Emulator}
+\justifying
+A fast statistical model trained on runs of a simulator. It replaces the simulator whenever we need to call it many times \cite{sacks_design_1989,kennedy_bayesian_2001}.
+\end{exampleblock}
+
+\vspace{0.3cm}
+
+\centering
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum height=0.9cm, align=center, font=\small},
+  arr/.style={-{Stealth}, thick}
+]
+  \node[box, fill=gray!10] (in1) {inputs};
+  \node[box, fill=red!10, right=0.6cm of in1, minimum width=3.4cm] (sim) {simulator, $N$ runs};
+  \node[box, fill=gray!10, right=0.6cm of sim] (out1) {distribution of $g(t)$};
+  \draw[arr] (in1) -- (sim);
+  \draw[arr] (sim) -- (out1);
+
+  \node[box, fill=gray!10, below=0.7cm of in1] (in2) {inputs};
+  \node[box, fill=blue!10, right=0.6cm of in2, minimum width=3.4cm] (emu) {emulator, 1 call};
+  \node[box, fill=gray!10, right=0.6cm of emu] (out2) {distribution of $g(t)$};
+  \draw[arr] (in2) -- (emu);
+  \draw[arr] (emu) -- (out2);
+\end{tikzpicture}
+
+\vspace{0.3cm}
+
+\raggedright
+Our emulator (neural network + Generalized Lambda Distribution) returns the \textbf{whole distribution} of $g(t)$ for a given design, at every age.
+
+\end{frame}
