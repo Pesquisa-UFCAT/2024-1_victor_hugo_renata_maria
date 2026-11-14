@@ -1,6 +1,3 @@
-% REVISÃO: seção escrita na revisão (não constava no rascunho da aluna), seguindo o
-% plano P2 item a item. É um ponto de partida para reescrever com a voz dos autores.
-
 \section{A distribuição lambda generalizada}\label{sec:gld}
 
 \subsection{Da densidade à função quantil}
@@ -9,7 +6,7 @@ Uma variável aleatória contínua $X$ costuma ser apresentada aos estudantes pe
 \begin{equation}
     F(x) = P(X \leq x),
 \end{equation}
-e pela sua função densidade de probabilidade (FDP), $f(x) = F'(x)$, cuja integral em um intervalo fornece a probabilidade de observar um valor nele, $P(a < X \leq b) = \int_a^b f(x)\,dx$. Uma terceira descrição, equivalente e menos explorada no ensino, é a função quantil,
+e pela sua função densidade de probabilidade (FDP), $f(x) = F'(x)$, cuja integral em um intervalo fornece a probabilidade de observar um valor nele, $P(a < X \leq b) = \int_a^b f(x)\,dx$. Uma terceira descrição, equivalente e menos explorada no ensino, é a função quantil~\cite{gilchrist2000},
 \begin{equation}
     Q(u) = F^{-1}(u), \qquad 0 < u < 1,
     \label{eq:quantil}
@@ -25,13 +22,13 @@ de modo que a densidade pode ser desenhada parametricamente, como o par $\big(Q(
 
 Uma expressão explícita para $Q$ tem uma segunda vantagem, que é a facilidade de gerar amostras. Se $U$ é uniforme em $(0,1)$, então $X = Q(U)$ tem distribuição $F$, pois $P(Q(U) \leq x) = P(U \leq F(x)) = F(x)$. Esse é o método da transformação inversa. Nos estudos de caso deste artigo, porém, o ponto de partida são sempre dados observados.
 
-O Código~\ref{lst:quantil} mostra essas duas operações com a biblioteca \texttt{pyglam} \parencite{pyglam}, usada ao longo do artigo. A função quantil é avaliada pelo método \texttt{ppf}, e a amostragem pela transformação inversa, pelo método \texttt{rvs}.
+O Código~\ref{lst:quantil} mostra essas duas operações com a biblioteca \texttt{pyglam}~\cite{pyglam}, usada ao longo do artigo. A função quantil é avaliada pelo método \texttt{ppf}, e a amostragem pela transformação inversa, pelo método \texttt{rvs}.
 
 \lstinputlisting[float=htbp, caption={Quantis e amostragem de uma GLD-FKML com a biblioteca \texttt{pyglam}.}, label=lst:quantil]{codigo/01_funcao_quantil.py}
 
 \subsection{A formulação FKML e o significado dos parâmetros}
 
-A distribuição lambda generalizada, na parametrização de \textcite{freimer1988}, é definida pela função quantil
+A distribuição lambda generalizada, na parametrização de Freimer e colaboradores~\cite{freimer1988}, é definida pela função quantil
 \begin{equation}
     Q(u) = \lambda_1 + \frac{1}{\lambda_2}
     \left[\frac{u^{\lambda_3} - 1}{\lambda_3} - \frac{(1-u)^{\lambda_4} - 1}{\lambda_4}\right],
@@ -40,7 +37,7 @@ A distribuição lambda generalizada, na parametrização de \textcite{freimer19
 \end{equation}
 em que, para $\lambda_3 = 0$ ou $\lambda_4 = 0$, cada fração é substituída pelo seu limite, $\lim_{a \to 0} (u^a - 1)/a = \ln u$.
 
-O papel de cada parâmetro está resumido na Tabela~\ref{tab:parametros} e ilustrado na Figura~\ref{fig:parametros}, em que um parâmetro varia por vez e os demais ficam fixos. O parâmetro $\lambda_1$ desloca a distribuição sem alterar sua forma; $\lambda_2$ controla inversamente a escala, de modo que dobrá-lo reduz a dispersão pela metade; $\lambda_3$ e $\lambda_4$ controlam a forma, atuando principalmente sobre o lado esquerdo e o lado direito da distribuição, respectivamente. Valores negativos tornam a cauda correspondente mais pesada e ilimitada, e valores positivos a tornam limitada. Se $X$ tem unidade física, $\lambda_1$ tem essa unidade, $\lambda_2$ tem a unidade inversa e os parâmetros de forma são adimensionais.
+O papel de cada parâmetro está resumido na tabela~\ref{tab:parametros} e ilustrado na figura~\ref{fig:parametros}, em que um parâmetro varia por vez e os demais ficam fixos. O parâmetro $\lambda_1$ desloca a distribuição sem alterar sua forma; $\lambda_2$ controla inversamente a escala, de modo que dobrá-lo reduz a dispersão pela metade; $\lambda_3$ e $\lambda_4$ controlam a forma, atuando principalmente sobre o lado esquerdo e o lado direito da distribuição, respectivamente. Valores positivos tornam a cauda correspondente limitada; o valor zero produz uma cauda ilimitada de decaimento exponencial, e valores negativos, uma cauda ilimitada e mais pesada, de decaimento em lei de potência. Se $X$ tem unidade física, $\lambda_1$ tem essa unidade, $\lambda_2$ tem a unidade inversa e os parâmetros de forma são adimensionais.
 
 \begin{table}[htbp]
 \centering
@@ -70,7 +67,7 @@ $\lambda_3$, $\lambda_4$ & Controlam conjuntamente a forma, com efeitos sobre os
 
 \subsection{Validade, suporte e momentos}
 
-Nem todo conjunto de parâmetros define uma distribuição, pois é preciso que a função quantil seja crescente. Derivando a Equação~\eqref{eq:fkml},
+Nem todo conjunto de parâmetros define uma distribuição, pois é preciso que a função quantil seja crescente. Derivando a equação~\eqref{eq:fkml},
 \begin{equation}
     Q'(u) = \frac{u^{\lambda_3 - 1} + (1-u)^{\lambda_4 - 1}}{\lambda_2},
     \label{eq:qlinha}
@@ -96,7 +93,7 @@ Validade e existência de momentos são propriedades distintas. O momento de ord
 
 \subsection{O método dos momentos, passo a passo}
 
-A ideia do método dos momentos é escolher os parâmetros de modo que as características resumidas do modelo coincidam com as da amostra. Para observações $x_1, \ldots, x_n$, definem-se
+A ideia do método dos momentos, proposto para a família lambda generalizada por Ramberg e colaboradores~\cite{ramberg1979}, é escolher os parâmetros de modo que as características resumidas do modelo coincidam com as da amostra. Para observações $x_1, \ldots, x_n$, definem-se
 \begin{equation}
     \bar x = \frac{1}{n}\sum_{i=1}^{n} x_i, \qquad
     m_k = \frac{1}{n}\sum_{i=1}^{n} (x_i - \bar x)^k, \qquad
@@ -117,24 +114,24 @@ Os momentos do modelo decorrem diretamente da função quantil. Como $X = Q(U)$,
 \begin{equation}
     E[X^r] = \int_0^1 Q(u)^r \, du,
 \end{equation}
-e, para a média, basta integrar a Equação~\eqref{eq:fkml} termo a termo, usando $\int_0^1 (u^{\lambda} - 1)/\lambda \, du = -1/(\lambda + 1)$, o que resulta em
+e, para a média, basta integrar a equação~\eqref{eq:fkml} termo a termo, usando $\int_0^1 (u^{\lambda} - 1)/\lambda \, du = -1/(\lambda + 1)$, o que resulta em
 \begin{equation}
     E[X] = \lambda_1 + \frac{1}{\lambda_2}
     \left[\frac{1}{1 + \lambda_4} - \frac{1}{1 + \lambda_3}\right].
     \label{eq:media}
 \end{equation}
-Os momentos de ordem superior seguem o mesmo caminho e resultam em combinações de funções beta dos parâmetros de forma \parencite{freimer1988}; o notebook que acompanha o artigo os avalia numericamente.
+Os momentos de ordem superior seguem o mesmo caminho e resultam em combinações de funções beta dos parâmetros de forma~\cite{freimer1988,karian2011}; o notebook que acompanha o artigo os avalia numericamente.
 
-O sistema da Equação~\eqref{eq:sistema} é não linear e é resolvido numericamente. O roteiro do ajuste tem cinco passos.
+O sistema da equação~\eqref{eq:sistema} é não linear e é resolvido numericamente. O roteiro do ajuste tem cinco passos.
 \begin{enumerate}
-    \item calcular os quatro resumos amostrais da Equação~\eqref{eq:momentos_amostra};
+    \item calcular os quatro resumos amostrais da equação~\eqref{eq:momentos_amostra};
     \item propor parâmetros iniciais;
     \item calcular os momentos do modelo e as discrepâncias em relação aos da amostra;
     \item atualizar os parâmetros até que as discrepâncias se anulem;
     \item verificar a validade, o domínio dos momentos, o suporte e a aderência aos dados.
 \end{enumerate}
-Na biblioteca \texttt{pyglam} \parencite{pyglam}, a função \texttt{fit\_lambdas} executa os passos 2 a 4 minimizando por mínimos quadrados os resíduos escalonados das quatro relações, a partir de vários pontos iniciais. Neste artigo, usaram-se $15$ pontos, tomados de uma grade fixa que cobre formas limitadas, próximas da exponencial e de caudas pesadas. Cada candidato precisa definir uma distribuição válida e estar no domínio dos momentos; entre os válidos, escolhe-se o de menor resíduo. O último passo cabe ao usuário, e é nele que os estudos de caso se concentram.
+Na biblioteca \texttt{pyglam}~\cite{pyglam}, a função \texttt{fit\_lambdas} executa os passos 2 a 4 minimizando por mínimos quadrados os resíduos escalonados das quatro relações, a partir de vários pontos iniciais. Neste artigo, usaram-se $15$ pontos, o primeiro construído a partir da média e do desvio padrão amostrais e os demais tomados de uma grade fixa que cobre formas limitadas, próximas da exponencial e de caudas pesadas. Entre as soluções obtidas, a biblioteca dá preferência às que definem uma distribuição válida e estão no domínio dos momentos, escolhe a de menor resíduo e, quando vários resíduos são numericamente equivalentes, desempata pela menor distância entre os quantis do modelo e os da amostra. Todas as tentativas ficam registradas no resultado do ajuste, o que permite ao estudante inspecionar a não unicidade discutida a seguir. O último passo cabe ao usuário, e é nele que os estudos de caso se concentram.
 
 \subsection{O que o ajuste por momentos garante e o que precisa ser avaliado}
 
-Reproduzir os quatro momentos da amostra não identifica uma única distribuição, já que, mesmo dentro da família FKML, parâmetros diferentes podem ter os mesmos quatro momentos \parencite{KingGld}. Além disso, os momentos de ordem alta são sensíveis a poucos valores extremos, e o sucesso numérico do otimizador não informa se o modelo representa bem os dados. Por isso, conferir os momentos e avaliar a aderência são etapas complementares. Convém também distinguir a flexibilidade da família da capacidade de um estimador específico, pois um resultado desfavorável obtido pelo método dos momentos não demonstra que nenhuma GLD descreveria os dados.
+Reproduzir os quatro momentos da amostra não identifica uma única distribuição, já que, mesmo dentro da família FKML, parâmetros diferentes podem ter os mesmos quatro momentos~\cite{karian2011}. Além disso, os momentos de ordem alta são sensíveis a poucos valores extremos, e o sucesso numérico do otimizador não informa se o modelo representa bem os dados. Por isso, conferir os momentos e avaliar a aderência são etapas complementares. Convém também distinguir a flexibilidade da família da capacidade de um estimador específico, pois um resultado desfavorável obtido pelo método dos momentos não demonstra que nenhuma GLD descreveria os dados. Existem estimadores alternativos, como o método dos percentis, o dos L-momentos e o de máxima verossimilhança~\cite{karian2011,su2007}. Este último, por construção, só aceita parâmetros cujo suporte contenha todas as observações, uma propriedade que o método dos momentos não garante e cuja importância ficará clara no estudo de caso do vento.

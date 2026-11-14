@@ -8,7 +8,7 @@ A forma observada da distribuição (como seu grau de assimetria ou espessura da
 
 \subsection{Exemplos de relações entre grandezas e famílias de distribuições}
 
-Diferentes mecanismos físicos e teoremas probabilísticos dão origem a famílias clássicas de distribuições, cada qual com suas hipóteses fundamentais e limites de validade. A Tabela~\ref{tab:modelos_fisicos} resume as motivações teóricas para a adoção de alguns modelos de referência habituais.
+Diferentes mecanismos físicos e teoremas probabilísticos dão origem a famílias clássicas de distribuições, cada qual com suas hipóteses fundamentais e limites de validade. A tabela~\ref{tab:modelos_fisicos} resume as motivações teóricas para a adoção de alguns modelos de referência habituais.
 
 \begin{table}[htbp]
 \centering
@@ -37,7 +37,9 @@ A grandeza física de interesse usualmente é o módulo da velocidade, $v = \sqr
     \label{eq:rayleigh}
 \end{equation}
 
-Nesta formulação, o parâmetro de escala $\sigma$ tem interpretação direta, pois, como $E[V^2] = E[V_x^2] + E[V_y^2] = 2\sigma^2$, a quantidade $\sigma^2$ é a energia cinética média por unidade de massa associada ao movimento horizontal. Cabe ressaltar que a atmosfera real está sujeita a efeitos de rugosidade do terreno e gradientes térmicos, de modo que as hipóteses da dedução não devem ser tomadas como válidas para o vento atmosférico sem a devida verificação empírica.
+Nesta formulação, o parâmetro de escala $\sigma$ tem interpretação direta, pois, como $E[V^2] = E[V_x^2] + E[V_y^2] = 2\sigma^2$, a quantidade $\sigma^2$ é a energia cinética média por unidade de massa associada ao movimento horizontal. Cabe ressaltar que a atmosfera real está sujeita a efeitos de rugosidade do terreno e gradientes térmicos, de modo que as hipóteses da dedução não devem ser tomadas como válidas para o vento atmosférico sem a devida verificação empírica. Além disso, a dedução refere-se à velocidade em um instante ou em intervalos curtos; médias sobre intervalos longos, como a média diária, têm dispersão relativa menor, por efeito da própria agregação. Na prática da energia eólica, a distribuição de Weibull, que contém a de Rayleigh como caso particular, é a referência usual para velocidades horárias ou de dez minutos~\cite{justus1978,carta2009}.
+
+O mesmo raciocínio, aplicado às três componentes cartesianas da velocidade de uma molécula de um gás ideal, leva à distribuição de Maxwell-Boltzmann, familiar aos estudantes da termodinâmica e da teoria cinética. O exemplo mostra como uma distribuição de probabilidade pode decorrer de hipóteses físicas explícitas, e não apenas de um ajuste empírico.
 
 \subsection{Por que isso importa na confiabilidade de materiais?}
 
@@ -48,11 +50,11 @@ Neste cenário simplificado, a probabilidade de falha $P_f$ é exatamente o valo
     P_f = P(R < s) = F_R(s).
 \end{equation}
 
-Esse simples balanço mostra por que conhecer apenas a resistência média de um material é insuficiente para a engenharia. A segurança da estrutura é governada pelo comportamento da \textit{cauda inferior} da distribuição (os valores mais baixos e raros de resistência), e um modelo cuja cauda inferior não corresponda à dos dados pode subestimar a probabilidade de falha. Em projetos reais, tanto $R$ quanto $s$ são grandezas aleatórias, exigindo a avaliação da interferência probabilística entre ambas e evidenciando a necessidade de escolhas de distribuições que reflitam a física da falha, conforme discutido em diretrizes de referência sobre dados de falha \parencite{nist2012}.
+Esse simples balanço mostra por que conhecer apenas a resistência média de um material é insuficiente para a engenharia. A segurança da estrutura é governada pelo comportamento da \textit{cauda inferior} da distribuição (os valores mais baixos e raros de resistência), e um modelo cuja cauda inferior não corresponda à dos dados pode subestimar a probabilidade de falha. Em projetos reais, tanto $R$ quanto $s$ são grandezas aleatórias, exigindo a avaliação da interferência probabilística entre ambas e evidenciando a necessidade de escolhas de distribuições que reflitam a física da falha, conforme discutido em diretrizes de referência sobre dados de falha~\cite{nist2012}.
 
 \subsection{Protocolo comum aos estudos de caso}\label{subsec:protocolo}
 
-Para garantir reprodutibilidade, rigor estatístico e clareza didática na análise dos dados, os estudos de caso desenvolvidos nas Seções~\ref{sec:vento} e \ref{sec:temperatura} seguem um protocolo dividido nas sete etapas sequenciais descritas a seguir.
+Para garantir reprodutibilidade, rigor estatístico e clareza didática na análise dos dados, os estudos de caso desenvolvidos nas seções~\ref{sec:vento} e \ref{sec:temperatura} seguem um protocolo dividido nas sete etapas sequenciais descritas a seguir.
 
 \begin{enumerate}
     \item \textbf{Documentação dos dados e contextualização física:} identificação da fonte primária (instituição, estação de monitoramento, coordenadas e altitude), período de observação, grandeza física medida, resolução temporal das leituras (por exemplo, médias diárias ou valores instantâneos) e instrumental associado.
@@ -72,7 +74,7 @@ Para garantir reprodutibilidade, rigor estatístico e clareza didática na anál
     \end{equation}
     cujo sinal indica subestimação (negativo) ou superestimação (positivo). Os ajustes são comparados visualmente em painéis com densidades sobrepostas, funções acumuladas e gráficos quantil-quantil (Q-Q).
 
-    \item \textbf{Interpretação nas unidades do fenômeno e limites de validade:} tradução física das discrepâncias para o contexto da aplicação, comparando-as com a incerteza de medição e discutindo o princípio da parcimônia frente ao custo de parâmetros adicionais.
+    \item \textbf{Interpretação nas unidades do fenômeno e limites de validade:} tradução física das discrepâncias para o contexto da aplicação, comparando-as com a resolução das medições e com a incerteza amostral dos próprios quantis empíricos, e discutindo o princípio da parcimônia frente ao custo de parâmetros adicionais.
 \end{enumerate}
 
-A distância $D_n$ é usada aqui como medida descritiva. Os p-valores usuais do teste de Kolmogorov-Smirnov não se aplicam diretamente, porque os parâmetros são estimados com os mesmos dados, as observações diárias são dependentes entre si e os valores registrados são arredondados.
+A distância $D_n$ é usada aqui como medida descritiva. Os p-valores usuais do teste de Kolmogorov-Smirnov não se aplicam diretamente, porque os parâmetros são estimados com os mesmos dados~\cite{lilliefors1967}, as observações diárias são dependentes entre si e os valores registrados são arredondados. Para dar uma escala às discrepâncias, o notebook que acompanha o artigo estima a variabilidade amostral dos quantis empíricos por reamostragem \textit{bootstrap} em blocos de dias consecutivos~\cite{kunsch1989}, que preserva a dependência entre dias próximos, e quantifica por simulação o efeito do arredondamento sobre $D_n$.
