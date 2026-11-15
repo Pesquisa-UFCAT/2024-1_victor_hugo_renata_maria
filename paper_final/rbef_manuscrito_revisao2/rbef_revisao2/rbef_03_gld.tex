@@ -18,7 +18,7 @@ Para uma distribuição contínua e estritamente crescente no seu suporte, vale 
     f(Q(u)) = \frac{1}{Q'(u)},
     \label{eq:densidade_quantil}
 \end{equation}
-de modo que a densidade pode ser desenhada parametricamente\rev{, tomando $x = Q(u)$ e $f = 1/Q'(u)$ para uma grade de valores de $u$,} sem que seja preciso inverter a função quantil.
+de modo que a densidade pode ser desenhada parametricamente, tomando $x = Q(u)$ e $f = 1/Q'(u)$ para uma grade de valores de $u$, sem que seja preciso inverter a função quantil.
 
 Uma expressão explícita para $Q$ tem uma segunda vantagem, que é a facilidade de gerar amostras. Se $U$ é uniforme em $(0,1)$, então $X = Q(U)$ tem distribuição $F$, pois $P(Q(U) \leq x) = P(U \leq F(x)) = F(x)$. Esse é o método da transformação inversa. Nos estudos de caso deste artigo, porém, o ponto de partida são sempre dados observados.
 
@@ -37,7 +37,7 @@ A distribuição lambda generalizada, na parametrização de Freimer e colaborad
 \end{equation}
 em que, para $\lambda_3 = 0$ ou $\lambda_4 = 0$, cada fração é substituída pelo seu limite, $\lim_{a \to 0} (u^a - 1)/a = \ln u$.
 
-O papel de cada parâmetro está resumido na tabela~\ref{tab:parametros} e ilustrado na figura~\ref{fig:parametros}, em que um parâmetro varia por vez e os demais ficam fixos. O parâmetro $\lambda_1$ desloca a distribuição sem alterar sua forma. O parâmetro $\lambda_2$ controla inversamente a escala, de modo que dobrá-lo reduz a dispersão pela metade. Os parâmetros $\lambda_3$ e $\lambda_4$ controlam a forma, atuando principalmente sobre o lado esquerdo e o lado direito da distribuição, respectivamente. Valores positivos tornam a cauda correspondente limitada. O valor zero produz uma cauda ilimitada de decaimento exponencial, e valores negativos, uma cauda ilimitada e mais pesada, de decaimento em lei de potência. Se $X$ tem unidade física, $\lambda_1$ tem essa unidade, $\lambda_2$ tem a unidade inversa e os parâmetros de forma são adimensionais.
+O papel de cada parâmetro está resumido na Tabela~\ref{tab:parametros} e ilustrado na Figura~\ref{fig:parametros}, em que um parâmetro varia por vez e os demais ficam fixos. O parâmetro $\lambda_1$ desloca a distribuição sem alterar sua forma. O parâmetro $\lambda_2$ controla inversamente a escala, de modo que dobrá-lo reduz a dispersão pela metade. Os parâmetros $\lambda_3$ e $\lambda_4$ controlam a forma, atuando principalmente sobre o lado esquerdo e o lado direito da distribuição, respectivamente. Valores positivos tornam a cauda correspondente limitada. O valor zero produz uma cauda ilimitada de decaimento exponencial, e valores negativos, uma cauda ilimitada e mais pesada, de decaimento em lei de potência. Se $X$ tem unidade física, $\lambda_1$ tem essa unidade, $\lambda_2$ tem a unidade inversa e os parâmetros de forma são adimensionais.
 
 \begin{table}[htbp]
 \centering
@@ -87,7 +87,7 @@ O suporte, isto é, o intervalo de valores possíveis, vai de $a = Q(0^+)$ a $b 
     \end{cases}
     \label{eq:suporte}
 \end{equation}
-Aqui aparece a primeira ponte com a física. Uma distribuição matematicamente válida pode atribuir probabilidade a valores fisicamente impossíveis, como velocidades negativas, ou excluir valores que foram de fato observados. O suporte deve ser examinado depois de todo ajuste.
+Aqui aparece a primeira ponte com a física. Uma distribuição matematicamente válida pode atribuir probabilidade a valores fisicamente impossíveis, como velocidades negativas, ou excluir valores que foram de fato observados. Por isso, o suporte é examinado depois de cada ajuste neste artigo.
 
 Validade e existência de momentos são propriedades distintas. O momento de ordem $k$ existe quando $\lambda_3, \lambda_4 > -1/k$. O ajuste pelos quatro primeiros momentos exige, portanto, $\lambda_3, \lambda_4 > -1/4$.
 
@@ -134,4 +134,4 @@ Na biblioteca \texttt{pyglam}~\cite{pyglam}, a função \texttt{fit\_lambdas} ex
 
 \subsection{O que o ajuste por momentos garante e o que precisa ser avaliado}
 
-Reproduzir os quatro momentos da amostra não identifica uma única distribuição, já que, mesmo dentro da família FKML, parâmetros diferentes podem ter os mesmos quatro momentos~\cite{karian2011}. Além disso, os momentos de ordem alta são sensíveis a poucos valores extremos, e o sucesso numérico do otimizador não informa se o modelo representa bem os dados. Por isso, conferir os momentos e avaliar a aderência são etapas complementares. Convém também distinguir a flexibilidade da família da capacidade de um estimador específico, pois um resultado desfavorável obtido pelo método dos momentos não demonstra que nenhuma GLD descreveria os dados. Existem estimadores alternativos, como o método dos percentis, o dos L-momentos e o de máxima verossimilhança~\cite{karian2011,su2007}. Este último, por construção, só aceita parâmetros cujo suporte contenha todas as observações, uma propriedade que o método dos momentos não garante e cuja importância ficará clara no estudo de caso do vento.
+Reproduzir os quatro momentos da amostra não identifica uma única distribuição, já que, mesmo dentro da família FKML, parâmetros diferentes podem ter os mesmos quatro momentos~\cite{karian2011}. Além disso, os momentos de ordem alta são sensíveis a poucos valores extremos, e o sucesso numérico do otimizador não informa se o modelo representa bem os dados. Por isso, conferir os momentos e avaliar a aderência são etapas complementares. A flexibilidade da família, por sua vez, não se confunde com a capacidade de um estimador específico, pois um resultado desfavorável obtido pelo método dos momentos não demonstra que nenhuma GLD descreveria os dados. Existem estimadores alternativos, como o método dos percentis, o dos L-momentos e o de máxima verossimilhança~\cite{karian2011,su2007}. Este último, por construção, só aceita parâmetros cujo suporte contenha todas as observações, uma propriedade que o método dos momentos não garante e cuja importância ficará clara no estudo de caso do vento.

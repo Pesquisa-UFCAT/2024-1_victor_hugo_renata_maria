@@ -1,0 +1,72 @@
+\usepackage[brazilian,english]{babel}
+
+\usepackage[a4paper,top=2cm,bottom=2cm,left=2.5cm,right=2.5cm,marginparwidth=1.75cm]{geometry}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{xcolor}
+\usepackage{orcidlink}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage{url}
+
+\IfFileExists{helvet.sty}{\usepackage{helvet}}{}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+
+\IfFileExists{setspace.sty}{
+  \usepackage{setspace}
+  \onehalfspacing
+}{
+  \linespread{1.25}
+}
+
+\IfFileExists{titlesec.sty}{
+  \usepackage{titlesec}
+  \titleformat{\section}
+    {\normalfont\Large\bfseries}{\thesection.}{1em}{}
+}{}
+
+\usepackage{float}
+\usepackage{caption}
+\captionsetup[table]{position=top}
+\captionsetup[table]{labelfont=bf}
+\captionsetup[figure]{labelfont=bf}
+
+\usepackage{listings}
+\definecolor{codebg}{HTML}{F7F7F5}
+\definecolor{coderule}{HTML}{D9D9D6}
+\definecolor{codekw}{HTML}{1F5FAD}
+\definecolor{codestr}{HTML}{B0502A}
+\definecolor{codecom}{HTML}{6E6E68}
+\definecolor{codenum}{HTML}{9C9A91}
+\lstdefinestyle{pycode}{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr},
+  commentstyle=\color{codecom}\itshape,
+  numbers=left, numberstyle=\tiny\color{codenum}, numbersep=8pt,
+  backgroundcolor=\color{codebg},
+  frame=tb, framerule=0.6pt, rulecolor=\color{coderule},
+  framesep=4pt, xleftmargin=14pt, framexleftmargin=14pt,
+  aboveskip=10pt, belowskip=6pt,
+  showstringspaces=false, columns=fullflexible, keepspaces=true,
+  breaklines=true, tabsize=4, upquote=true,
+  morekeywords={True, False, None}
+}
+\lstset{style=pycode}
+\renewcommand{\lstlistingname}{Code}
+\captionsetup[lstlisting]{labelfont=bf, singlelinecheck=false, skip=4pt}
+
+\pdfsuppresswarningpagegroup=1
+
+\date{}

@@ -2,13 +2,13 @@
 
 \subsection{O que significa dizer que uma grandeza segue uma distribuição?}
 
-Na física e na engenharia, afirmar que uma grandeza segue uma determinada distribuição de probabilidade significa estabelecer um modelo matemático descritivo para um conjunto de observações empíricas obtidas sob condições especificadas. A distribuição não é uma propriedade intrínseca da matéria ou do ambiente dissociada de como é medida. Ela é indissociável da definição da própria variável de interesse. Por exemplo, modelar a velocidade instantânea do vento em uma rajada exige um tratamento estatístico diferente daquele aplicado à velocidade média diária. Da mesma forma, as precipitações diárias em uma bacia hidrográfica apresentam um comportamento distinto dos máximos anuais de precipitação utilizados em projetos de barragens.
+Na física e na engenharia, afirmar que uma grandeza segue uma determinada distribuição de probabilidade significa estabelecer um modelo matemático descritivo para um conjunto de observações empíricas obtidas sob condições especificadas. A distribuição não é uma propriedade do fenômeno em si, pois depende de como a variável de interesse é definida e medida. Por exemplo, modelar a velocidade instantânea do vento em uma rajada exige um tratamento estatístico diferente daquele aplicado à velocidade média diária. Da mesma forma, as precipitações diárias em uma bacia hidrográfica apresentam um comportamento distinto dos máximos anuais de precipitação utilizados em projetos de barragens.
 
-A forma observada da distribuição (como seu grau de assimetria ou espessura das caudas) depende fortemente das condições físicas do fenômeno, da resolução do procedimento de medição e da escala de agregação temporal ou espacial. \rev{Vale lembrar que a} semelhança visual entre um histograma empírico e a curva de densidade de um modelo teórico não prova a existência de um mecanismo físico gerador subjacente. Um histograma bimodal de temperaturas coletadas ao longo de um ano, por exemplo, não revela uma nova lei termodinâmica, mas frequentemente resulta da combinação de duas populações sazonais distintas (verão e inverno) com médias diferentes. A estatística descreve o padrão, mas a justificativa do modelo exige compreensão física.
+A forma observada da distribuição (como seu grau de assimetria ou espessura das caudas) depende fortemente das condições físicas do fenômeno, da resolução do procedimento de medição e da escala de agregação temporal ou espacial. A semelhança visual entre um histograma e a curva de um modelo teórico não prova que exista um mecanismo físico por trás dos dados. Um histograma bimodal de temperaturas coletadas ao longo de um ano, por exemplo, não revela uma nova lei termodinâmica, mas frequentemente resulta da combinação de duas populações sazonais distintas (verão e inverno) com médias diferentes. A estatística descreve o padrão, mas a justificativa do modelo exige compreensão física.
 
 \subsection{Exemplos de relações entre grandezas e famílias de distribuições}
 
-Diferentes mecanismos físicos e teoremas probabilísticos dão origem a famílias clássicas de distribuições, cada qual com suas hipóteses fundamentais e limites de validade. A tabela~\ref{tab:modelos_fisicos} resume as motivações teóricas para a adoção de alguns modelos de referência habituais.
+Diferentes mecanismos físicos e teoremas probabilísticos dão origem a famílias clássicas de distribuições, cada qual com suas hipóteses fundamentais e limites de validade. A Tabela~\ref{tab:modelos_fisicos} resume as motivações teóricas para a adoção de alguns modelos de referência habituais.
 
 \begin{table}[htbp]
 \centering
@@ -27,7 +27,7 @@ Resistência de materiais ou tempo até a falha & Weibull & A adequação depend
 \end{tabular}
 \end{table}
 
-A distribuição de Rayleigh ilustra como uma hipótese cinemática gera um modelo estatístico. Considere-se a velocidade horizontal do vento, com componentes ortogonais $V_x$ e $V_y$, e assuma-se que ambas são variáveis aleatórias independentes e normalmente distribuídas, com médias nulas e variâncias idênticas $\sigma^2$. A densidade conjunta é o produto das densidades marginais,
+A distribuição de Rayleigh ilustra como uma hipótese física sobre as componentes da velocidade gera um modelo estatístico. Considere-se a velocidade horizontal do vento, com componentes ortogonais $V_x$ e $V_y$, e assuma-se que ambas são variáveis aleatórias independentes e normalmente distribuídas, com médias nulas e variâncias idênticas $\sigma^2$. A densidade conjunta é o produto das densidades marginais,
 \begin{equation}
     f_{V_x,V_y}(v_x, v_y) = \frac{1}{2\pi\sigma^2} \exp\left( -\frac{v_x^2 + v_y^2}{2\sigma^2} \right).
 \end{equation}
@@ -37,13 +37,13 @@ A grandeza física de interesse usualmente é o módulo da velocidade, $v = \sqr
     \label{eq:rayleigh}
 \end{equation}
 
-Nesta formulação, o parâmetro de escala $\sigma$ tem interpretação direta, pois, como $E[V^2] = E[V_x^2] + E[V_y^2] = 2\sigma^2$, a quantidade $\sigma^2$ é a energia cinética média por unidade de massa associada ao movimento horizontal. \rev{Na atmosfera real, porém, há efeitos de rugosidade do terreno e gradientes térmicos, de modo que} as hipóteses da dedução não devem ser tomadas como válidas para o vento atmosférico sem a devida verificação empírica. Além disso, a dedução refere-se à velocidade em um instante ou em intervalos curtos. Médias sobre intervalos longos, como a média diária, têm dispersão relativa menor, por efeito da própria agregação. Na prática da energia eólica, a distribuição de Weibull, que contém a de Rayleigh como caso particular, é a referência usual para velocidades horárias ou de dez minutos~\cite{justus1978,carta2009}.
+Nesta formulação, o parâmetro de escala $\sigma$ tem interpretação direta, pois, como $E[V^2] = E[V_x^2] + E[V_y^2] = 2\sigma^2$, a quantidade $\sigma^2$ é a energia cinética média por unidade de massa associada ao movimento horizontal. Na atmosfera real, porém, há efeitos de rugosidade do terreno e gradientes térmicos, de modo que as hipóteses da dedução não devem ser tomadas como válidas para o vento atmosférico sem a devida verificação empírica. Além disso, a dedução refere-se à velocidade em um instante ou em intervalos curtos. Médias sobre intervalos longos, como a média diária, têm dispersão relativa menor, por efeito da própria agregação. Na prática da energia eólica, a distribuição de Weibull, que contém a de Rayleigh como caso particular, é a referência usual para velocidades horárias ou de dez minutos~\cite{justus1978,carta2009}.
 
 O mesmo raciocínio, aplicado às três componentes cartesianas da velocidade de uma molécula de um gás ideal, leva à distribuição de Maxwell-Boltzmann, familiar aos estudantes da termodinâmica e da teoria cinética. O exemplo mostra como uma distribuição de probabilidade pode decorrer de hipóteses físicas explícitas, e não apenas de um ajuste empírico.
 
 \subsection{Por que isso importa na confiabilidade de materiais?}
 
-\rev{A forma da distribuição importa também fora do ajuste de curvas, porque está na base da teoria de confiabilidade estrutural e de materiais.} Suponha-se que uma estrutura, como uma viga de concreto armado, possua uma resistência mecânica de comportamento aleatório, modelada pela variável $R$. Se esta estrutura é submetida a uma solicitação (carga) fixa conhecida $s$, a falha ocorrerá sempre que a resistência for inferior à solicitação.
+A forma da distribuição importa também fora do ajuste de curvas, porque está na base da teoria de confiabilidade estrutural e de materiais. Suponha-se que uma estrutura, como uma viga de concreto armado, possua uma resistência mecânica de comportamento aleatório, modelada pela variável $R$. Se esta estrutura é submetida a uma solicitação (carga) fixa conhecida $s$, a falha ocorrerá sempre que a resistência for inferior à solicitação.
 
 Neste cenário simplificado, a probabilidade de falha $P_f$ é exatamente o valor da função distribuição acumulada (FDA) de $R$ avaliada no ponto $s$,
 \begin{equation}
@@ -54,14 +54,14 @@ Esse simples balanço mostra por que conhecer apenas a resistência média de um
 
 \subsection{Protocolo comum aos estudos de caso}\label{subsec:protocolo}
 
-\rev{Para que as análises possam ser reproduzidas e comparadas,} os estudos de caso desenvolvidos nas seções~\ref{sec:vento} e \ref{sec:temperatura} seguem um protocolo dividido nas sete etapas sequenciais descritas a seguir.
+Para que as análises possam ser reproduzidas e comparadas, os estudos de caso desenvolvidos nas seções~\ref{sec:vento} e \ref{sec:temperatura} seguem um protocolo dividido nas sete etapas sequenciais descritas a seguir.
 
 \begin{enumerate}
     \item \textbf{Documentação dos dados e contextualização física:} identificação da fonte primária (instituição, estação de monitoramento, coordenadas e altitude), período de observação, grandeza física medida, resolução temporal das leituras (por exemplo, médias diárias ou valores instantâneos) e instrumental associado.
 
     \item \textbf{Exame de qualidade e consistência física:} levantamento de dados ausentes, identificação de eventuais leituras espúrias e avaliação de restrições de suporte (por exemplo, a não negatividade da velocidade do vento ou os limites da umidade relativa). Os critérios de descarte ou tratamento de falhas são explicitados e fundamentados.
 
-    \item \textbf{Definição do recorte amostral:} estabelecimento prévio e justificado de janelas temporais ou espaciais homogêneas (como o recorte de um mês específico para atenuar a não estacionariedade sazonal), evitando seleções \textit{a posteriori} direcionadas a favorecer um modelo pré-determinado. \rev{Quando não se estratifica, o alvo deve ser declarado. No vento, por exemplo, o alvo é a distribuição histórica agregada de todo o período, que mistura as estações do ano.}
+    \item \textbf{Definição do recorte amostral:} estabelecimento prévio e justificado de janelas temporais ou espaciais homogêneas (como o recorte de um mês específico para atenuar a não estacionariedade sazonal), evitando seleções \textit{a posteriori} direcionadas a favorecer um modelo pré-determinado. Quando não se estratifica, declara-se o alvo. No vento, por exemplo, o alvo é a distribuição histórica agregada de todo o período, que mistura as estações do ano.
 
     \item \textbf{Descrição estatística exploratória:} caracterização da amostra por medidas de posição, dispersão, assimetria ($\widehat\gamma_1$) e curtose ($\widehat\beta_2$), acompanhadas de quantis empíricos de referência ($Q_{0,05}$, $Q_{0,50}$, $Q_{0,95}$) e de gráficos da série temporal e do histograma.
 
@@ -77,4 +77,4 @@ Esse simples balanço mostra por que conhecer apenas a resistência média de um
     \item \textbf{Interpretação nas unidades do fenômeno e limites de validade:} tradução física das discrepâncias para o contexto da aplicação, comparando-as com a resolução das medições e com a incerteza amostral dos próprios quantis empíricos, e discutindo o princípio da parcimônia frente ao custo de parâmetros adicionais.
 \end{enumerate}
 
-A distância $D_n$ é usada aqui como medida descritiva. Os p-valores usuais do teste de Kolmogorov-Smirnov não se aplicam diretamente, porque os parâmetros são estimados com os mesmos dados~\cite{lilliefors1967}, as observações diárias são dependentes entre si e os valores registrados são arredondados. Para dar uma escala às discrepâncias, o notebook que acompanha o artigo estima a variabilidade amostral dos quantis empíricos por reamostragem \textit{bootstrap} em blocos de dias consecutivos~\cite{kunsch1989}, que preserva a dependência entre dias próximos, \rev{sorteando apenas blocos sem falhas de registro,} e quantifica por simulação o efeito do arredondamento sobre $D_n$. \rev{Essas escalas servem para comparar ordens de grandeza. Nenhuma delas é usada como teste de hipótese.}
+A distância $D_n$ é usada aqui como medida descritiva. Os p-valores usuais do teste de Kolmogorov-Smirnov não se aplicam diretamente, porque os parâmetros são estimados com os mesmos dados~\cite{lilliefors1967}, as observações diárias são dependentes entre si e os valores registrados são arredondados. Para dar uma escala às discrepâncias, o notebook que acompanha o artigo estima a variabilidade amostral dos quantis empíricos por reamostragem \textit{bootstrap} em blocos de dias consecutivos~\cite{kunsch1989}, que preserva a dependência entre dias próximos, sorteando apenas blocos sem falhas de registro, e quantifica por simulação o efeito do arredondamento sobre $D_n$. Essas escalas servem para comparar ordens de grandeza. Nenhuma delas é usada como teste de hipótese.
