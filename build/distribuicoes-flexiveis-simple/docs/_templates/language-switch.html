@@ -1,0 +1,4 @@
+<nav class="language-switch" aria-label="{{ 'Idioma' if site_language == 'pt' else 'Language' }}">
+  <span aria-current="page">{{ 'Português' if site_language == 'pt' else 'English' }}</span>
+  <a href="../{{ other_language }}/{{ pagename }}.html" lang="{{ other_language }}" hreflang="{{ other_language }}">{{ 'English' if site_language == 'pt' else 'Português' }}</a>
+</nav>
