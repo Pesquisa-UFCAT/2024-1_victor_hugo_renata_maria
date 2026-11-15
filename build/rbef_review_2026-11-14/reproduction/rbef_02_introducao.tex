@@ -1,0 +1,60 @@
+\section{Introdução}\label{sec:introducao}
+
+\subsection{Distribuições no ensino de física e engenharia}
+
+A descrição matemática da variabilidade de medições e grandezas observáveis é um pilar do ensino e da prática da física e da engenharia. Fatores estocásticos e incertezas estão presentes em todas as escalas da observação empírica. Frequentemente, a estatística introdutória ensinada nos cursos de graduação concentra-se em medidas de tendência central, como a média. Contudo, a média isolada é insuficiente para capturar a dispersão, a assimetria, os quantis de interesse para projetos ou a frequência de ocorrência de valores extremos.
+
+Grandezas físicas reais apresentam comportamentos variados. Ao analisar a velocidade do vento em estudos de escoamento, as variações de temperatura em termodinâmica, o tempo de falha de componentes mecânicos ou a profundidade de carbonatação em estruturas de concreto, observa-se que a variabilidade não é uniforme. Nessas grandezas, a dispersão observada pode refletir a flutuação intrínseca do fenômeno, o erro instrumental associado aos equipamentos de medição ou a incerteza epistêmica sobre os parâmetros de um modelo. Muitas vezes, uma única distribuição ajustada a dados experimentais reflete a superposição dessas fontes de variabilidade.
+
+Nos textos de tratamento de dados usados no ensino de física, a distribuição normal ocupa posição central, tanto na teoria de erros~\cite{vuolo1996} quanto na avaliação de incertezas de medição~\cite{gum2008}. Abordagens mais recentes, como a propagação de distribuições por simulação de Monte Carlo~\cite{gums1,ribeiro2025}, já exigem que o estudante trabalhe com distribuições arbitrárias. É, portanto, oportuno discutir com os estudantes em quais situações a simetria estrita e o suporte infinito $(-\infty, \infty)$ da distribuição normal são fisicamente adequados. Um foco exclusivo na normalidade pode levar a forçar dados manifestamente assimétricos ou limitados em modelos simétricos, deixando de lado ferramentas mais ricas para o tratamento de incertezas e a análise de falhas.
+
+\subsection{Percurso histórico das distribuições particulares às famílias flexíveis}
+
+O esforço para representar dados que escapam à normalidade impulsionou, ao longo de mais de um século, o desenvolvimento de famílias de distribuições de probabilidade. Em vez de uma cronologia exaustiva, é mais instrutivo observar essa evolução pelos problemas que cada geração de pesquisadores tentou superar.
+
+O marco inicial pode ser atribuído a Pearson~\cite{pearson1895}, que identificou a limitação das curvas gaussianas para fenômenos assimétricos e desenvolveu um sistema de curvas contínuas definidas como soluções de uma equação diferencial ordinária, abrindo caminho para a modelagem sistemática da assimetria. Cinquenta anos depois, Johnson~\cite{johnson1949} abordou o problema por outro ângulo, construindo sistemas de distribuições por transformações não lineares da variável normal padrão, o que permitiu cobrir uma vasta região do plano formado pela assimetria e pela curtose.
+
+Uma mudança de paradigma ocorreu com a família lambda~\cite{hastings1947}, difundida por Tukey~\cite{tukey1960}. Em lugar de trabalhar com a função densidade de probabilidade (FDP), a família é definida pela função quantil, a inversa da função distribuição acumulada, que controla diretamente a forma da distribuição~\cite{gilchrist2000}. Essa abordagem facilitou o tratamento computacional dos dados e das caudas.
+
+Com base nessa facilidade, Ramberg e Schmeiser~\cite{ramberg1974} generalizaram a família lambda, motivados pela geração eficiente de variáveis aleatórias assimétricas em simulações de Monte Carlo, e Ramberg e colaboradores~\cite{ramberg1979} propuseram o seu ajuste a dados pelo método dos momentos. O refinamento dessa generalização culminou na formulação de Freimer, Kollia, Mudholkar e Lin~\cite{freimer1988}, adotada no presente artigo e conhecida como GLD-FKML (do inglês \textit{Generalized Lambda Distribution}, na parametrização FKML). Uma exposição abrangente da família e de seus métodos de ajuste encontra-se em Karian e Dudewicz~\cite{karian2011}.
+
+Esse percurso converge para uma pergunta eminentemente prática, a de como representar diferentes formas, assimetrias e pesos de cauda com uma mesma expressão de função quantil. A família GLD oferece uma resposta a essa pergunta, embora não deva ser encarada como uma panaceia, tampouco como uma generalização em que toda distribuição clássica se encaixa como caso particular exato.
+
+\subsection{Por que utilizar distribuições flexíveis?}
+
+A vantagem de adotar distribuições flexíveis como a GLD reside na capacidade de representar uma grande variedade de comportamentos sob um procedimento computacional comum, o que reduz a necessidade de testar muitas famílias distintas para encontrar um ajuste adequado.
+
+Esse poder representativo, entretanto, tem um custo que deve ser explicitado em sala de aula. Modelos com quatro parâmetros, como a GLD-FKML, exigem uma estimação mais delicada, são suscetíveis a instabilidades em amostras pequenas e exigem verificação cuidadosa para que o suporte matemático da distribuição não viole o suporte físico da grandeza (por exemplo, atribuindo probabilidade a valores negativos de variáveis estritamente positivas).
+
+Ao longo dos exemplos deste artigo, três questões guiarão a avaliação das distribuições: a \textit{proximidade dos dados} (quão bem o modelo se ajusta às observações), a \textit{simplicidade do modelo} (o princípio da parcimônia) e a \textit{plausibilidade física} (se as caudas e os limites do modelo fazem sentido para o fenômeno). Nenhuma delas é resolvida apenas pela contagem de parâmetros, tampouco pela simples inspeção visual de um histograma~\cite{nist2012}.
+
+\subsection{Aplicações contemporâneas e ferramentas computacionais}
+
+Se no passado o uso da GLD era limitado pelo custo da estimação de parâmetros, hoje essas distribuições encontram aplicações na engenharia e nas ciências computacionais, como a representação das saídas de simuladores estocásticos e a quantificação de incertezas. Zhu e Sudret~\cite{zhu2021}, por exemplo, empregam modelos baseados na GLD como metamodelos de simuladores estocásticos, e o modelo MF-GLaM~\cite{giannoukou2026} estende essa ideia à combinação de simulações com diferentes níveis de fidelidade.
+
+Para transpor esses conceitos para a prática didática, faz-se uso de um ecossistema computacional acessível. A tabela~\ref{tab:ferramentas} resume as principais ferramentas disponíveis para o trabalho com a GLD.
+
+\begin{table}[htbp]
+\centering
+\caption{Ferramentas computacionais para ajuste e análise de distribuições flexíveis.}
+\label{tab:ferramentas}
+\small
+\begin{tabular}{p{1.8cm} p{2.6cm} p{9.6cm}}
+\toprule
+\textbf{Ambiente} & \textbf{Ferramenta} & \textbf{Papel e aplicabilidade} \\
+\midrule
+Python & \texttt{pyglam}~\cite{pyglam} & Biblioteca que implementa a GLD-FKML, utilizada na execução dos exemplos deste artigo. \\
+Python & \texttt{scipy.stats}~\cite{scipy2020} & Contém distribuições e funções estatísticas clássicas; a distribuição \texttt{tukeylambda} abrange apenas a família original simétrica, não substituindo a FKML completa de quatro parâmetros. \\
+R & \texttt{gld}~\cite{KingGld}, \texttt{GLDEX}~\cite{su2007} & Pacotes que implementam diversas parametrizações da família lambda generalizada e vários métodos de ajuste, incluindo máxima verossimilhança. \\
+MATLAB & \texttt{fitdist}~\cite{matlabfitdist} & Ferramenta de ajuste de distribuições do software; a GLD-FKML não consta entre as distribuições disponíveis, e seu uso requer rotinas próprias. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Objetivo, contribuição didática e organização}
+
+O objetivo deste artigo é apresentar uma via didática para o ensino de distribuições de probabilidade flexíveis, estruturada sobre a análise de dados físicos reais.
+
+A contribuição do trabalho reside em instrumentar estudantes e educadores para além da aplicação mecânica de fórmulas. Ao final do percurso proposto, o leitor deverá ser capaz de interpretar a matemática de uma função quantil, compreender os mecanismos e as sensibilidades do ajuste por momentos, avaliar criticamente as distribuições ajustadas, comparando as discrepâncias com a resolução das medições e com a incerteza amostral, e reconhecer os limites da interpretação física das caudas dessas distribuições.
+
+O artigo está organizado da seguinte forma. A seção~\ref{sec:gld} apresenta a função quantil, a parametrização FKML e o ajuste pelo método dos momentos. A seção~\ref{sec:dados} discute o que significa modelar uma grandeza física por uma distribuição e estabelece o protocolo comum aos estudos de caso, desenvolvidos para a velocidade do vento na seção~\ref{sec:vento} e para a temperatura na seção~\ref{sec:temperatura}. A seção~\ref{sec:consideracoes} reúne as considerações finais e indica os materiais computacionais que acompanham o artigo.

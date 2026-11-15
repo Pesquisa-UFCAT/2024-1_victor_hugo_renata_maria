@@ -1,0 +1,36 @@
+{
+  "labels": 32,
+  "references": 38,
+  "bibliography": 26,
+  "citations": 42,
+  "duplicate_labels": [],
+  "missing_refs": [],
+  "missing_cites": [],
+  "missing_files": [],
+  "unused_bibitems": [],
+  "source_sha256": {
+    "main.tex": "848642e8a1ceba3225d5025a90ee2390b4c8a791127038d35c175927ef24a61c",
+    "preamble.tex": "4cc38cb67e7f8ade66582457814ef628c343783bfe7150e7c44f0584fa9ee6b0",
+    "rbef_00_titulo.tex": "118018ff98b7f68524992f6845837973216f4e05b2a88409d679a5d13ce20c97",
+    "rbef_01_resumo.tex": "4511e061d1466e423baa1d01d31afb830a844fb4ebdb82c7b4ec6378711a87db",
+    "rbef_02_introducao.tex": "735775201df766764ce441fe96a2949f01b9e72a2d53d1a3c24bb7c11a96d92d",
+    "rbef_03_gld.tex": "b62a2beef78f03d9000d72b536e54bd696e89b8371e1a5b09478552993c0237f",
+    "rbef_04_dados_modelos.tex": "a10c31f9f7ab86379ecd090e1b9bd0fee04c16f682033909372f8bc613c5e120",
+    "rbef_05_vento.tex": "7d233ceb21e108141a6338f3407bfd600283001278bc1c150ac039f3c7f1ac86",
+    "rbef_06_temperatura.tex": "a272ccfef9a480ec8d8184d393f4bef16e48cc51ec9479006b470b9f193d871c",
+    "rbef_07_consideracoes.tex": "1ea3bc5d90ea9dad0af5e2f29005f4daa6fc2f6dde7f65ebd56ca66d383dbaa9",
+    "rbef_08_declaracoes.tex": "4a0588a4457b23d603d42d4b60464815ae8ba9faeb80145985db4acbf033fec9",
+    "referencias.tex": "91ba4e2316be524742baf96b46f60fbe7a817e894e64d6c1aad281347f6e1dc5",
+    "tab_descritiva.tex": "fcc48bd676b737ca426c27556ecbdd4e67b8d463c3efb54ad0d3dcb996097dc3",
+    "tab_temperatura.tex": "ddd505e17ba475c0ca443d793ab80592edf4da4cf4de907cdd5d25dfaa6e2216",
+    "tab_vento.tex": "a337f29e7532c5c471bc535d807cb9a159175c79d0b76f4d73ba0f8acef0caf8"
+  },
+  "versions": {
+    "numpy": "1.26.4",
+    "pandas": "3.0.5",
+    "scipy": "1.17.1",
+    "matplotlib": "3.8.4",
+    "pyglam": "1.1.0"
+  },
+  "python": "3.11.18 (main, Oct 26 2026, 14:08:50) [MSC v.1944 64 bit (AMD64)]"
+}

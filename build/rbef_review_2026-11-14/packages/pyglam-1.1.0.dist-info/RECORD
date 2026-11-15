@@ -1,0 +1,8 @@
+pyglam-1.1.0.dist-info/INSTALLER,sha256=5hhM4Q4mYTT9z6QB6PGpUAW81PGNFrYrdXMj4oM_6ak,2
+pyglam-1.1.0.dist-info/METADATA,sha256=qCI00ajsjey6dG3UAQaUcwCxpauXWIjYe_acsnnbbaA,5356
+pyglam-1.1.0.dist-info/RECORD,,
+pyglam-1.1.0.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
+pyglam-1.1.0.dist-info/WHEEL,sha256=L-WvLdSBvJWHXv5zrQxDvNRnIgoBzLUpcbuiw19KCuQ,88
+pyglam/__init__.py,sha256=AO67cIL0j73rIB4ZXP5236n7Y1WWNFJE3y6doFnbBgc,57
+pyglam/glam.py,sha256=GBmHNwmGRAkQbr9axkAIS0-IoTkVtZmtiaU8Z3OKcL8,55903
+pyglam/performance.py,sha256=pUPX3PjXjs2QmpcKE6iLnHsWwEwalMRwrWGrQUc8HCU,10436
