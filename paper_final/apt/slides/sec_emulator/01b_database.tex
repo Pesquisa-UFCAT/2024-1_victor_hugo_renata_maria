@@ -1,0 +1,31 @@
+\begin{frame}{How We Build the Training Database}
+
+\justifying
+\small
+
+\begin{enumerate}
+\setlength{\itemsep}{0.12cm}
+\item \textbf{Choose the design space:} $f_{ck} \in [20, 50]$~MPa, RH $\in [20, 80]$~\%, cover $c \in [15, 60]$~mm. Draw design points inside it.
+\item \textbf{Create variations:} each design point generates \textbf{5{,}000 variations}. $f_{ck}$, RH and $c$ are multiplied by random factors with \textbf{15\%} CoV.
+\item \textbf{Run the simulator:} $y(t)$ and $g(t) = c - y(t)$ for every variation, at $t = 0, 25, 50, 75, 100$ years.
+\item \textbf{Fit the distribution:} a GLD fitted to the 5{,}000 values of $g$ gives $\lambda_1,\dots,\lambda_4$.
+\item \textbf{Train:} database rows $(f_{ck}, \mathrm{RH}, c, t) \rightarrow \boldsymbol{\lambda}$ train the neural network.
+\end{enumerate}
+
+\vspace{0.1cm}
+
+\centering
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum height=0.75cm, align=center, font=\scriptsize},
+  arr/.style={-{Stealth}, thick}
+]
+  \node[box, fill=gray!10] (a) {1 design point\\$(f_{ck}, \mathrm{RH}, c)$};
+  \node[box, fill=red!10, right=0.45cm of a] (b) {5{,}000 variations\\(CoV 15\%)};
+  \node[box, fill=red!10, right=0.45cm of b] (c) {5{,}000 values\\of $g(t)$};
+  \node[box, fill=blue!10, right=0.45cm of c] (d) {GLD\\$\boldsymbol{\lambda}$};
+  \draw[arr] (a) -- (b);
+  \draw[arr] (b) -- (c);
+  \draw[arr] (c) -- (d);
+\end{tikzpicture}
+
+\end{frame}
